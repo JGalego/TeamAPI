@@ -2,6 +2,16 @@ export interface DiagramNode {
   id: string;
   label: string;
   kind?: string;
+  /** Groups this node into a rendered box (Mermaid subgraph / DOT cluster) with other nodes
+   * sharing the same `groupId`. Undefined means the node isn't boxed. */
+  groupId?: string;
+}
+
+/** A rendered grouping box (Mermaid subgraph / DOT cluster) — e.g. one per team, so roles from
+ * different teams are visually distinguishable even when cross-team edges connect them. */
+export interface DiagramGroup {
+  id: string;
+  label: string;
 }
 
 export interface DiagramEdge {
@@ -22,4 +32,5 @@ export interface DiagramModel {
   direction?: "LR" | "TD";
   nodes: DiagramNode[];
   edges: DiagramEdge[];
+  groups?: DiagramGroup[];
 }

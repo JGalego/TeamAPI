@@ -1,5 +1,6 @@
 import type { OrgGraph, TeamId } from "../model/org-graph";
 import type { DiagramModel } from "./diagram-model";
+import { labelForRole, membersByRole } from "./role-label";
 
 /** Per-team role/reporting hierarchy chart, built from `roles[]` (positions) and `reportsTo`,
  * annotated with any `members[]` currently assigned to each role. */
@@ -10,22 +11,13 @@ export function buildHierarchyDiagram(graph: OrgGraph, teamId: TeamId): DiagramM
   }
 
   const roles = [...team.doc.roles].sort((a, b) => a.id.localeCompare(b.id));
-  const membersByRole = new Map<string, string[]>();
-  for (const member of team.doc.members) {
-    for (const roleId of member.roleIds) {
-      const names = membersByRole.get(roleId) ?? [];
-      names.push(member.name);
-      membersByRole.set(roleId, names);
-    }
-  }
+  const roleMembers = membersByRole(team);
 
-  const nodes = roles.map((role) => {
-    const memberNames = membersByRole.get(role.id);
-    const label = memberNames?.length
-      ? `${role.name} (${role.kind}) — ${memberNames.join(", ")}`
-      : `${role.name} (${role.kind}) — vacant`;
-    return { id: role.id, label, kind: role.kind };
-  });
+  const nodes = roles.map((role) => ({
+    id: role.id,
+    label: labelForRole(role, roleMembers.get(role.id)),
+    kind: role.kind,
+  }));
   // Edges point manager -> report (not report -> manager) so a top-down layout naturally
   // places managers above their reports, like a conventional org chart.
   const edges = roles

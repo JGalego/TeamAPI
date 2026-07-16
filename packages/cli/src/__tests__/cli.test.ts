@@ -45,6 +45,15 @@ describe("teamapi render", () => {
     const code = await runRender([ACME_GLOB], { scope: "hierarchy" });
     expect(code).toBe(1);
   });
+
+  it("writes an org-hierarchy diagram grouped into boxes per team", async () => {
+    const outFile = path.join(tmpDir, "org-hierarchy.mmd");
+    const code = await runRender([ACME_GLOB], { scope: "org-hierarchy", format: "mermaid", out: outFile });
+    expect(code).toBe(0);
+    const content = await fs.readFile(outFile, "utf-8");
+    expect(content).toContain("subgraph");
+    expect(content).toContain("aligns with");
+  });
 });
 
 describe("teamapi scaffold", () => {

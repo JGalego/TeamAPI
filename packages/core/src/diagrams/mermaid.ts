@@ -16,7 +16,20 @@ function arrowFor(style: DiagramModel["edges"][number]["style"]): string {
 
 export function toMermaid(model: DiagramModel): string {
   const lines: string[] = [`flowchart ${model.direction ?? "LR"}`];
+
+  const groupedNodeIds = new Set<string>();
+  for (const group of model.groups ?? []) {
+    const groupNodes = model.nodes.filter((n) => n.groupId === group.id);
+    if (groupNodes.length === 0) continue;
+    lines.push(`  subgraph ${sanitizeId(group.id)}["${escapeLabel(group.label)}"]`);
+    for (const node of groupNodes) {
+      lines.push(`    ${sanitizeId(node.id)}["${escapeLabel(node.label)}"]`);
+      groupedNodeIds.add(node.id);
+    }
+    lines.push("  end");
+  }
   for (const node of model.nodes) {
+    if (groupedNodeIds.has(node.id)) continue;
     lines.push(`  ${sanitizeId(node.id)}["${escapeLabel(node.label)}"]`);
   }
   for (const edge of model.edges) {

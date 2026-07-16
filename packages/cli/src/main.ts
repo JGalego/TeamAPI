@@ -21,13 +21,13 @@ program
   .command("render")
   .argument("<patterns...>", "file paths or globs to Team API documents")
   .description("Render an organigram / role-hierarchy / context-map diagram")
-  .requiredOption("--scope <scope>", "topology | hierarchy | context-map")
+  .requiredOption("--scope <scope>", "topology | hierarchy | context-map | org-hierarchy")
   .option("--format <format>", "mermaid | dot", "mermaid")
   .option("--team <id>", "scope to one team id")
   .option("--out <file>", "write to a file instead of stdout")
   .action(async (patterns: string[], opts: { scope: string; format: string; team?: string; out?: string }) => {
     process.exitCode = await runRender(patterns, {
-      scope: opts.scope as "topology" | "hierarchy" | "context-map",
+      scope: opts.scope as "topology" | "hierarchy" | "context-map" | "org-hierarchy",
       format: opts.format as "mermaid" | "dot",
       team: opts.team,
       out: opts.out,

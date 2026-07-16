@@ -48,12 +48,19 @@ services:
         - ChargeSettled
         - RefundIssued
 roles:
+  - id: head-of-engineering
+    name: Head of Engineering
+    kind: EngineeringManager
+    responsibilities:
+      - Engineering org structure and staffing
+      - Cross-team technical direction
   - id: tech-lead
     name: Payments Tech Lead
     kind: TechLead
     responsibilities:
       - Payments platform architecture
       - On-call escalation point
+    reportsTo: head-of-engineering
   - id: payments-engineer
     name: Payments API Engineer
     kind: Engineer

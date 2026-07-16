@@ -1,7 +1,7 @@
 import { TeamApiDocumentSchema } from "@teamapi/schema";
 import { formatZodError } from "../validate/format-errors";
 import { LoaderRegistry } from "./loaders";
-import type { GraphEdge, OrgGraph, ResolvedTeam, UnresolvedRef } from "../model/org-graph";
+import type { GraphEdge, OrgGraph, ResolvedTeam, RoleGraphEdge, UnresolvedRef } from "../model/org-graph";
 
 export interface BuildOrgGraphOptions {
   /** Absolute file paths or URLs to start resolution from. */
@@ -14,6 +14,14 @@ export interface BuildOrgGraphOptions {
 interface PendingEdge {
   targetUri: string;
   build: (toId: string) => GraphEdge;
+}
+
+interface PendingRoleEdge {
+  targetUri: string;
+  kind: RoleGraphEdge["kind"];
+  fromTeam: string;
+  fromRole: string;
+  toRoleId: string;
 }
 
 /**
@@ -37,6 +45,7 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
   const uriToTeamId = new Map<string, string>();
   const unresolved: UnresolvedRef[] = [];
   const pendingEdges: PendingEdge[] = [];
+  const pendingRoleEdges: PendingRoleEdge[] = [];
 
   const worklist: string[] = [...options.seedUris];
 
@@ -106,6 +115,21 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
         description: dependency.description,
       }));
     }
+
+    const enqueueRole = (ref: string, kind: RoleGraphEdge["kind"], fromRole: string, toRoleId: string) => {
+      const targetUri = loaders.resolveRef(loaded.canonicalUri, ref);
+      worklist.push(targetUri);
+      pendingRoleEdges.push({ targetUri, kind, fromTeam: doc.id, fromRole, toRoleId });
+    };
+
+    for (const role of doc.roles) {
+      if (role.reportsToRef) {
+        enqueueRole(role.reportsToRef.$ref, "reports-to", role.id, role.reportsToRef.roleId);
+      }
+      for (const align of role.alignsWith) {
+        enqueueRole(align.$ref, "aligns-with", role.id, align.roleId);
+      }
+    }
   }
 
   const edges: GraphEdge[] = [];
@@ -122,9 +146,40 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
     edges.push(pending.build(toId));
   }
 
+  const roleEdges: RoleGraphEdge[] = [];
+  for (const pending of pendingRoleEdges) {
+    const toTeamId = uriToTeamId.get(pending.targetUri);
+    if (!toTeamId) {
+      unresolved.push({
+        fromUri: pending.targetUri,
+        ref: pending.targetUri,
+        reason: "Referenced document could not be resolved into a team",
+      });
+      continue;
+    }
+    const toTeam = teams.get(toTeamId)!;
+    const roleExists = toTeam.doc.roles.some((r) => r.id === pending.toRoleId);
+    if (!roleExists) {
+      unresolved.push({
+        fromUri: pending.targetUri,
+        ref: pending.targetUri,
+        reason: `Role '${pending.toRoleId}' not found on team '${toTeamId}' (referenced by ${pending.fromTeam}.${pending.fromRole})`,
+      });
+      continue;
+    }
+    roleEdges.push({
+      kind: pending.kind,
+      fromTeam: pending.fromTeam,
+      fromRole: pending.fromRole,
+      toTeam: toTeamId,
+      toRole: pending.toRoleId,
+    });
+  }
+
   return {
     teams,
     edges,
+    roleEdges,
     unresolved,
     meta: { resolvedAt: new Date().toISOString(), sourceRoots: options.seedUris },
   };

@@ -3,7 +3,7 @@ import { deriveContextMap } from "../context-map/derive";
 import type { GraphEdge, OrgGraph } from "../model/org-graph";
 
 function graphWithEdges(edges: GraphEdge[]): OrgGraph {
-  return { teams: new Map(), edges, unresolved: [], meta: { resolvedAt: "", sourceRoots: [] } };
+  return { teams: new Map(), edges, roleEdges: [], unresolved: [], meta: { resolvedAt: "", sourceRoots: [] } };
 }
 
 describe("deriveContextMap", () => {

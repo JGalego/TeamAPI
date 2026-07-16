@@ -31,6 +31,14 @@ roles:
     kind: TechLead
     responsibilities:
       - Onboarding architecture
+    reportsToRef:
+      teamName: Platform Payments
+      roleId: head-of-engineering
+      $ref: ../platform-payments/teamapi.yml
+    alignsWith:
+      - teamName: Enabling DevEx
+        roleId: coach
+        $ref: ../enabling-devex/teamapi.yml
   - id: engineer
     name: Onboarding Engineer
     kind: Engineer

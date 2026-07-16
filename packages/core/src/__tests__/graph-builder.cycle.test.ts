@@ -80,6 +80,27 @@ describe("buildOrgGraph — cycles", () => {
     await expect(buildOrgGraph({ seedUris: [aFile] })).rejects.toThrow();
   });
 
+  it("flags a role reportsToRef pointing at a nonexistent roleId as unresolved", async () => {
+    const aFile = await writeTeam("team-a", {
+      roles: [
+        {
+          id: "engineer",
+          name: "Engineer",
+          kind: "Engineer",
+          reportsToRef: { teamName: "team-b", roleId: "ghost-role", $ref: "./team-b.yml" },
+        },
+      ],
+    });
+    await writeTeam("team-b", {
+      roles: [{ id: "tech-lead", name: "Tech Lead", kind: "TechLead" }],
+    });
+
+    const graph = await buildOrgGraph({ seedUris: [aFile], allowPartial: true });
+
+    expect(graph.roleEdges).toEqual([]);
+    expect(graph.unresolved.some((u) => u.reason.includes("ghost-role"))).toBe(true);
+  });
+
   it("flags duplicate team ids declared from different files", async () => {
     const aFile = await writeTeam("team-a", {
       dependencies: [{ teamName: "dup", type: "OK", $ref: "./dup-of-a.yml" }],

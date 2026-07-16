@@ -3,6 +3,7 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import {
   buildContextMapDiagram,
   buildHierarchyDiagram,
+  buildOrgHierarchyDiagram,
   buildTopologyDiagram,
   deriveContextMap,
   findServiceOwner,
@@ -24,7 +25,7 @@ import {
 import { errorResult, jsonResult, textResult } from "./result";
 import { looseRegisterTool } from "./loose-register";
 
-const DiagramScopeSchema = z.enum(["topology", "hierarchy", "context-map"]);
+const DiagramScopeSchema = z.enum(["topology", "hierarchy", "context-map", "org-hierarchy"]);
 const DiagramFormatSchema = z.enum(["mermaid", "dot"]);
 const DirectionSchema = z.enum(["in", "out", "both"]);
 const TeamTypeSchema = z.enum(["stream-aligned", "platform", "complicated-subsystem", "enabling"]);
@@ -148,7 +149,7 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
     {
       title: "Render an org diagram",
       description:
-        "Render a Mermaid or DOT diagram: 'topology' (team interaction organigram, optionally scoped to one team's neighborhood), 'hierarchy' (one team's role/reporting chart, requires teamId), or 'context-map' (DDD relationship diagram).",
+        "Render a Mermaid or DOT diagram: 'topology' (team interaction organigram, optionally scoped to one team's neighborhood), 'hierarchy' (one team's role/reporting chart, requires teamId), 'org-hierarchy' (every team's role hierarchy grouped into one box per team, with cross-team reportsTo/alignsWith relationships), or 'context-map' (DDD relationship diagram).",
       inputSchema: {
         scope: DiagramScopeSchema,
         teamId: z.string().optional(),
@@ -160,7 +161,7 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
       teamId,
       format,
     }: {
-      scope: "topology" | "hierarchy" | "context-map";
+      scope: "topology" | "hierarchy" | "context-map" | "org-hierarchy";
       teamId?: string;
       format?: "mermaid" | "dot";
     }) => {
@@ -172,6 +173,9 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
       if (scope === "hierarchy") {
         if (!teamId) return errorResult("scope 'hierarchy' requires a teamId");
         return textResult(render(buildHierarchyDiagram(graph, teamId)));
+      }
+      if (scope === "org-hierarchy") {
+        return textResult(render(buildOrgHierarchyDiagram(graph)));
       }
       if (scope === "context-map") {
         return textResult(render(buildContextMapDiagram(graph, deriveContextMap(graph, teamId), teamId)));

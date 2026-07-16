@@ -1,5 +1,12 @@
 import type { FastifyInstance } from "fastify";
-import { buildHierarchyDiagram, buildTopologyDiagram, toDot, toMermaid, type DiagramModel } from "@teamapi/core";
+import {
+  buildHierarchyDiagram,
+  buildOrgHierarchyDiagram,
+  buildTopologyDiagram,
+  toDot,
+  toMermaid,
+  type DiagramModel,
+} from "@teamapi/core";
 
 type Format = "mermaid" | "dot";
 
@@ -66,6 +73,25 @@ export async function diagramsRoutes(app: FastifyInstance): Promise<void> {
         return reply.code(404).send({ error: `Unknown team id '${req.params.teamId}'` });
       }
       const model = buildHierarchyDiagram(graph, req.params.teamId);
+      return reply.type("text/plain").send(render(model, format));
+    },
+  );
+
+  app.get<{ Querystring: { format?: Format } }>(
+    "/diagrams/org-hierarchy",
+    {
+      schema: {
+        tags: ["Diagrams"],
+        summary: "Render the org-wide role hierarchy",
+        description:
+          "Every team's roles[]/reportsTo tree grouped into one box per team, plus cross-team " +
+          "reportsToRef and alignsWith relationships. Response body is raw Mermaid/DOT text.",
+        querystring: { type: "object", properties: { format: formatProperty } },
+      },
+    },
+    async (req, reply) => {
+      const format = req.query.format ?? "mermaid";
+      const model = buildOrgHierarchyDiagram(app.orgGraphStore.current);
       return reply.type("text/plain").send(render(model, format));
     },
   );

@@ -34,4 +34,25 @@ describe("buildOrgGraph — examples/acme-org", () => {
     );
     expect(toPayments).toMatchObject({ mode: "x-as-a-service", contextMappingPattern: "CustomerSupplier" });
   });
+
+  it("resolves cross-team reportsToRef and alignsWith into roleEdges", async () => {
+    const graph = await buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
+
+    const reportsTo = graph.roleEdges.filter((e) => e.kind === "reports-to");
+    const alignsWith = graph.roleEdges.filter((e) => e.kind === "aligns-with");
+
+    expect(reportsTo).toEqual(
+      expect.arrayContaining([
+        { kind: "reports-to", fromTeam: "stream-checkout", fromRole: "tech-lead", toTeam: "platform-payments", toRole: "head-of-engineering" },
+        { kind: "reports-to", fromTeam: "stream-onboarding", fromRole: "tech-lead", toTeam: "platform-payments", toRole: "head-of-engineering" },
+      ]),
+    );
+    expect(alignsWith).toEqual(
+      expect.arrayContaining([
+        { kind: "aligns-with", fromTeam: "stream-checkout", fromRole: "tech-lead", toTeam: "enabling-devex", toRole: "coach" },
+        { kind: "aligns-with", fromTeam: "stream-onboarding", fromRole: "tech-lead", toTeam: "enabling-devex", toRole: "coach" },
+      ]),
+    );
+    expect(graph.unresolved).toEqual([]);
+  });
 });

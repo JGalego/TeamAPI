@@ -88,6 +88,45 @@ flowchart TD
   classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;
 ```
 
+**Org-wide role hierarchy** — every team's roles, grouped into one box per team, with a solid
+`reports to` arrow for formal reporting (`reportsTo`/`reportsToRef`, same-team or cross-team) and
+a dashed `aligns with` arrow for `alignsWith` (dotted-line/matrix relationships, e.g. a
+community-of-practice lead a role coordinates with but doesn't report to).
+`teamapi render "examples/acme-org/**/teamapi.yml" --scope org-hierarchy`
+
+```mermaid
+flowchart TD
+  subgraph enabling_devex["Enabling DevEx"]
+    enabling_devex__coach["DevEx Coach (DeliveryLead) — Marta Kowalski"]
+  end
+  subgraph platform_payments["Platform Payments"]
+    platform_payments__head_of_engineering["Head of Engineering (EngineeringManager) — vacant"]
+    platform_payments__ledger_engineer["Ledger Engineer (Engineer) — Lin Zhao"]
+    platform_payments__payments_engineer["Payments API Engineer (Engineer) — Sam Okafor"]
+    platform_payments__tech_lead["Payments Tech Lead (TechLead) — Priya Raman"]
+  end
+  subgraph stream_checkout["Stream Checkout"]
+    stream_checkout__backend_engineer["Checkout Backend Engineer (Engineer) — Yuki Tanaka"]
+    stream_checkout__frontend_engineer["Checkout Frontend Engineer (Engineer) — Fatima Al-Sayed"]
+    stream_checkout__tech_lead["Checkout Tech Lead (TechLead) — Diego Alves"]
+  end
+  subgraph stream_onboarding["Stream Onboarding"]
+    stream_onboarding__engineer["Onboarding Engineer (Engineer) — Aisha Bello"]
+    stream_onboarding__tech_lead["Onboarding Tech Lead (TechLead) — Noah Fischer"]
+  end
+  platform_payments__head_of_engineering --> platform_payments__tech_lead
+  platform_payments__tech_lead --> platform_payments__payments_engineer
+  platform_payments__tech_lead --> platform_payments__ledger_engineer
+  stream_checkout__tech_lead --> stream_checkout__backend_engineer
+  stream_checkout__tech_lead --> stream_checkout__frontend_engineer
+  stream_onboarding__tech_lead --> stream_onboarding__engineer
+  platform_payments__head_of_engineering --> stream_checkout__tech_lead
+  stream_checkout__tech_lead -.->|"aligns with"| enabling_devex__coach
+  platform_payments__head_of_engineering --> stream_onboarding__tech_lead
+  stream_onboarding__tech_lead -.->|"aligns with"| enabling_devex__coach
+  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;
+```
+
 **REST API** — `curl http://127.0.0.1:3000/cognitive-load`
 
 ```json
@@ -152,7 +191,7 @@ directly as `teamapi <command> ...` from anywhere. If you built with `CI=true` (
 there), use `pnpm teamapi <command> ...` from the repo root instead.
 
 - `teamapi validate <patterns...>` — resolve every `$ref` transitively and report unresolved refs.
-- `teamapi render <patterns...> --scope topology|hierarchy|context-map [--format mermaid|dot] [--team <id>] [--out <file>]`
+- `teamapi render <patterns...> --scope topology|hierarchy|context-map|org-hierarchy [--format mermaid|dot] [--team <id>] [--out <file>]`
 - `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` — generate a minimal, schema-valid document.
 - `teamapi serve-api <patterns...> [--port 3000]`
 - `teamapi serve-mcp <patterns...>`
@@ -161,7 +200,7 @@ there), use `pnpm teamapi <command> ...` from the repo root instead.
 
 `GET /teams`, `/teams/:id`, `/teams/:id/interactions`, `/teams/:id/dependencies`, `/teams/:id/roles`,
 `/services`, `/services/:name`, `/search?q=`, `/graph`, `/diagrams/topology`, `/diagrams/hierarchy/:teamId`,
-`/context-map`, `/cognitive-load`, `/cognitive-load/:teamId`, `/health`.
+`/diagrams/org-hierarchy`, `/context-map`, `/cognitive-load`, `/cognitive-load/:teamId`, `/health`.
 
 Interactive docs (Swagger UI, with a "Try it out" button for every endpoint) are served at
 **`/docs`** once `serve-api` is running (e.g. `http://127.0.0.1:3000/docs`); the raw OpenAPI 3

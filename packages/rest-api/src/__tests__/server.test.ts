@@ -89,6 +89,13 @@ describe("REST API", () => {
     expect(res.body).toContain("flowchart LR");
   });
 
+  it("GET /diagrams/org-hierarchy?format=mermaid groups roles into one box per team", async () => {
+    const res = await app.inject({ method: "GET", url: "/diagrams/org-hierarchy?format=mermaid" });
+    expect(res.statusCode).toBe(200);
+    expect(res.body).toContain("subgraph");
+    expect(res.body).toContain("aligns with");
+  });
+
   it("GET /context-map?format=json returns relationships and conflicts", async () => {
     const res = await app.inject({ method: "GET", url: "/context-map" });
     const body = res.json();

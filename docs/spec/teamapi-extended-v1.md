@@ -68,6 +68,18 @@ Tech Lead") and a **member** (a specific person) are different things worth keep
 | `kind` | string | Yes | A broad category for filtering/analytics, e.g. `TechLead`, `Engineer`, `Designer`, `SRE` (suggested values in `SUGGESTED_ROLE_KINDS`, not enforced). |
 | `responsibilities` | string[] | No | What this role owns. |
 | `reportsTo` | slug | No | Another role's `id` within the same team. |
+| `reportsToRef` | [RoleRef](#roleref) | No | Formal reporting line to a role on another team. Mutually exclusive with `reportsTo` in practice. |
+| `alignsWith` | [RoleRef](#roleref)[] | No | Dotted-line/matrix relationships that aren't formal reporting, e.g. a community-of-practice lead this role coordinates with. Same-team or cross-team. |
+
+### RoleRef
+
+A reference to another team's role — same `$ref` convention as `Interaction`/`Dependency`.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `teamName` | string | Yes | Human-readable label for the target team, kept inline alongside `$ref`. |
+| `roleId` | slug | Yes | The target role's `id` within the referenced team's `roles[]`. |
+| `$ref` | string | Yes | Path/URL to the target team's document. |
 
 ### Member
 
@@ -149,6 +161,9 @@ CLI) can produce:
 - **Topology organigram** — team-interaction diagram (Mermaid/DOT), org-wide or scoped to one
   team's neighborhood.
 - **Role hierarchy chart** — one team's `roles[]`/`reportsTo` tree, annotated with `members[]`.
+- **Org-wide role hierarchy** — every team's roles, grouped into one box per team, with a solid
+  arrow for formal reporting (`reportsTo`/`reportsToRef`, same-team or cross-team) and a dashed
+  arrow for `alignsWith` (dotted-line/matrix relationships).
 - **Context map** — DDD relationship diagram derived from `interactions[]`.
 - **Cognitive load report** — per-team or org-wide, sorted by total load.
 - **Full graph JSON** — every resolved team plus every edge, for custom tooling.

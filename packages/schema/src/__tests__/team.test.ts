@@ -41,6 +41,23 @@ describe("TeamApiDocumentSchema", () => {
       roles: [
         { id: "tech-lead", name: "Tech Lead", kind: "TechLead", responsibilities: ["Architecture"] },
         { id: "engineer", name: "Engineer", kind: "Engineer", reportsTo: "tech-lead" },
+        {
+          id: "product-owner",
+          name: "Product Owner",
+          kind: "ProductManager",
+          reportsToRef: {
+            teamName: "Platform Payments",
+            roleId: "head-of-product",
+            $ref: "../platform-payments/teamapi.yml",
+          },
+          alignsWith: [
+            {
+              teamName: "Enabling DevEx",
+              roleId: "coach",
+              $ref: "../enabling-devex/teamapi.yml",
+            },
+          ],
+        },
       ],
       members: [
         { id: "ada-lovelace", name: "Ada Lovelace", roleIds: ["tech-lead"], allocation: 100 },
@@ -68,6 +85,15 @@ describe("TeamApiDocumentSchema", () => {
 
     const parsed = TeamApiDocumentSchema.parse(full);
     expect(parsed.roles[1]?.reportsTo).toBe("tech-lead");
+    expect(parsed.roles[2]?.reportsToRef).toEqual({
+      teamName: "Platform Payments",
+      roleId: "head-of-product",
+      $ref: "../platform-payments/teamapi.yml",
+    });
+    expect(parsed.roles[2]?.alignsWith).toEqual([
+      { teamName: "Enabling DevEx", roleId: "coach", $ref: "../enabling-devex/teamapi.yml" },
+    ]);
+    expect(parsed.roles[0]?.alignsWith).toEqual([]);
     expect(parsed.interactions[0]?.contextMappingPattern).toBe("CustomerSupplier");
   });
 

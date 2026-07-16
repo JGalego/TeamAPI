@@ -75,6 +75,16 @@ describe("MCP tools", () => {
     expect(textOf(result)).toContain("flowchart LR");
   });
 
+  it("render_org_diagram returns a grouped hierarchy for the org-hierarchy scope", async () => {
+    const result = await client.callTool({
+      name: "render_org_diagram",
+      arguments: { scope: "org-hierarchy", format: "mermaid" },
+    });
+    const text = textOf(result);
+    expect(text).toContain("subgraph");
+    expect(text).toContain("aligns with");
+  });
+
   it("get_context_map surfaces relationships", async () => {
     const result = await client.callTool({ name: "get_context_map", arguments: {} });
     const body = JSON.parse(textOf(result));

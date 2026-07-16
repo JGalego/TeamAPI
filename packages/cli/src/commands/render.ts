@@ -3,6 +3,7 @@ import {
   buildContextMapDiagram,
   buildHierarchyDiagram,
   buildOrgGraph,
+  buildOrgHierarchyDiagram,
   buildTopologyDiagram,
   deriveContextMap,
   toDot,
@@ -12,7 +13,7 @@ import {
 import { expandSeeds } from "../seeds";
 
 export interface RenderOptions {
-  scope: "topology" | "hierarchy" | "context-map";
+  scope: "topology" | "hierarchy" | "context-map" | "org-hierarchy";
   format?: "mermaid" | "dot";
   team?: string;
   out?: string;
@@ -36,6 +37,8 @@ export async function runRender(patterns: string[], options: RenderOptions): Pro
       return 1;
     }
     output = render(buildHierarchyDiagram(graph, options.team));
+  } else if (options.scope === "org-hierarchy") {
+    output = render(buildOrgHierarchyDiagram(graph));
   } else if (options.scope === "context-map") {
     output = render(buildContextMapDiagram(graph, deriveContextMap(graph, options.team), options.team));
   } else {

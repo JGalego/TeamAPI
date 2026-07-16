@@ -10,6 +10,7 @@ export * from "./context-map/derive";
 export * from "./diagrams/diagram-model";
 export * from "./diagrams/topology";
 export * from "./diagrams/hierarchy";
+export * from "./diagrams/org-hierarchy";
 export * from "./diagrams/context-map";
 export * from "./diagrams/mermaid";
 export * from "./diagrams/dot";

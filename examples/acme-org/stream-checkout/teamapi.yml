@@ -39,6 +39,14 @@ roles:
     responsibilities:
       - Checkout architecture
       - Incident response lead
+    reportsToRef:
+      teamName: Platform Payments
+      roleId: head-of-engineering
+      $ref: ../platform-payments/teamapi.yml
+    alignsWith:
+      - teamName: Enabling DevEx
+        roleId: coach
+        $ref: ../enabling-devex/teamapi.yml
   - id: backend-engineer
     name: Checkout Backend Engineer
     kind: Engineer
