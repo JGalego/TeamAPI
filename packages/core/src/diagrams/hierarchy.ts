@@ -26,9 +26,16 @@ export function buildHierarchyDiagram(graph: OrgGraph, teamId: TeamId): DiagramM
       : `${role.name} (${role.kind}) — vacant`;
     return { id: role.id, label, kind: role.kind };
   });
+  // Edges point manager -> report (not report -> manager) so a top-down layout naturally
+  // places managers above their reports, like a conventional org chart.
   const edges = roles
     .filter((role) => role.reportsTo)
-    .map((role, i) => ({ id: `e${i}`, from: role.id, to: role.reportsTo as string, label: "reports to" }));
+    .map((role, i) => ({
+      id: `e${i}`,
+      from: role.reportsTo as string,
+      to: role.id,
+      style: "plain" as const,
+    }));
 
-  return { title: `${team.doc.info.name} — Role Hierarchy`, nodes, edges };
+  return { title: `${team.doc.info.name} — Role Hierarchy`, direction: "TD", nodes, edges };
 }

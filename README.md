@@ -3,10 +3,7 @@
   <h1>TeamAPI</h1>
   <blockquote>Your org chart, compiled.</blockquote>
 
-  [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml)
-  [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE)
-  ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)
-  ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
+  [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 </div>
 
 Inspired by [Team Topologies](https://teamtopologies.com/) and Domain-Driven Design, this toolchain turns a **Team API as Code** spec into organigrams, a REST API, and an MCP server for LLM assistants.
@@ -50,12 +47,13 @@ flowchart LR
   platform_payments["Platform Payments"]
   stream_checkout["Stream Checkout"]
   stream_onboarding["Stream Onboarding"]
-  stream_checkout -.->|platform| platform_payments
-  stream_checkout -->|x-as-a-service| platform_payments
-  stream_checkout -->|collaboration| stream_onboarding
-  stream_checkout -.->|depends (Slowing)| stream_onboarding
-  stream_onboarding -.->|facilitating| enabling_devex
-  stream_onboarding -.->|depends (OK)| platform_payments
+  stream_checkout -.->|"platform"| platform_payments
+  stream_checkout -->|"x-as-a-service"| platform_payments
+  stream_checkout -->|"collaboration"| stream_onboarding
+  stream_checkout -.->|"depends (Slowing)"| stream_onboarding
+  stream_onboarding -.->|"facilitating"| enabling_devex
+  stream_onboarding -.->|"depends (OK)"| platform_payments
+  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;
 ```
 
 **DDD context map** — same interactions, reinterpreted as DDD relationships: explicit
@@ -70,21 +68,24 @@ flowchart LR
   platform_payments["Platform Payments"]
   stream_checkout["Stream Checkout"]
   stream_onboarding["Stream Onboarding"]
-  stream_checkout -->|CustomerSupplier| platform_payments
-  stream_checkout -->|Partnership (inferred)| stream_onboarding
-  stream_onboarding -->|unclassified| enabling_devex
+  stream_checkout -->|"CustomerSupplier"| platform_payments
+  stream_checkout -->|"Partnership (inferred)"| stream_onboarding
+  stream_onboarding -->|"unclassified"| enabling_devex
+  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;
 ```
 
-**Role hierarchy** — `roles[]`/`reportsTo` annotated with the `members[]` filling each seat.
+**Role hierarchy** — `roles[]`/`reportsTo` annotated with the `members[]` filling each seat, laid
+out top-down like a conventional org chart (manager above, reports below, plain connectors).
 `teamapi render "examples/acme-org/**/teamapi.yml" --scope hierarchy --team stream-checkout`
 
 ```mermaid
-flowchart LR
+flowchart TD
   backend_engineer["Checkout Backend Engineer (Engineer) — Yuki Tanaka"]
   frontend_engineer["Checkout Frontend Engineer (Engineer) — Fatima Al-Sayed"]
   tech_lead["Checkout Tech Lead (TechLead) — Diego Alves"]
-  backend_engineer -->|reports to| tech_lead
-  frontend_engineer -->|reports to| tech_lead
+  tech_lead --- backend_engineer
+  tech_lead --- frontend_engineer
+  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;
 ```
 
 **REST API** — `curl http://127.0.0.1:3000/cognitive-load`

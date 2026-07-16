@@ -5,10 +5,11 @@ exports[`diagram generation — examples/acme-org > renders a scoped topology di
   platform_payments["Platform Payments"]
   stream_checkout["Stream Checkout"]
   stream_onboarding["Stream Onboarding"]
-  stream_checkout -.->|platform| platform_payments
-  stream_checkout -->|x-as-a-service| platform_payments
-  stream_checkout -->|collaboration| stream_onboarding
-  stream_checkout -.->|depends (Slowing)| stream_onboarding"
+  stream_checkout -.->|"platform"| platform_payments
+  stream_checkout -->|"x-as-a-service"| platform_payments
+  stream_checkout -->|"collaboration"| stream_onboarding
+  stream_checkout -.->|"depends (Slowing)"| stream_onboarding
+  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;"
 `;
 
 exports[`diagram generation — examples/acme-org > renders the org-wide context map diagram 1`] = `
@@ -17,23 +18,26 @@ exports[`diagram generation — examples/acme-org > renders the org-wide context
   platform_payments["Platform Payments"]
   stream_checkout["Stream Checkout"]
   stream_onboarding["Stream Onboarding"]
-  stream_checkout -->|CustomerSupplier| platform_payments
-  stream_checkout -->|Partnership (inferred)| stream_onboarding
-  stream_onboarding -->|unclassified| enabling_devex"
+  stream_checkout -->|"CustomerSupplier"| platform_payments
+  stream_checkout -->|"Partnership (inferred)"| stream_onboarding
+  stream_onboarding -->|"unclassified"| enabling_devex
+  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;"
 `;
 
 exports[`diagram generation — examples/acme-org > renders the role hierarchy diagram for stream-checkout 1`] = `
-"flowchart LR
+"flowchart TD
   backend_engineer["Checkout Backend Engineer (Engineer) — Yuki Tanaka"]
   frontend_engineer["Checkout Frontend Engineer (Engineer) — Fatima Al-Sayed"]
   tech_lead["Checkout Tech Lead (TechLead) — Diego Alves"]
-  backend_engineer -->|reports to| tech_lead
-  frontend_engineer -->|reports to| tech_lead"
+  tech_lead --- backend_engineer
+  tech_lead --- frontend_engineer
+  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;"
 `;
 
 exports[`diagram generation — examples/acme-org > renders the topology diagram as DOT 1`] = `
 "digraph "Organization Topology" {
   rankdir=LR;
+  node [style=filled, fillcolor="#ede9fe", color="#7c3aed", fontcolor="#1e1b4b"];
   "enabling-devex" [label="Enabling DevEx"];
   "platform-payments" [label="Platform Payments"];
   "stream-checkout" [label="Stream Checkout"];
@@ -53,10 +57,11 @@ exports[`diagram generation — examples/acme-org > renders the topology diagram
   platform_payments["Platform Payments"]
   stream_checkout["Stream Checkout"]
   stream_onboarding["Stream Onboarding"]
-  stream_checkout -.->|platform| platform_payments
-  stream_checkout -->|x-as-a-service| platform_payments
-  stream_checkout -->|collaboration| stream_onboarding
-  stream_checkout -.->|depends (Slowing)| stream_onboarding
-  stream_onboarding -.->|facilitating| enabling_devex
-  stream_onboarding -.->|depends (OK)| platform_payments"
+  stream_checkout -.->|"platform"| platform_payments
+  stream_checkout -->|"x-as-a-service"| platform_payments
+  stream_checkout -->|"collaboration"| stream_onboarding
+  stream_checkout -.->|"depends (Slowing)"| stream_onboarding
+  stream_onboarding -.->|"facilitating"| enabling_devex
+  stream_onboarding -.->|"depends (OK)"| platform_payments
+  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;"
 `;

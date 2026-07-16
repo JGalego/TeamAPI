@@ -8,15 +8,22 @@ function escapeLabel(label: string): string {
   return label.replace(/"/g, "'").replace(/\n/g, "<br/>");
 }
 
+function arrowFor(style: DiagramModel["edges"][number]["style"]): string {
+  if (style === "plain") return "---";
+  if (style === "dashed" || style === "dotted") return "-.->";
+  return "-->";
+}
+
 export function toMermaid(model: DiagramModel): string {
-  const lines: string[] = ["flowchart LR"];
+  const lines: string[] = [`flowchart ${model.direction ?? "LR"}`];
   for (const node of model.nodes) {
     lines.push(`  ${sanitizeId(node.id)}["${escapeLabel(node.label)}"]`);
   }
   for (const edge of model.edges) {
-    const arrow = edge.style === "solid" || !edge.style ? "-->" : "-.->";
-    const label = edge.label ? `|${escapeLabel(edge.label)}|` : "";
+    const arrow = arrowFor(edge.style);
+    const label = edge.label ? `|"${escapeLabel(edge.label)}"|` : "";
     lines.push(`  ${sanitizeId(edge.from)} ${arrow}${label} ${sanitizeId(edge.to)}`);
   }
+  lines.push("  classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;");
   return lines.join("\n");
 }
