@@ -1,0 +1,62 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`diagram generation — examples/acme-org > renders a scoped topology diagram for a single team 1`] = `
+"flowchart LR
+  platform_payments["Platform Payments"]
+  stream_checkout["Stream Checkout"]
+  stream_onboarding["Stream Onboarding"]
+  stream_checkout -.->|platform| platform_payments
+  stream_checkout -->|x-as-a-service| platform_payments
+  stream_checkout -->|collaboration| stream_onboarding
+  stream_checkout -.->|depends (Slowing)| stream_onboarding"
+`;
+
+exports[`diagram generation — examples/acme-org > renders the org-wide context map diagram 1`] = `
+"flowchart LR
+  enabling_devex["Enabling DevEx"]
+  platform_payments["Platform Payments"]
+  stream_checkout["Stream Checkout"]
+  stream_onboarding["Stream Onboarding"]
+  stream_checkout -->|CustomerSupplier| platform_payments
+  stream_checkout -->|Partnership (inferred)| stream_onboarding
+  stream_onboarding -->|unclassified| enabling_devex"
+`;
+
+exports[`diagram generation — examples/acme-org > renders the role hierarchy diagram for stream-checkout 1`] = `
+"flowchart LR
+  backend_engineer["Checkout Backend Engineer (Engineer) — Yuki Tanaka"]
+  frontend_engineer["Checkout Frontend Engineer (Engineer) — Fatima Al-Sayed"]
+  tech_lead["Checkout Tech Lead (TechLead) — Diego Alves"]
+  backend_engineer -->|reports to| tech_lead
+  frontend_engineer -->|reports to| tech_lead"
+`;
+
+exports[`diagram generation — examples/acme-org > renders the topology diagram as DOT 1`] = `
+"digraph "Organization Topology" {
+  rankdir=LR;
+  "enabling-devex" [label="Enabling DevEx"];
+  "platform-payments" [label="Platform Payments"];
+  "stream-checkout" [label="Stream Checkout"];
+  "stream-onboarding" [label="Stream Onboarding"];
+  "stream-checkout" -> "platform-payments" [label="platform", style=dotted];
+  "stream-checkout" -> "platform-payments" [label="x-as-a-service"];
+  "stream-checkout" -> "stream-onboarding" [label="collaboration"];
+  "stream-checkout" -> "stream-onboarding" [label="depends (Slowing)", style=dotted];
+  "stream-onboarding" -> "enabling-devex" [label="facilitating", style=dashed];
+  "stream-onboarding" -> "platform-payments" [label="depends (OK)", style=dotted];
+}"
+`;
+
+exports[`diagram generation — examples/acme-org > renders the topology diagram as Mermaid 1`] = `
+"flowchart LR
+  enabling_devex["Enabling DevEx"]
+  platform_payments["Platform Payments"]
+  stream_checkout["Stream Checkout"]
+  stream_onboarding["Stream Onboarding"]
+  stream_checkout -.->|platform| platform_payments
+  stream_checkout -->|x-as-a-service| platform_payments
+  stream_checkout -->|collaboration| stream_onboarding
+  stream_checkout -.->|depends (Slowing)| stream_onboarding
+  stream_onboarding -.->|facilitating| enabling_devex
+  stream_onboarding -.->|depends (OK)| platform_payments"
+`;

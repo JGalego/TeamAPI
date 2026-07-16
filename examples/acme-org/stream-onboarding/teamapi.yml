@@ -1,0 +1,73 @@
+teamApiVersion: "1.0.0"
+id: stream-onboarding
+info:
+  name: Stream Onboarding
+  focus: Customer sign-up, KYC verification, and account activation
+  type: stream-aligned
+channels:
+  - type: slack
+    name: stream-onboarding
+searchTerms:
+  - term: onboarding
+  - term: kyc
+  - term: sign-up
+services:
+  - name: onboarding-api
+    repository: https://github.com/acme-example/onboarding-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Applicant
+          definition: A prospective customer who has started but not finished sign-up
+      aggregates:
+        - Applicant
+      publishedEvents:
+        - ApplicantActivated
+      subscribedEvents: []
+roles:
+  - id: tech-lead
+    name: Onboarding Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Onboarding architecture
+  - id: engineer
+    name: Onboarding Engineer
+    kind: Engineer
+    responsibilities:
+      - onboarding-api development
+    reportsTo: tech-lead
+members:
+  - id: noah-fischer
+    name: Noah Fischer
+    contact: noah.fischer@acme.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: aisha-bello
+    name: Aisha Bello
+    contact: aisha.bello@acme.example
+    roleIds: [engineer]
+    allocation: 100
+cognitiveLoad:
+  intrinsic: 4
+  extraneous: 2
+  germane: 5
+  notes: Well-bounded domain, low incidental complexity.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Monday
+    timeOfDay: "09:15"
+    durationMinutes: 15
+interactions:
+  - teamName: Enabling DevEx
+    mode: facilitating
+    purpose: Improve end-to-end test automation for the sign-up flow
+    startDate: "2026-05-01"
+    expectedDuration: 6
+    expectedDurationUnit: weeks
+    $ref: ../enabling-devex/teamapi.yml
+dependencies:
+  - teamName: Platform Payments
+    description: Onboarding relies on the payments platform's KYC verification integration
+    type: OK
+    $ref: ../platform-payments/teamapi.yml

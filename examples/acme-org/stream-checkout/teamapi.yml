@@ -1,0 +1,100 @@
+teamApiVersion: "1.0.0"
+id: stream-checkout
+info:
+  name: Stream Checkout
+  focus: Shopping cart, checkout flow, and order placement
+  type: stream-aligned
+channels:
+  - type: slack
+    name: stream-checkout
+searchTerms:
+  - term: checkout
+  - term: cart
+  - term: order
+platform:
+  $ref: ../platform-payments/teamapi.yml
+services:
+  - name: checkout-api
+    repository: https://github.com/acme-example/checkout-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Cart
+          definition: An in-progress, unpaid order
+        - term: Order
+          definition: A cart that has been placed and paid for
+      aggregates:
+        - Cart
+        - Order
+      publishedEvents:
+        - OrderPlaced
+      subscribedEvents:
+        - ChargeAuthorized
+        - ApplicantActivated
+roles:
+  - id: tech-lead
+    name: Checkout Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Checkout architecture
+      - Incident response lead
+  - id: backend-engineer
+    name: Checkout Backend Engineer
+    kind: Engineer
+    responsibilities:
+      - checkout-api development
+    reportsTo: tech-lead
+  - id: frontend-engineer
+    name: Checkout Frontend Engineer
+    kind: Engineer
+    responsibilities:
+      - Checkout frontend
+    reportsTo: tech-lead
+members:
+  - id: diego-alves
+    name: Diego Alves
+    contact: diego.alves@acme.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: yuki-tanaka
+    name: Yuki Tanaka
+    contact: yuki.tanaka@acme.example
+    roleIds: [backend-engineer]
+    allocation: 100
+  - id: fatima-al-sayed
+    name: Fatima Al-Sayed
+    contact: fatima.al-sayed@acme.example
+    roleIds: [frontend-engineer]
+    allocation: 80
+cognitiveLoad:
+  intrinsic: 6
+  extraneous: 8
+  germane: 4
+  notes: >
+    High extraneous load from juggling three upstream integrations (payments, onboarding,
+    fulfillment) with inconsistent contracts; a strong candidate for an anticorruption layer.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Wednesday
+    timeOfDay: "09:00"
+    durationMinutes: 15
+interactions:
+  - teamName: Platform Payments
+    mode: x-as-a-service
+    purpose: Consume payment processing and ledger services to reduce cognitive load
+    contextMappingPattern: CustomerSupplier
+    startDate: "2026-01-15"
+    $ref: ../platform-payments/teamapi.yml
+  - teamName: Stream Onboarding
+    mode: collaboration
+    purpose: Jointly define the applicant-to-customer handoff contract
+    startDate: "2026-06-01"
+    expectedDuration: 4
+    expectedDurationUnit: weeks
+    $ref: ../stream-onboarding/teamapi.yml
+dependencies:
+  - teamName: Stream Onboarding
+    description: Checkout waits on the new applicant activation event schema before it can drop legacy polling
+    type: Slowing
+    $ref: ../stream-onboarding/teamapi.yml

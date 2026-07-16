@@ -1,0 +1,33 @@
+{
+  "name": "@teamapi/cli",
+  "version": "0.1.0",
+  "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, serve-api, serve-mcp",
+  "bin": {
+    "teamapi": "dist/main.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b && chmod +x dist/main.js",
+    "postbuild": "[ \"$CI\" = \"true\" ] || npm link",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run",
+    "typecheck": "tsc -b --noEmit false"
+  },
+  "dependencies": {
+    "@teamapi/core": "workspace:*",
+    "@teamapi/schema": "workspace:*",
+    "@teamapi/rest-api": "workspace:*",
+    "@teamapi/mcp-server": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "commander": "^12.1.0",
+    "fast-glob": "^3.3.2",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

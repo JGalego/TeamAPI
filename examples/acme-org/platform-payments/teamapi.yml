@@ -1,0 +1,97 @@
+teamApiVersion: "1.0.0"
+id: platform-payments
+info:
+  name: Platform Payments
+  focus: Provide payment processing and ledger capabilities as internal platform services
+  type: platform
+channels:
+  - type: slack
+    name: platform-payments
+searchTerms:
+  - term: payments
+  - term: ledger
+  - term: billing
+services:
+  - name: payments-api
+    url: https://internal.acme.example/docs/payments-api
+    repository: https://github.com/acme-example/payments-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Charge
+          definition: A single attempt to move money from a customer's payment method
+        - term: Ledger Entry
+          definition: An immutable, double-entry record of a movement of funds
+      aggregates:
+        - Charge
+        - Refund
+      publishedEvents:
+        - ChargeAuthorized
+        - ChargeSettled
+        - RefundIssued
+      subscribedEvents: []
+  - name: ledger
+    repository: https://github.com/acme-example/ledger
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Ledger Entry
+          definition: An immutable, double-entry record of a movement of funds
+      aggregates:
+        - Account
+        - LedgerEntry
+      publishedEvents:
+        - LedgerEntryPosted
+      subscribedEvents:
+        - ChargeSettled
+        - RefundIssued
+roles:
+  - id: tech-lead
+    name: Payments Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Payments platform architecture
+      - On-call escalation point
+  - id: payments-engineer
+    name: Payments API Engineer
+    kind: Engineer
+    responsibilities:
+      - payments-api development
+    reportsTo: tech-lead
+  - id: ledger-engineer
+    name: Ledger Engineer
+    kind: Engineer
+    responsibilities:
+      - ledger development
+    reportsTo: tech-lead
+members:
+  - id: priya-raman
+    name: Priya Raman
+    contact: priya.raman@acme.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: sam-okafor
+    name: Sam Okafor
+    contact: sam.okafor@acme.example
+    roleIds: [payments-engineer]
+    allocation: 100
+  - id: lin-zhao
+    name: Lin Zhao
+    contact: lin.zhao@acme.example
+    roleIds: [ledger-engineer]
+    allocation: 100
+cognitiveLoad:
+  intrinsic: 7
+  extraneous: 5
+  germane: 6
+  notes: PCI compliance scope adds real intrinsic complexity; onboarding docs need work.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Tuesday
+    timeOfDay: "09:30"
+    durationMinutes: 15
+work:
+  waysOfWorking:
+    - name: Trunk-based development

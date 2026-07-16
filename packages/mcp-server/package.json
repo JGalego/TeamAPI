@@ -1,0 +1,24 @@
+{
+  "name": "@teamapi/mcp-server",
+  "version": "0.1.0",
+  "description": "MCP server exposing a resolved Team API org graph as tools for LLM assistants",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run",
+    "typecheck": "tsc -b --noEmit false"
+  },
+  "dependencies": {
+    "@teamapi/core": "workspace:*",
+    "@teamapi/schema": "workspace:*",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

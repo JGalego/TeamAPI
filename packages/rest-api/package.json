@@ -1,0 +1,25 @@
+{
+  "name": "@teamapi/rest-api",
+  "version": "0.1.0",
+  "description": "Read-only REST API over a resolved Team API org graph",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run",
+    "typecheck": "tsc -b --noEmit false"
+  },
+  "dependencies": {
+    "@teamapi/core": "workspace:*",
+    "@teamapi/schema": "workspace:*",
+    "fastify": "^5.1.0",
+    "@fastify/swagger": "^9.8.1",
+    "@fastify/swagger-ui": "^6.1.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}
