@@ -20,6 +20,8 @@
     "@teamapi/schema": "workspace:*",
     "@teamapi/rest-api": "workspace:*",
     "@teamapi/mcp-server": "workspace:*",
+    "@teamapi/chat": "workspace:*",
+    "@anthropic-ai/sdk": "^0.112.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^12.1.0",
     "fast-glob": "^3.3.2",

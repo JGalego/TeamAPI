@@ -21,6 +21,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
   - [🏢 Org-wide role hierarchy](#org-wide-role-hierarchy)
 - [🔌 REST API](#rest-api)
 - [🤖 MCP tools](#mcp-tools)
+- [💬 Chat](#chat)
 - [⚙️ Generators](#generators)
   - [▶️ Running it](#running-it)
 - [💻 CLI reference](#cli-reference)
@@ -51,7 +52,7 @@ ACME Org is a small, fictional e-commerce company that ships payments and checko
 
 ## 📦 What you get
 
-Render [diagrams](#diagrams) from the spec — team-interaction organigrams, DDD context maps, and role hierarchies — as Mermaid or DOT. Query it live through a read-only [REST API](#rest-api) with interactive Swagger docs, or an [MCP server](#mcp-tools) that exposes the same data as tools an LLM assistant can call. Or turn it into config for other tools, like [CrewAI](https://docs.crewai.com/), with the built-in [generators](#generators). See the [CLI reference](#cli-reference) for every command and flag.
+Render [diagrams](#diagrams) from the spec — team-interaction organigrams, DDD context maps, and role hierarchies — as Mermaid or DOT. Query it live through a read-only [REST API](#rest-api) with interactive Swagger docs, or an [MCP server](#mcp-tools) that exposes the same data as tools an LLM assistant can call. [Chat](#chat) with a team or a specific team member instead of querying it directly. Or turn it into config for other tools, like [CrewAI](https://docs.crewai.com/), with the built-in [generators](#generators). See the [CLI reference](#cli-reference) for every command and flag.
 
 <a id="diagrams"></a>
 
@@ -242,6 +243,28 @@ Prefer just asking? `teamapi serve-mcp examples/acme-org` starts an MCP server y
 }
 ```
 
+<a id="chat"></a>
+
+## 💬 Chat
+
+Want to talk to a team instead of querying it? `teamapi chat examples/acme-org --team stream-checkout` starts an interactive session where the assistant speaks as that team — or, with `--member <id>`, as one specific person on it. It's backed by a live tool-use loop over the same org-graph operations the MCP server exposes, so it can accurately answer questions about any team, not just its own. Requires `ANTHROPIC_API_KEY` in your environment.
+
+```bash
+export ANTHROPIC_API_KEY=sk-ant-...
+teamapi chat examples/acme-org --team stream-checkout --member diego-alves
+```
+
+**Example:**
+
+```
+Chatting as Diego Alves (model: claude-opus-4-8). Type 'exit' or Ctrl+D to quit.
+
+You> is payments overloaded right now?
+Diego Alves> Checked Platform Payments' latest self-assessment — they're running "elevated,"
+not overloaded. PCI compliance scope is adding real intrinsic load, and their onboarding docs
+could use work, but nothing critical right now.
+```
+
 <a id="generators"></a>
 
 ## ⚙️ Generators
@@ -318,5 +341,6 @@ After `pnpm build` (see [Quick start](#quick-start)) `teamapi` is on your PATH �
 | `teamapi generate crewai <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
+| `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |
 
 `<patterns...>` accepts file paths, globs, or a directory (auto-discovers every `teamapi.yml`/`.yaml` under it).

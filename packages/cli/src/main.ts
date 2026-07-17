@@ -6,6 +6,7 @@ import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
 import { runServeApi } from "./commands/serve-api";
 import { runServeMcp } from "./commands/serve-mcp";
+import { runChat } from "./commands/chat";
 
 const program = new Command();
 program.name("teamapi").description("Team API as Code toolchain CLI").version("0.1.0");
@@ -77,6 +78,17 @@ program
   .description("Start the MCP server (stdio transport) over the resolved org graph")
   .action(async (patterns: string[]) => {
     await runServeMcp(patterns);
+  });
+
+program
+  .command("chat")
+  .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+  .description("Chat as a team or a team member, backed by a live tool-use loop over the org graph (requires ANTHROPIC_API_KEY)")
+  .requiredOption("--team <id>", "team id to chat as")
+  .option("--member <id>", "chat as a specific member on that team instead of the team as a whole")
+  .option("--model <id>", "Anthropic model id", "claude-opus-4-8")
+  .action(async (patterns: string[], opts: { team: string; member?: string; model: string }) => {
+    process.exitCode = await runChat(patterns, { team: opts.team, member: opts.member, model: opts.model });
   });
 
 program.parseAsync(process.argv).catch((err) => {

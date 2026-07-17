@@ -1,0 +1,24 @@
+{
+  "name": "@teamapi/chat",
+  "version": "0.1.0",
+  "description": "Chat as a team or a member, backed by an Anthropic tool-use loop over the resolved org graph",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run",
+    "typecheck": "tsc -b --noEmit false"
+  },
+  "dependencies": {
+    "@teamapi/core": "workspace:*",
+    "@teamapi/schema": "workspace:*",
+    "@anthropic-ai/sdk": "^0.112.3",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

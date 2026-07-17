@@ -9,6 +9,7 @@
     { "path": "../schema" },
     { "path": "../core" },
     { "path": "../rest-api" },
-    { "path": "../mcp-server" }
+    { "path": "../mcp-server" },
+    { "path": "../chat" }
   ]
 }

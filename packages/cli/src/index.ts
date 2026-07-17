@@ -4,4 +4,5 @@ export { runScaffold, type ScaffoldOptions } from "./commands/scaffold";
 export { runGenerate, type GenerateOptions } from "./commands/generate";
 export { runServeApi, type ServeApiOptions } from "./commands/serve-api";
 export { runServeMcp } from "./commands/serve-mcp";
+export { runChat, type ChatOptions } from "./commands/chat";
 export { expandSeeds } from "./seeds";
