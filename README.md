@@ -247,7 +247,7 @@ Prefer just asking? `teamapi serve-mcp examples/acme-org` starts an MCP server y
 
 ## 💬 Chat
 
-Want to talk to a team instead of querying it? `teamapi chat examples/acme-org --team stream-checkout` starts an interactive session where the assistant speaks as that team — or, with `--member <id>`, as one specific person on it. It's backed by a live tool-use loop over the same org-graph operations the MCP server exposes, so it can accurately answer questions about any team, not just its own. Requires `ANTHROPIC_API_KEY` in your environment.
+Want to talk to a team instead of querying it? `teamapi chat examples/acme-org --team stream-checkout` starts an interactive session where the assistant speaks as that team — or, with `--member <id>`, as one specific person on it. It's backed by a live tool-use loop over the same org-graph operations the MCP server exposes, so it can accurately answer questions about any team, not just its own. Requires `ANTHROPIC_API_KEY` in your environment. Add `--debug` to see the persona's system prompt and every tool call as it happens.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -341,6 +341,6 @@ After `pnpm build` (see [Quick start](#quick-start)) `teamapi` is on your PATH �
 | `teamapi generate crewai <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
-| `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |
+| `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |
 
 `<patterns...>` accepts file paths, globs, or a directory (auto-discovers every `teamapi.yml`/`.yaml` under it).
