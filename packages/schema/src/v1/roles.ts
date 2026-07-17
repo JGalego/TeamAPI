@@ -10,6 +10,31 @@ export const RoleRefSchema = RefSchema.extend({
 });
 export type RoleRef = z.infer<typeof RoleRefSchema>;
 
+/** A responsibility can be a plain string, or — when a consumer like the CrewAI generator needs
+ * to know what "done" looks like — an object pairing the responsibility with an optional
+ * `doneWhen`. Both forms are valid; `doneWhen` is never required, since most consumers (diagrams,
+ * REST API, MCP tools) have no use for it. */
+export const ResponsibilitySchema = z.union([
+  z.string().min(1),
+  z
+    .object({
+      text: z.string().min(1),
+      doneWhen: z.string().min(1).optional(),
+    })
+    .passthrough(),
+]);
+export type Responsibility = z.infer<typeof ResponsibilitySchema>;
+
+/** Reads a `Responsibility`'s text regardless of which of its two forms was used. */
+export function responsibilityText(responsibility: Responsibility): string {
+  return typeof responsibility === "string" ? responsibility : responsibility.text;
+}
+
+/** Reads a `Responsibility`'s `doneWhen`, if any was declared. */
+export function responsibilityDoneWhen(responsibility: Responsibility): string | undefined {
+  return typeof responsibility === "string" ? undefined : responsibility.doneWhen;
+}
+
 /**
  * A role is a position/function within the team (e.g. "Payments Tech Lead"), independent of who
  * (if anyone) currently fills it. Keeping roles and people separate lets a role stay vacant, be
@@ -20,7 +45,7 @@ export const RoleSchema = z
     id: SlugSchema,
     name: z.string().min(1),
     kind: RoleKindSchema,
-    responsibilities: z.array(z.string().min(1)).default([]),
+    responsibilities: z.array(ResponsibilitySchema).default([]),
     reportsTo: SlugSchema.optional(),
     /** Formal reporting line to a role on another team, e.g. a tech lead reporting to a
      * cross-team engineering manager. Mutually exclusive with `reportsTo` in practice, since a

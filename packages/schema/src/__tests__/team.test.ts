@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { TeamApiDocumentSchema } from "../v1/team";
+import { responsibilityDoneWhen, responsibilityText } from "../v1/roles";
 import { getTeamApiJsonSchema } from "../json-schema";
 
 const minimalValid = {
@@ -39,7 +40,12 @@ describe("TeamApiDocumentSchema", () => {
         },
       ],
       roles: [
-        { id: "tech-lead", name: "Tech Lead", kind: "TechLead", responsibilities: ["Architecture"] },
+        {
+          id: "tech-lead",
+          name: "Tech Lead",
+          kind: "TechLead",
+          responsibilities: ["Architecture", { text: "On-call", doneWhen: "A runbook exists." }],
+        },
         { id: "engineer", name: "Engineer", kind: "Engineer", reportsTo: "tech-lead" },
         {
           id: "product-owner",
@@ -95,6 +101,7 @@ describe("TeamApiDocumentSchema", () => {
     ]);
     expect(parsed.roles[0]?.alignsWith).toEqual([]);
     expect(parsed.interactions[0]?.contextMappingPattern).toBe("CustomerSupplier");
+    expect(parsed.roles[0]?.responsibilities).toEqual(["Architecture", { text: "On-call", doneWhen: "A runbook exists." }]);
   });
 
   it("rejects an invalid team type", () => {
@@ -111,6 +118,20 @@ describe("TeamApiDocumentSchema", () => {
     const withExtension = { ...minimalValid, "x-internal-notes": "some note" };
     const parsed = TeamApiDocumentSchema.parse(withExtension);
     expect((parsed as Record<string, unknown>)["x-internal-notes"]).toBe("some note");
+  });
+});
+
+describe("Responsibility", () => {
+  it("reads text/doneWhen off either the string or object form", () => {
+    expect(responsibilityText("Architecture")).toBe("Architecture");
+    expect(responsibilityDoneWhen("Architecture")).toBeUndefined();
+
+    const withDoneWhen = { text: "On-call", doneWhen: "A runbook exists." };
+    expect(responsibilityText(withDoneWhen)).toBe("On-call");
+    expect(responsibilityDoneWhen(withDoneWhen)).toBe("A runbook exists.");
+
+    const withoutDoneWhen = { text: "On-call" };
+    expect(responsibilityDoneWhen(withoutDoneWhen)).toBeUndefined();
   });
 });
 

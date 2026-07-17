@@ -14,10 +14,10 @@
     "typecheck": "turbo run typecheck",
     "clean": "turbo run clean",
     "teamapi": "node packages/cli/dist/main.js",
-    "example:validate": "pnpm teamapi validate 'examples/acme-org/**/teamapi.yml'",
-    "example:render": "pnpm teamapi render 'examples/acme-org/**/teamapi.yml' --scope topology",
-    "example:serve-api": "pnpm teamapi serve-api 'examples/acme-org/**/teamapi.yml' --port 3000",
-    "example:serve-mcp": "pnpm teamapi serve-mcp 'examples/acme-org/**/teamapi.yml'"
+    "example:validate": "pnpm teamapi validate examples/acme-org",
+    "example:render": "pnpm teamapi render examples/acme-org --scope topology",
+    "example:serve-api": "pnpm teamapi serve-api examples/acme-org --port 3000",
+    "example:serve-mcp": "pnpm teamapi serve-mcp examples/acme-org"
   },
   "devDependencies": {
     "turbo": "^2.1.3",

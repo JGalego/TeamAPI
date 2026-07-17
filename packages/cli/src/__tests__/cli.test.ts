@@ -7,8 +7,10 @@ import { TeamApiDocumentSchema } from "@teamapi/schema";
 import { runValidate } from "../commands/validate";
 import { runRender } from "../commands/render";
 import { runScaffold } from "../commands/scaffold";
+import { runGenerate } from "../commands/generate";
 
-const ACME_GLOB = path.resolve(__dirname, "../../../../examples/acme-org/**/teamapi.yml");
+const ACME_ROOT = path.resolve(__dirname, "../../../../examples/acme-org");
+const ACME_GLOB = path.join(ACME_ROOT, "**/teamapi.yml");
 
 let tmpDir: string;
 
@@ -23,6 +25,11 @@ afterEach(async () => {
 describe("teamapi validate", () => {
   it("exits 0 for the example org", async () => {
     const code = await runValidate([ACME_GLOB]);
+    expect(code).toBe(0);
+  });
+
+  it("exits 0 when pointed at the example org folder directly (no glob needed)", async () => {
+    const code = await runValidate([ACME_ROOT]);
     expect(code).toBe(0);
   });
 
@@ -53,6 +60,38 @@ describe("teamapi render", () => {
     const content = await fs.readFile(outFile, "utf-8");
     expect(content).toContain("subgraph");
     expect(content).toContain("aligns with");
+  });
+});
+
+describe("teamapi generate", () => {
+  it("writes one crew's agents/tasks YAML when scoped with --team", async () => {
+    const outDir = path.join(tmpDir, "crewai-checkout");
+    const code = await runGenerate([ACME_GLOB], { target: "crewai", team: "stream-checkout", out: outDir });
+    expect(code).toBe(0);
+
+    const agents = YAML.load(await fs.readFile(path.join(outDir, "agents.yaml"), "utf-8"));
+    expect(agents).toHaveProperty("tech_lead.role", "Checkout Tech Lead");
+    await expect(fs.access(path.join(outDir, "org.yaml"))).rejects.toThrow();
+  });
+
+  it("writes org.yaml plus a per-team crew directory for the whole org", async () => {
+    const outDir = path.join(tmpDir, "crewai-org");
+    const code = await runGenerate([ACME_GLOB], { target: "crewai", out: outDir });
+    expect(code).toBe(0);
+
+    const org = YAML.load(await fs.readFile(path.join(outDir, "org.yaml"), "utf-8"));
+    expect(org).toHaveProperty("crews.platform-payments.process", "hierarchical");
+
+    const checkoutAgents = YAML.load(
+      await fs.readFile(path.join(outDir, "stream-checkout", "agents.yaml"), "utf-8"),
+    );
+    expect(checkoutAgents).toHaveProperty("backend_engineer.role", "Checkout Backend Engineer");
+  });
+
+  it("fails for an unknown --team id", async () => {
+    const outDir = path.join(tmpDir, "crewai-bad-team");
+    const code = await runGenerate([ACME_GLOB], { target: "crewai", team: "does-not-exist", out: outDir });
+    expect(code).toBe(1);
   });
 });
 

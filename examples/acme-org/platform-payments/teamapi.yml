@@ -59,7 +59,8 @@ roles:
     kind: TechLead
     responsibilities:
       - Payments platform architecture
-      - On-call escalation point
+      - text: On-call escalation point
+        doneWhen: A runbook exists and the on-call rotation is staffed for the current quarter.
     reportsTo: head-of-engineering
   - id: payments-engineer
     name: Payments API Engineer

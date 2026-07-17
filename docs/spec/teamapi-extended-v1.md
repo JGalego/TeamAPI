@@ -66,10 +66,26 @@ Tech Lead") and a **member** (a specific person) are different things worth keep
 | `id` | slug | Yes | Unique within this team's `roles[]`. |
 | `name` | string | Yes | The role's title, e.g. `"Payments Tech Lead"` — **not** a person's name. |
 | `kind` | string | Yes | A broad category for filtering/analytics, e.g. `TechLead`, `Engineer`, `Designer`, `SRE` (suggested values in `SUGGESTED_ROLE_KINDS`, not enforced). |
-| `responsibilities` | string[] | No | What this role owns. |
+| `responsibilities` | [Responsibility](#responsibility)[] | No | What this role owns. |
 | `reportsTo` | slug | No | Another role's `id` within the same team. |
 | `reportsToRef` | [RoleRef](#roleref) | No | Formal reporting line to a role on another team. Mutually exclusive with `reportsTo` in practice. |
 | `alignsWith` | [RoleRef](#roleref)[] | No | Dotted-line/matrix relationships that aren't formal reporting, e.g. a community-of-practice lead this role coordinates with. Same-team or cross-team. |
+
+### Responsibility
+
+A plain string, or an object pairing the responsibility with an optional `doneWhen` — a definition of done, for consumers that need one (e.g. `teamapi generate crewai`, where it becomes a task's `expected_output`). Most consumers (diagrams, REST API, MCP tools) have no use for `doneWhen`, so it's never required — plain strings remain valid everywhere.
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `text` | string | Yes | The responsibility itself, same content as the plain-string form. |
+| `doneWhen` | string | No | What "done" looks like for this responsibility. |
+
+```yaml
+responsibilities:
+  - Payments platform architecture           # plain string — no doneWhen
+  - text: On-call escalation point
+    doneWhen: A runbook exists and the on-call rotation is staffed for the current quarter.
+```
 
 ### RoleRef
 
