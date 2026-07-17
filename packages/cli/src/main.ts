@@ -87,8 +87,14 @@ program
   .requiredOption("--team <id>", "team id to chat as")
   .option("--member <id>", "chat as a specific member on that team instead of the team as a whole")
   .option("--model <id>", "Anthropic model id", "claude-opus-4-8")
-  .action(async (patterns: string[], opts: { team: string; member?: string; model: string }) => {
-    process.exitCode = await runChat(patterns, { team: opts.team, member: opts.member, model: opts.model });
+  .option("--debug", "print the persona's system prompt and every tool call")
+  .action(async (patterns: string[], opts: { team: string; member?: string; model: string; debug?: boolean }) => {
+    process.exitCode = await runChat(patterns, {
+      team: opts.team,
+      member: opts.member,
+      model: opts.model,
+      debug: opts.debug,
+    });
   });
 
 program.parseAsync(process.argv).catch((err) => {

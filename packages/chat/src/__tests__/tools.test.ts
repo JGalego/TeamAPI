@@ -48,4 +48,18 @@ describe("buildChatTools — examples/acme-org", () => {
     const result = await getTeam.run({ teamId: "does-not-exist" });
     expect(result).toContain("Error");
   });
+
+  it("invokes onToolCall with the tool name, input, and output — for --debug", async () => {
+    const graph = await buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
+    const calls: Array<{ name: string; input: unknown; output: string }> = [];
+    const tools = buildChatTools(graph, { onToolCall: (call) => calls.push(call) }) as any[];
+    const getTeam = tools.find((t) => t.name === "get_team");
+
+    await getTeam.run({ teamId: "stream-checkout" });
+
+    expect(calls).toHaveLength(1);
+    const [call] = calls;
+    expect(call).toMatchObject({ name: "get_team", input: { teamId: "stream-checkout" } });
+    expect(call!.output).toContain("stream-checkout");
+  });
 });
