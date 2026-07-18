@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi-core",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Team API as Code resolution, graph building, cognitive load, context mapping, and diagram generation",
   "license": "MIT",
   "homepage": "https://github.com/JGalego/TeamAPI#readme",
@@ -9,10 +9,14 @@
     "url": "https://github.com/JGalego/TeamAPI.git",
     "directory": "packages/core"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b",
     "clean": "rm -rf dist *.tsbuildinfo",

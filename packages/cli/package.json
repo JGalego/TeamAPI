@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, serve-api, serve-mcp, chat",
   "license": "MIT",
   "homepage": "https://github.com/JGalego/TeamAPI#readme",
@@ -9,13 +9,17 @@
     "url": "https://github.com/JGalego/TeamAPI.git",
     "directory": "packages/cli"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "bin": {
     "teamapi": "dist/main.js"
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -b && chmod +x dist/main.js",
     "postbuild": "[ \"$CI\" = \"true\" ] || npm link",
