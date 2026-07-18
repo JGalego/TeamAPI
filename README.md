@@ -79,10 +79,8 @@ flowchart LR
   platform_payments["Platform Payments"]
   stream_checkout["Stream Checkout"]
   stream_onboarding["Stream Onboarding"]
-  stream_checkout -.->|"platform"| platform_payments
-  stream_checkout -->|"x-as-a-service"| platform_payments
-  stream_checkout -->|"collaboration"| stream_onboarding
-  stream_checkout -.->|"depends (Slowing)"| stream_onboarding
+  stream_checkout -->|"platform / x-as-a-service"| platform_payments
+  stream_checkout -->|"collaboration / depends (Slowing)"| stream_onboarding
   stream_onboarding -.->|"facilitating"| enabling_devex
   stream_onboarding -.->|"depends (OK)"| platform_payments
   classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;
