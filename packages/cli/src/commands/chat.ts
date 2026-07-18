@@ -23,27 +23,39 @@ const magenta = paint("35");
 const gray = paint("90");
 const red = paint("31");
 
-const TOOL_OUTPUT_PREVIEW_LENGTH = 300;
+const TOOL_OUTPUT_PREVIEW_LENGTH = 3000;
+const TOOL_OUTPUT_INDENT = "       "; // aligns continuation lines under "→ "
 
-/** Collapses a tool's output to one line for the `--debug` preview — re-compacts pretty-printed
- * JSON (dropping its indentation) and flattens anything else (e.g. a rendered diagram) by
- * folding whitespace, so a single tool call is always a single line of debug output. */
-function compactPreview(output: string): string {
-  let compact: string;
+/** Re-indents a JSON tool output as pretty-printed JSON (dropping any indentation the tool
+ * itself already applied and re-formatting from scratch, so nesting never stacks); anything
+ * that isn't JSON (e.g. a rendered diagram) is left as-is. */
+function prettyToolOutput(output: string): string {
   try {
-    compact = JSON.stringify(JSON.parse(output));
+    return JSON.stringify(JSON.parse(output), null, 2);
   } catch {
-    compact = output.replace(/\s+/g, " ").trim();
+    return output;
   }
-  return compact.length > TOOL_OUTPUT_PREVIEW_LENGTH
-    ? `${compact.slice(0, TOOL_OUTPUT_PREVIEW_LENGTH)}… (${compact.length} chars total)`
-    : compact;
+}
+
+function indentContinuationLines(text: string, indent: string): string {
+  return text
+    .split("\n")
+    .map((line, i) => (i === 0 ? line : indent + line))
+    .join("\n");
 }
 
 function printToolCall(call: ChatToolCall): void {
   const inputText = JSON.stringify(call.input);
+  const pretty = prettyToolOutput(call.output);
+  const truncated = pretty.length > TOOL_OUTPUT_PREVIEW_LENGTH;
+  const shown = truncated ? pretty.slice(0, TOOL_OUTPUT_PREVIEW_LENGTH) : pretty;
+
+  console.log();
   console.log(gray(`  ⚙  ${call.name}(${inputText})`));
-  console.log(gray(`     → ${compactPreview(call.output)}`));
+  console.log(gray(`     → ${indentContinuationLines(shown, TOOL_OUTPUT_INDENT)}`));
+  if (truncated) {
+    console.log(gray(`${TOOL_OUTPUT_INDENT}… (${pretty.length} chars total)`));
+  }
 }
 
 /** Interactive chat as a team or a team member, backed by a live Anthropic tool-use loop over
