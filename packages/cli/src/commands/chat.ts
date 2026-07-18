@@ -25,14 +25,25 @@ const red = paint("31");
 
 const TOOL_OUTPUT_PREVIEW_LENGTH = 300;
 
+/** Collapses a tool's output to one line for the `--debug` preview — re-compacts pretty-printed
+ * JSON (dropping its indentation) and flattens anything else (e.g. a rendered diagram) by
+ * folding whitespace, so a single tool call is always a single line of debug output. */
+function compactPreview(output: string): string {
+  let compact: string;
+  try {
+    compact = JSON.stringify(JSON.parse(output));
+  } catch {
+    compact = output.replace(/\s+/g, " ").trim();
+  }
+  return compact.length > TOOL_OUTPUT_PREVIEW_LENGTH
+    ? `${compact.slice(0, TOOL_OUTPUT_PREVIEW_LENGTH)}… (${compact.length} chars total)`
+    : compact;
+}
+
 function printToolCall(call: ChatToolCall): void {
   const inputText = JSON.stringify(call.input);
-  const outputText =
-    call.output.length > TOOL_OUTPUT_PREVIEW_LENGTH
-      ? `${call.output.slice(0, TOOL_OUTPUT_PREVIEW_LENGTH)}… (${call.output.length} chars total)`
-      : call.output;
-  console.log(gray(`  ⚙ ${call.name}(${inputText})`));
-  console.log(gray(`    → ${outputText.replace(/\n/g, "\n      ")}`));
+  console.log(gray(`  ⚙  ${call.name}(${inputText})`));
+  console.log(gray(`     → ${compactPreview(call.output)}`));
 }
 
 /** Interactive chat as a team or a team member, backed by a live Anthropic tool-use loop over
