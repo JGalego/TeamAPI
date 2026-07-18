@@ -21,7 +21,7 @@ import {
   toTeamDetailDto,
   toTeamSummaryDto,
   type OrgGraphStore,
-} from "@teamapi/core";
+} from "@jgalego/teamapi-core";
 import { errorResult, jsonResult, textResult } from "./result";
 import { looseRegisterTool } from "./loose-register";
 

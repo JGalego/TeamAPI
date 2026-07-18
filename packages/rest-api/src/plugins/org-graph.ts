@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { OrgGraphStore } from "@teamapi/core";
+import type { OrgGraphStore } from "@jgalego/teamapi-core";
 
 declare module "fastify" {
   interface FastifyInstance {

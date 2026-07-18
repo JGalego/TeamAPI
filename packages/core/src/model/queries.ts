@@ -1,4 +1,4 @@
-import type { Member, Service, Role } from "@teamapi/schema";
+import type { Member, Service, Role } from "@jgalego/teamapi-schema";
 import type { GraphEdge, OrgGraph, ResolvedTeam, TeamId } from "./org-graph";
 
 export interface ListTeamsFilter {

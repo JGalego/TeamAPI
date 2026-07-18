@@ -1,4 +1,4 @@
-import type { ContextMappingPattern, InteractionMode } from "@teamapi/schema";
+import type { ContextMappingPattern, InteractionMode } from "@jgalego/teamapi-schema";
 import type { GraphEdge, OrgGraph, TeamId } from "../model/org-graph";
 import { MODE_TO_PATTERN_HEURISTIC } from "./patterns";
 

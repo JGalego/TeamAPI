@@ -3,7 +3,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as YAML from "js-yaml";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { TeamApiDocumentSchema } from "@teamapi/schema";
+import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { runValidate } from "../commands/validate";
 import { runRender } from "../commands/render";
 import { runScaffold } from "../commands/scaffold";

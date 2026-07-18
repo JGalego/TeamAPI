@@ -1,4 +1,4 @@
-import { getTeam, listRoles, type OrgGraph, type TeamId } from "@teamapi/core";
+import { getTeam, listRoles, type OrgGraph, type TeamId } from "@jgalego/teamapi-core";
 
 export interface ChatPersonaTarget {
   teamId: TeamId;

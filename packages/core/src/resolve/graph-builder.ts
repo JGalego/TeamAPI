@@ -1,4 +1,4 @@
-import { TeamApiDocumentSchema } from "@teamapi/schema";
+import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { formatZodError } from "../validate/format-errors";
 import { LoaderRegistry } from "./loaders";
 import type { GraphEdge, OrgGraph, ResolvedTeam, RoleGraphEdge, UnresolvedRef } from "../model/org-graph";

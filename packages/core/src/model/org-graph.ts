@@ -1,4 +1,4 @@
-import type { ContextMappingPattern, DependencyType, InteractionMode, TeamApiDocument } from "@teamapi/schema";
+import type { ContextMappingPattern, DependencyType, InteractionMode, TeamApiDocument } from "@jgalego/teamapi-schema";
 
 export type TeamId = string;
 

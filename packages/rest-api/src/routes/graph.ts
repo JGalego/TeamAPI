@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { toTeamDetailDto } from "@teamapi/core";
+import { toTeamDetailDto } from "@jgalego/teamapi-core";
 
 export async function graphRoutes(app: FastifyInstance): Promise<void> {
   app.get(

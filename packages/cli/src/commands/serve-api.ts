@@ -1,5 +1,5 @@
-import { OrgGraphStore } from "@teamapi/core";
-import { buildServer } from "@teamapi/rest-api";
+import { OrgGraphStore } from "@jgalego/teamapi-core";
+import { buildServer } from "@jgalego/teamapi-rest-api";
 import { expandSeeds } from "../seeds";
 
 export interface ServeApiOptions {

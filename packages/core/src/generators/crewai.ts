@@ -1,5 +1,5 @@
 import * as YAML from "js-yaml";
-import { responsibilityDoneWhen, responsibilityText, type Responsibility } from "@teamapi/schema";
+import { responsibilityDoneWhen, responsibilityText, type Responsibility } from "@jgalego/teamapi-schema";
 import type { OrgGraph, GraphEdge, TeamId } from "../model/org-graph";
 
 export interface CrewAiAgentConfig {

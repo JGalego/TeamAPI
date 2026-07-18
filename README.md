@@ -30,9 +30,16 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
 
 ## 🚀 Quick start
 
-Install dependencies and build every package
+Install the CLI from npm:
 
 ```bash
+npm install -g @jgalego/teamapi
+```
+
+Want to try it against a sample org first, or contribute? Clone and build from source instead:
+
+```bash
+git clone https://github.com/JGalego/TeamAPI.git && cd TeamAPI
 pnpm install
 pnpm build
 ```
@@ -387,7 +394,7 @@ For a crew `org.yaml` marks `sequential` (most of them), skip `process`/`manager
 
 ## 💻 CLI reference
 
-After `pnpm build` (see [Quick start](#quick-start)) `teamapi` is on your PATH — run commands directly as `teamapi <command> ...` from anywhere. If you built with `CI=true` (linking is skipped there), use `pnpm teamapi <command> ...` from the repo root instead.
+After `npm install -g @jgalego/teamapi` (or `pnpm build` from a source checkout — see [Quick start](#quick-start)) `teamapi` is on your PATH — run commands directly as `teamapi <command> ...` from anywhere. If you built from source with `CI=true` (linking is skipped there), use `pnpm teamapi <command> ...` from the repo root instead.
 
 | Command | Purpose |
 |---|---|

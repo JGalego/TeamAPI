@@ -1,7 +1,15 @@
 {
-  "name": "@teamapi/cli",
+  "name": "@jgalego/teamapi",
   "version": "0.1.0",
-  "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, serve-api, serve-mcp",
+  "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, serve-api, serve-mcp, chat",
+  "license": "MIT",
+  "homepage": "https://github.com/JGalego/TeamAPI#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JGalego/TeamAPI.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": { "access": "public" },
   "bin": {
     "teamapi": "dist/main.js"
   },
@@ -16,11 +24,11 @@
     "typecheck": "tsc -b --noEmit false"
   },
   "dependencies": {
-    "@teamapi/core": "workspace:*",
-    "@teamapi/schema": "workspace:*",
-    "@teamapi/rest-api": "workspace:*",
-    "@teamapi/mcp-server": "workspace:*",
-    "@teamapi/chat": "workspace:*",
+    "@jgalego/teamapi-core": "workspace:*",
+    "@jgalego/teamapi-schema": "workspace:*",
+    "@jgalego/teamapi-rest-api": "workspace:*",
+    "@jgalego/teamapi-mcp-server": "workspace:*",
+    "@jgalego/teamapi-chat": "workspace:*",
     "@anthropic-ai/sdk": "^0.112.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^12.1.0",

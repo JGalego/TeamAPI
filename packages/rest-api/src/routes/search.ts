@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { searchOrg } from "@teamapi/core";
+import { searchOrg } from "@jgalego/teamapi-core";
 
 export async function searchRoutes(app: FastifyInstance): Promise<void> {
   app.get<{ Querystring: { q?: string } }>(

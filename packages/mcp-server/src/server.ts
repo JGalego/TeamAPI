@@ -1,5 +1,5 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import type { OrgGraphStore } from "@teamapi/core";
+import type { OrgGraphStore } from "@jgalego/teamapi-core";
 import { registerTools } from "./tools/register";
 
 export function createMcpServer(store: OrgGraphStore): McpServer {

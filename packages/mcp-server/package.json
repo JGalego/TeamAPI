@@ -1,7 +1,15 @@
 {
-  "name": "@teamapi/mcp-server",
+  "name": "@jgalego/teamapi-mcp-server",
   "version": "0.1.0",
   "description": "MCP server exposing a resolved Team API org graph as tools for LLM assistants",
+  "license": "MIT",
+  "homepage": "https://github.com/JGalego/TeamAPI#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JGalego/TeamAPI.git",
+    "directory": "packages/mcp-server"
+  },
+  "publishConfig": { "access": "public" },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist"],
@@ -12,8 +20,8 @@
     "typecheck": "tsc -b --noEmit false"
   },
   "dependencies": {
-    "@teamapi/core": "workspace:*",
-    "@teamapi/schema": "workspace:*",
+    "@jgalego/teamapi-core": "workspace:*",
+    "@jgalego/teamapi-schema": "workspace:*",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^3.23.8"
   },

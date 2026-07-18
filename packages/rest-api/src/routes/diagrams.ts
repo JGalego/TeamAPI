@@ -6,7 +6,7 @@ import {
   toDot,
   toMermaid,
   type DiagramModel,
-} from "@teamapi/core";
+} from "@jgalego/teamapi-core";
 
 type Format = "mermaid" | "dot";
 

@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { OrgGraphStore } from "@teamapi/core";
+import { OrgGraphStore } from "@jgalego/teamapi-core";
 import type { FastifyInstance } from "fastify";
 import { buildServer } from "../server";
 

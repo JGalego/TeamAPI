@@ -1,7 +1,7 @@
 import * as readline from "node:readline/promises";
 import Anthropic from "@anthropic-ai/sdk";
-import { buildOrgGraph } from "@teamapi/core";
-import { buildChatPersona, buildChatTools, DEFAULT_CHAT_MODEL, type ChatToolCall } from "@teamapi/chat";
+import { buildOrgGraph } from "@jgalego/teamapi-core";
+import { buildChatPersona, buildChatTools, DEFAULT_CHAT_MODEL, type ChatToolCall } from "@jgalego/teamapi-chat";
 import { expandSeeds } from "../seeds";
 
 export interface ChatOptions {

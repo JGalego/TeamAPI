@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { buildContextMapDiagram, deriveContextMap, toDot, toMermaid } from "@teamapi/core";
+import { buildContextMapDiagram, deriveContextMap, toDot, toMermaid } from "@jgalego/teamapi-core";
 
 type Format = "json" | "mermaid" | "dot";
 

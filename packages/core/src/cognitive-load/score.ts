@@ -1,4 +1,4 @@
-import type { CognitiveLoadAssessment } from "@teamapi/schema";
+import type { CognitiveLoadAssessment } from "@jgalego/teamapi-schema";
 import type { OrgGraph, TeamId } from "../model/org-graph";
 
 export type CognitiveLoadLabel = "sustainable" | "elevated" | "overloaded";

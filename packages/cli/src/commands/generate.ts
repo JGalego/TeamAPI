@@ -6,7 +6,7 @@ import {
   buildOrgGraph,
   toCrewAiCrewYaml,
   toCrewAiOrgYaml,
-} from "@teamapi/core";
+} from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 
 export interface GenerateOptions {

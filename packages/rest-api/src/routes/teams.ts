@@ -8,7 +8,7 @@ import {
   listTeams,
   toTeamDetailDto,
   toTeamSummaryDto,
-} from "@teamapi/core";
+} from "@jgalego/teamapi-core";
 
 interface ListTeamsQuery {
   type?: string;

@@ -1,4 +1,4 @@
-import type { Channel, Meeting, Member, Role, Service } from "@teamapi/schema";
+import type { Channel, Meeting, Member, Role, Service } from "@jgalego/teamapi-schema";
 import { scoreCognitiveLoad, type CognitiveLoadLabel } from "../cognitive-load/score";
 import type { OrgGraph, ResolvedTeam, TeamId } from "../model/org-graph";
 

@@ -1,7 +1,15 @@
 {
-  "name": "@teamapi/rest-api",
+  "name": "@jgalego/teamapi-rest-api",
   "version": "0.1.0",
   "description": "Read-only REST API over a resolved Team API org graph",
+  "license": "MIT",
+  "homepage": "https://github.com/JGalego/TeamAPI#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JGalego/TeamAPI.git",
+    "directory": "packages/rest-api"
+  },
+  "publishConfig": { "access": "public" },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": ["dist"],
@@ -12,8 +20,8 @@
     "typecheck": "tsc -b --noEmit false"
   },
   "dependencies": {
-    "@teamapi/core": "workspace:*",
-    "@teamapi/schema": "workspace:*",
+    "@jgalego/teamapi-core": "workspace:*",
+    "@jgalego/teamapi-schema": "workspace:*",
     "fastify": "^5.1.0",
     "@fastify/swagger": "^9.8.1",
     "@fastify/swagger-ui": "^6.1.0"

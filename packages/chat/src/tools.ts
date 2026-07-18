@@ -22,7 +22,7 @@ import {
   toTeamSummaryDto,
   type DiagramModel,
   type OrgGraph,
-} from "@teamapi/core";
+} from "@jgalego/teamapi-core";
 
 const TeamTypeSchema = z.enum(["stream-aligned", "platform", "complicated-subsystem", "enabling"]);
 const DirectionSchema = z.enum(["in", "out", "both"]);
@@ -45,8 +45,8 @@ export interface ChatToolsOptions {
 }
 
 /**
- * Builds the same ~12 org-graph operations `@teamapi/mcp-server` exposes over MCP, as Anthropic
- * tool-use tools instead — same underlying `@teamapi/core` query functions, different protocol
+ * Builds the same ~12 org-graph operations `@jgalego/teamapi-mcp-server` exposes over MCP, as Anthropic
+ * tool-use tools instead — same underlying `@jgalego/teamapi-core` query functions, different protocol
  * adapter. Each tool closes over a single resolved `graph`: chat sessions are one-shot, unlike the
  * long-running REST/MCP servers, so there's no need for `OrgGraphStore`'s reload.
  */

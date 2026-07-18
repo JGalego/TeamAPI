@@ -9,7 +9,7 @@ import {
   toDot,
   toMermaid,
   type DiagramModel,
-} from "@teamapi/core";
+} from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 
 export interface RenderOptions {

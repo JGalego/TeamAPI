@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import { getTeam, orgWideCognitiveLoadReport, scoreCognitiveLoad } from "@teamapi/core";
+import { getTeam, orgWideCognitiveLoadReport, scoreCognitiveLoad } from "@jgalego/teamapi-core";
 
 export async function cognitiveLoadRoutes(app: FastifyInstance): Promise<void> {
   app.get(

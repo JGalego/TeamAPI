@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as YAML from "js-yaml";
-import { TeamApiDocumentSchema } from "@teamapi/schema";
+import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 
 export interface ScaffoldOptions {
   id: string;

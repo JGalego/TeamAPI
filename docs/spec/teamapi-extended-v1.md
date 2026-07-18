@@ -120,7 +120,7 @@ a 1-10 self-assessment across the three load types from _Team Topologies_.
 | `notes` | string | No |
 | `assessedOn` | string | No |
 
-`@teamapi/core`'s `scoreCognitiveLoad` derives a `sustainable | elevated | overloaded` label,
+`@jgalego/teamapi-core`'s `scoreCognitiveLoad` derives a `sustainable | elevated | overloaded` label,
 weighting `extraneous` load more heavily than the total score — Team Topologies treats extraneous
 (avoidable overhead) as the load type teams should actively minimize.
 
@@ -152,7 +152,7 @@ boundedContext:
 | `contextMappingPattern` | `Partnership \| CustomerSupplier \| Conformist \| OpenHostService \| AnticorruptionLayer \| SharedKernel` | No |
 | `$ref` | string | Yes |
 
-When `contextMappingPattern` is omitted, `@teamapi/core`'s `deriveContextMap` applies a heuristic:
+When `contextMappingPattern` is omitted, `@jgalego/teamapi-core`'s `deriveContextMap` applies a heuristic:
 
 | Mode | Inferred pattern |
 |---|---|
@@ -171,7 +171,7 @@ spec.
 
 ## Toolchain-generated artifacts
 
-Given a resolved org graph, `@teamapi/core` (consumed identically by the REST API, MCP server, and
+Given a resolved org graph, `@jgalego/teamapi-core` (consumed identically by the REST API, MCP server, and
 CLI) can produce:
 
 - **Topology organigram** — team-interaction diagram (Mermaid/DOT), org-wide or scoped to one

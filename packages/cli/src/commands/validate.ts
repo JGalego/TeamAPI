@@ -1,4 +1,4 @@
-import { buildOrgGraph } from "@teamapi/core";
+import { buildOrgGraph } from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 
 export async function runValidate(patterns: string[]): Promise<number> {

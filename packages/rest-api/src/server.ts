@@ -1,7 +1,7 @@
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
-import type { OrgGraphStore } from "@teamapi/core";
+import type { OrgGraphStore } from "@jgalego/teamapi-core";
 import { registerOrgGraphStore } from "./plugins/org-graph";
 import { teamsRoutes } from "./routes/teams";
 import { servicesRoutes } from "./routes/services";

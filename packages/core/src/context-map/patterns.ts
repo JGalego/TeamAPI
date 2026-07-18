@@ -1,4 +1,4 @@
-import type { ContextMappingPattern, InteractionMode } from "@teamapi/schema";
+import type { ContextMappingPattern, InteractionMode } from "@jgalego/teamapi-schema";
 
 /**
  * Heuristic mapping from a Team Topologies interaction mode to a suggested DDD context-mapping

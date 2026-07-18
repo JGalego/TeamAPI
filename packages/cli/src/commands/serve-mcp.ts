@@ -1,5 +1,5 @@
-import { OrgGraphStore } from "@teamapi/core";
-import { createMcpServer } from "@teamapi/mcp-server";
+import { OrgGraphStore } from "@jgalego/teamapi-core";
+import { createMcpServer } from "@jgalego/teamapi-mcp-server";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { expandSeeds } from "../seeds";
 

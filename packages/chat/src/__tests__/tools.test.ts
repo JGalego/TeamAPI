@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
-import { buildOrgGraph } from "@teamapi/core";
+import { buildOrgGraph } from "@jgalego/teamapi-core";
 import { buildChatTools } from "../tools";
 
 const ACME_ROOT = path.resolve(__dirname, "../../../../examples/acme-org");

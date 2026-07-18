@@ -1,6 +1,6 @@
 import * as path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
-import { OrgGraphStore } from "@teamapi/core";
+import { OrgGraphStore } from "@jgalego/teamapi-core";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
 import { createMcpServer } from "../server";
