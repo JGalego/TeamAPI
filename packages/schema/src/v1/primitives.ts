@@ -7,9 +7,11 @@ export const SlugSchema = z
 export type Slug = z.infer<typeof SlugSchema>;
 
 /** A reference to another team's document, or a supporting resource, by URI or relative file path. */
-export const RefSchema = z.object({
-  $ref: z.string().min(1),
-});
+export const RefSchema = z
+  .object({
+    $ref: z.string().min(1),
+  })
+  .passthrough();
 export type Ref = z.infer<typeof RefSchema>;
 
 export const TeamTypeSchema = z.enum([

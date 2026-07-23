@@ -36,6 +36,13 @@ export class HttpLoader implements DocumentLoader {
   private cache = new Map<string, Promise<LoadedDocument>>();
 
   resolveUri(baseUri: string, ref: string): string {
+    // `new URL(ref, baseUri)` always parses `baseUri` as a URL first, even when `ref` is already
+    // absolute — so a local file referencing a remote `$ref` directly (`baseUri` is a filesystem
+    // path, not a URL) would throw "Invalid URL" here despite `ref` alone being perfectly
+    // resolvable. Short-circuit when `ref` doesn't need a base at all.
+    if (isHttpUri(ref)) {
+      return new URL(ref).toString();
+    }
     return new URL(ref, baseUri).toString();
   }
 

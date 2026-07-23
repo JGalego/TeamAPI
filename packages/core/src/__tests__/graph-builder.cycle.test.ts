@@ -115,4 +115,30 @@ describe("buildOrgGraph — cycles", () => {
     const graph = await buildOrgGraph({ seedUris: [aFile], allowPartial: true });
     expect(graph.unresolved.some((u) => u.reason.includes("Duplicate team id"))).toBe(true);
   });
+
+  it("still traverses a duplicate team id's own outbound refs, so a team reachable only through it doesn't vanish", async () => {
+    const aFile = await writeTeam("team-a", {
+      interactions: [{ teamName: "team-b", mode: "collaboration", $ref: "./team-b.yml" }],
+    });
+    await writeTeam("team-b"); // the canonical team-b, no outbound refs of its own
+    await writeTeam("team-c"); // only reachable via the *duplicate* team-b below
+
+    const dupBFile = path.join(tmpDir, "dup-of-b.yml");
+    await fs.writeFile(
+      dupBFile,
+      JSON.stringify({
+        teamApiVersion: "1.0.0",
+        id: "team-b",
+        info: { name: "Duplicate of B", type: "stream-aligned" },
+        dependencies: [{ teamName: "team-c", type: "OK", $ref: "./team-c.yml" }],
+      }),
+      "utf-8",
+    );
+
+    const graph = await buildOrgGraph({ seedUris: [aFile, dupBFile], allowPartial: true });
+
+    expect(graph.unresolved.some((u) => u.reason.includes("Duplicate team id"))).toBe(true);
+    expect(graph.teams.has("team-c")).toBe(true);
+    expect(graph.edges.some((e) => e.kind === "dependency" && e.from === "team-b" && e.to === "team-c")).toBe(true);
+  });
 });

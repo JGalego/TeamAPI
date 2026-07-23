@@ -8,6 +8,7 @@ import {
   toCrewAiOrgYaml,
 } from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
+import { warnUnresolved } from "../warn-unresolved";
 
 export interface GenerateOptions {
   target: "crewai";
@@ -23,6 +24,7 @@ export async function runGenerate(patterns: string[], options: GenerateOptions):
   }
 
   const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  warnUnresolved(graph);
 
   if (options.team) {
     if (!graph.teams.has(options.team)) {

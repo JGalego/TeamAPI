@@ -27,6 +27,9 @@ export function getTeam(graph: OrgGraph, id: TeamId): ResolvedTeam | undefined {
 type InteractionEdge = Extract<GraphEdge, { kind: "interaction" }>;
 type DependencyEdge = Extract<GraphEdge, { kind: "dependency" }>;
 
+/** Interactions default to `"both"` directions: Team Topologies interactions (collaboration /
+ * x-as-a-service / facilitating) are inherently mutual relationships, so "both" is the more
+ * useful default view. Contrast with `getDependencies`, which defaults to `"out"` only. */
 export function getInteractions(
   graph: OrgGraph,
   id: TeamId,
@@ -37,6 +40,10 @@ export function getInteractions(
     .filter((e) => matchesDirection(e, id, direction));
 }
 
+/** Dependencies default to `"out"` only (what this team depends on), not `"both"`: a dependency
+ * is directional by nature (Team A depends on Team B is a different statement from the reverse),
+ * so "what do I depend on" is the more useful default view. Pass `direction: "in"` to see who
+ * depends on this team instead, or `"both"` for every dependency edge touching it. */
 export function getDependencies(
   graph: OrgGraph,
   id: TeamId,
@@ -70,9 +77,16 @@ export function listServices(graph: OrgGraph, search?: string): ServiceEntry[] {
   return results.sort((a, b) => a.service.name.localeCompare(b.service.name));
 }
 
+/**
+ * Finds the team declaring a service with this exact (case-insensitive) name. Service names are
+ * expected to be unique org-wide, but that isn't enforced by the schema — if two teams declare
+ * the same service name, the team whose id sorts first alphabetically wins, which is at least a
+ * deterministic, well-defined tie-break rather than an accident of graph traversal order.
+ */
 export function findServiceOwner(graph: OrgGraph, serviceName: string): ServiceEntry | undefined {
   const q = serviceName.toLowerCase();
-  for (const team of graph.teams.values()) {
+  const teams = [...graph.teams.values()].sort((a, b) => a.id.localeCompare(b.id));
+  for (const team of teams) {
     const service = team.doc.services.find((s) => s.name.toLowerCase() === q);
     if (service) return { teamId: team.id, service };
   }

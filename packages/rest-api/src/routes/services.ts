@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { findServiceOwner, listServices } from "@jgalego/teamapi-core";
+import { errorResponseSchema } from "../schemas/error";
 
 export async function servicesRoutes(app: FastifyInstance): Promise<void> {
   app.get<{ Querystring: { search?: string } }>(
@@ -32,6 +33,7 @@ export async function servicesRoutes(app: FastifyInstance): Promise<void> {
           properties: { name: { type: "string", description: "Exact service name, e.g. 'payments-api'" } },
           required: ["name"],
         },
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {

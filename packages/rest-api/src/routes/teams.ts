@@ -9,6 +9,8 @@ import {
   toTeamDetailDto,
   toTeamSummaryDto,
 } from "@jgalego/teamapi-core";
+import { TeamTypeSchema } from "@jgalego/teamapi-schema";
+import { errorResponseSchema } from "../schemas/error";
 
 interface ListTeamsQuery {
   type?: string;
@@ -25,12 +27,21 @@ const teamIdParam = {
   required: ["id"],
 } as const;
 
-const directionQuery = {
-  type: "object",
-  properties: {
-    direction: { type: "string", enum: ["in", "out", "both"], description: "Filter by edge direction" },
-  },
-} as const;
+/** `defaultDirection` documents the endpoint's actual runtime default in the OpenAPI schema —
+ * `/teams/:id/interactions` defaults to "both", `/teams/:id/dependencies` defaults to "out". */
+function directionQuery(defaultDirection: "in" | "out" | "both") {
+  return {
+    type: "object",
+    properties: {
+      direction: {
+        type: "string",
+        enum: ["in", "out", "both"],
+        description: "Filter by edge direction",
+        default: defaultDirection,
+      },
+    },
+  } as const;
+}
 
 export async function teamsRoutes(app: FastifyInstance): Promise<void> {
   app.get<{ Querystring: ListTeamsQuery }>(
@@ -45,7 +56,7 @@ export async function teamsRoutes(app: FastifyInstance): Promise<void> {
           properties: {
             type: {
               type: "string",
-              enum: ["stream-aligned", "platform", "complicated-subsystem", "enabling"],
+              enum: [...TeamTypeSchema.options],
               description: "Filter by Team Topologies team type",
             },
             search: { type: "string", description: "Case-insensitive substring match on name/focus" },
@@ -68,6 +79,7 @@ export async function teamsRoutes(app: FastifyInstance): Promise<void> {
         summary: "Get team detail",
         description: "Full detail for one team: info, roles, members, services, cognitive load, meetings.",
         params: teamIdParam,
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {
@@ -86,7 +98,8 @@ export async function teamsRoutes(app: FastifyInstance): Promise<void> {
         summary: "Get team interactions",
         description: "Team Topologies interactions (collaboration / x-as-a-service / facilitating).",
         params: teamIdParam,
-        querystring: directionQuery,
+        querystring: directionQuery("both"),
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {
@@ -104,7 +117,8 @@ export async function teamsRoutes(app: FastifyInstance): Promise<void> {
         summary: "Get team dependencies",
         description: "Dependencies this team has declared on other teams (or, with direction=in, who depends on it).",
         params: teamIdParam,
-        querystring: directionQuery,
+        querystring: directionQuery("out"),
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {
@@ -122,6 +136,7 @@ export async function teamsRoutes(app: FastifyInstance): Promise<void> {
         summary: "Get team roles and members",
         description: "The role/reporting hierarchy for one team, plus the members assigned to each role.",
         params: teamIdParam,
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {

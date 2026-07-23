@@ -7,6 +7,12 @@ interactions, dependencies, cognitive load, and diagrams, plus interactive Swagg
 Normally started via the `teamapi serve-api` CLI command rather than embedded directly, but it's a
 plain Fastify plugin if you want to mount it yourself.
 
+**Unauthenticated by design.** There is no auth, CORS, or rate limiting — the CLI binds to
+`127.0.0.1` only, which is the right default for local/dev use. If you embed `buildServer`
+yourself and bind it beyond localhost, put an authenticating reverse proxy in front of it; the
+org data this API serves (team structure, cognitive load self-assessments, member names/contacts)
+is not something to expose unauthenticated on a shared network.
+
 ## Install
 
 ```bash

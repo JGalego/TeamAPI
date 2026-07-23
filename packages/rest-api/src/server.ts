@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
@@ -15,6 +17,11 @@ import { healthRoutes } from "./routes/health";
 export interface BuildServerOptions {
   logger?: boolean;
 }
+
+// Read at runtime (not imported as a TS module) so this keeps working both from `dist/` in the
+// monorepo and once published, without fighting `rootDir`/project-reference boundaries.
+const packageVersion = (JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8")) as { version: string })
+  .version;
 
 /**
  * Builds a Fastify app over an already-`load()`ed `OrgGraphStore`. Read-only: there is
@@ -37,7 +44,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         title: "Team API",
         description:
           "Read-only API over a resolved Team API as Code org graph: teams, services, roles, interactions, dependencies, cognitive load, DDD context mapping, and rendered organigrams.",
-        version: "0.1.0",
+        version: packageVersion,
       },
       tags: [
         { name: "Teams", description: "Team lookup, roles, interactions, dependencies" },
