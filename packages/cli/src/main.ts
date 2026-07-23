@@ -86,21 +86,19 @@ export function createProgram(): Command {
       process.exitCode = await runScaffold({ id, type: opts.type, name: opts.name, out: opts.out });
     });
 
-  program
-    .command("generate")
-    .argument("<target>", "crewai")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
-    .description("Generate config for an external tool from the resolved org graph")
-    .option("--team <id>", "scope to one team id (single-crew output instead of the whole org)")
-    .requiredOption("--out <dir>", "output directory")
-    .action(async (target: string, patterns: string[], opts: { team?: string; out: string }) => {
-      if (target !== "crewai") {
-        console.error(`Unknown generate target: ${target} (only "crewai" is supported)`);
-        process.exitCode = 1;
-        return;
-      }
-      process.exitCode = await runGenerate(patterns, { target: "crewai", team: opts.team, out: opts.out });
-    });
+const GENERATE_TARGETS = ["crewai", "backstage"] as const;
+
+const generateCommand = program
+  .command("generate")
+  .description("Generate config for an external tool from the resolved org graph")
+  .option("--team <id>", "scope to one team id (single-crew/single-catalog output instead of the whole org)")
+  .requiredOption("--out <dir>", "output directory");
+generateCommand
+  .addArgument(generateCommand.createArgument("<target>", "crewai | backstage").choices(GENERATE_TARGETS))
+  .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+  .action(async (target: "crewai" | "backstage", patterns: string[], opts: { team?: string; out: string }) => {
+    process.exitCode = await runGenerate(patterns, { target, team: opts.team, out: opts.out });
+  });
 
   program
     .command("serve-api")

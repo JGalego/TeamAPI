@@ -93,6 +93,38 @@ describe("teamapi generate", () => {
     const code = await runGenerate([ACME_GLOB], { target: "crewai", team: "does-not-exist", out: outDir });
     expect(code).toBe(1);
   });
+
+  it("writes a single catalog-info.yaml for one team when scoped with --team backstage", async () => {
+    const outDir = path.join(tmpDir, "backstage-checkout");
+    const code = await runGenerate([ACME_GLOB], { target: "backstage", team: "stream-checkout", out: outDir });
+    expect(code).toBe(0);
+
+    const docs = YAML.loadAll(await fs.readFile(path.join(outDir, "catalog-info.yaml"), "utf-8")) as Array<{
+      kind: string;
+      metadata: { name: string };
+    }>;
+    expect(docs.some((d) => d.kind === "Group" && d.metadata.name === "stream-checkout")).toBe(true);
+    expect(docs.some((d) => d.kind === "Component" && d.metadata.name === "checkout-api")).toBe(true);
+  });
+
+  it("writes a single combined catalog-info.yaml for the whole org with backstage", async () => {
+    const outDir = path.join(tmpDir, "backstage-org");
+    const code = await runGenerate([ACME_GLOB], { target: "backstage", out: outDir });
+    expect(code).toBe(0);
+
+    const docs = YAML.loadAll(await fs.readFile(path.join(outDir, "catalog-info.yaml"), "utf-8")) as Array<{
+      kind: string;
+      metadata: { name: string };
+    }>;
+    const groupNames = docs.filter((d) => d.kind === "Group").map((d) => d.metadata.name);
+    expect(groupNames.sort()).toEqual(["enabling-devex", "platform-payments", "stream-checkout", "stream-onboarding"]);
+  });
+
+  it("fails for an unknown --team id with backstage too", async () => {
+    const outDir = path.join(tmpDir, "backstage-bad-team");
+    const code = await runGenerate([ACME_GLOB], { target: "backstage", team: "does-not-exist", out: outDir });
+    expect(code).toBe(1);
+  });
 });
 
 describe("teamapi scaffold", () => {

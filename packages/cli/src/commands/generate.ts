@@ -1,17 +1,21 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import {
+  buildBackstageCatalog,
+  buildBackstageOrgCatalog,
   buildCrewAiCrewConfig,
   buildCrewAiOrgConfig,
   buildOrgGraph,
+  toBackstageYaml,
   toCrewAiCrewYaml,
   toCrewAiOrgYaml,
+  type OrgGraph,
 } from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
 export interface GenerateOptions {
-  target: "crewai";
+  target: "crewai" | "backstage";
   team?: string;
   out: string;
 }
@@ -26,11 +30,19 @@ export async function runGenerate(patterns: string[], options: GenerateOptions):
   const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
   warnUnresolved(graph);
 
+  if (options.team && !graph.teams.has(options.team)) {
+    console.error(`Unknown team id: ${options.team}`);
+    return 1;
+  }
+
+  if (options.target === "backstage") {
+    return generateBackstage(graph, options);
+  }
+  return generateCrewAi(graph, options);
+}
+
+async function generateCrewAi(graph: OrgGraph, options: GenerateOptions): Promise<number> {
   if (options.team) {
-    if (!graph.teams.has(options.team)) {
-      console.error(`Unknown team id: ${options.team}`);
-      return 1;
-    }
     const crew = buildCrewAiCrewConfig(graph, options.team);
     const { agentsYaml, tasksYaml } = toCrewAiCrewYaml(crew);
     await fs.mkdir(options.out, { recursive: true });
@@ -51,5 +63,17 @@ export async function runGenerate(patterns: string[], options: GenerateOptions):
     await fs.writeFile(path.join(crewDir, "tasks.yaml"), crew.tasksYaml, "utf-8");
   }
   console.log(`Wrote ${crews.length} crew(s) + org.yaml to ${options.out}/`);
+  return 0;
+}
+
+async function generateBackstage(graph: OrgGraph, options: GenerateOptions): Promise<number> {
+  const entities = options.team
+    ? buildBackstageCatalog(graph, options.team).entities
+    : buildBackstageOrgCatalog(graph);
+
+  await fs.mkdir(options.out, { recursive: true });
+  const file = path.join(options.out, "catalog-info.yaml");
+  await fs.writeFile(file, toBackstageYaml(entities), "utf-8");
+  console.log(`Wrote ${file} (${entities.length} entities)`);
   return 0;
 }

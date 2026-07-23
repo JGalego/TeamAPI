@@ -1,0 +1,67 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`backstage generator — examples/acme-org > serializes entities as --- separated YAML documents 1`] = `
+"apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: stream-checkout
+  description: Shopping cart, checkout flow, and order placement
+  title: Stream Checkout
+spec:
+  type: team
+  children: []
+  members:
+    - diego-alves
+    - yuki-tanaka
+    - fatima-al-sayed
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: diego-alves
+  title: Diego Alves
+spec:
+  memberOf:
+    - stream-checkout
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: yuki-tanaka
+  title: Yuki Tanaka
+spec:
+  memberOf:
+    - stream-checkout
+---
+apiVersion: backstage.io/v1alpha1
+kind: User
+metadata:
+  name: fatima-al-sayed
+  title: Fatima Al-Sayed
+spec:
+  memberOf:
+    - stream-checkout
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: stream-checkout
+  description: Shopping cart, checkout flow, and order placement
+  title: Stream Checkout
+spec:
+  owner: group:stream-checkout
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: checkout-api
+  links:
+    - url: https://github.com/acme-example/checkout-api
+      title: Repository
+spec:
+  type: service
+  lifecycle: production
+  owner: group:stream-checkout
+  system: stream-checkout
+"
+`;

@@ -173,9 +173,12 @@ describe("createProgram — serve-api", () => {
 });
 
 describe("createProgram — generate", () => {
-  it("rejects an unknown generate target without calling runGenerate", async () => {
-    const { program } = freshProgram();
-    await program.parseAsync(["node", "teamapi", "generate", "not-crewai", "some/path", "--out", "out"]);
+  it("rejects an unknown generate target before ever calling runGenerate", async () => {
+    const { program, stderr } = freshProgram();
+    await expect(
+      program.parseAsync(["node", "teamapi", "generate", "not-a-target", "some/path", "--out", "out"]),
+    ).rejects.toThrow();
+    expect(stderr.join("")).toContain("Allowed choices are crewai, backstage");
     expect(runGenerate).not.toHaveBeenCalled();
   });
 
@@ -183,6 +186,12 @@ describe("createProgram — generate", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "generate", "crewai", "some/path", "--out", "out"]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], { target: "crewai", team: undefined, out: "out" });
+  });
+
+  it("accepts the backstage target", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "generate", "backstage", "some/path", "--out", "out"]);
+    expect(runGenerate).toHaveBeenCalledWith(["some/path"], { target: "backstage", team: undefined, out: "out" });
   });
 });
 

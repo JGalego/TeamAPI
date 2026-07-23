@@ -6,7 +6,7 @@
   [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 </div>
 
-Write your org as a **Team API as Code** spec — one YAML file per team — and this toolchain turns it into organigrams, a REST API, an MCP server for LLM assistants, and config for other tools like [CrewAI](https://crewai.com/).
+Write your org as a **Team API as Code** spec — one YAML file per team — and this toolchain turns it into organigrams, a REST API, an MCP server for LLM assistants, and config for other tools like [CrewAI](https://crewai.com/) and [Backstage](https://backstage.io/).
 
 Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design).
 
@@ -24,6 +24,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
 - [💬 Chat](#chat)
 - [⚙️ Generators](#generators)
   - [▶️ Running it](#running-it)
+  - [🗂️ Backstage catalog](#backstage-catalog)
 - [💻 CLI reference](#cli-reference)
 
 <a id="quick-start"></a>
@@ -388,6 +389,45 @@ AcmePaymentsCrew().crew().kickoff()
 
 For a crew `org.yaml` marks `sequential` (most of them), skip `process`/`manager_agent` entirely — just `Crew(agents=self.agents, tasks=self.tasks)`.
 
+<a id="backstage-catalog"></a>
+
+### 🗂️ Backstage catalog
+
+Already running [Backstage](https://backstage.io/)? `teamapi generate backstage examples/acme-org --out ./catalog` turns the same org graph into a `catalog-info.yaml`: one `Group` per team (with its `members[]`), one `User` per member, and — for any team that owns `services[]` — a `System` grouping them plus one `Component` per service, owned by that team's `Group`. Drop the file at your catalog's discovery root (or point Backstage's `catalog.locations` config at it) and it imports directly — no hand-maintained catalog YAML to keep in sync with your org chart.
+
+**Example:** <code>catalog/catalog-info.yaml</code> (excerpt, `--team stream-checkout`)
+
+```yaml
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: stream-checkout
+  description: Shopping cart, checkout flow, and order placement
+  title: Stream Checkout
+spec:
+  type: team
+  children: []
+  members:
+    - diego-alves
+    - yuki-tanaka
+    - fatima-al-sayed
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: checkout-api
+  links:
+    - url: https://github.com/acme-example/checkout-api
+      title: Repository
+spec:
+  type: service
+  lifecycle: production
+  owner: group:stream-checkout
+  system: stream-checkout
+```
+
+Cross-team `interactions[]`/`dependencies[]` aren't translated into Backstage's `dependsOn` relations — those model service-to-service dependencies, and Team API only tracks team-level ones, so guessing a mapping would produce plausible-looking but misleading catalog data. `roles[]` aren't represented either: Backstage's `Group`/`User` model has no concept of a role independent of the person filling it.
+
 <a id="cli-reference"></a>
 
 ## 💻 CLI reference
@@ -399,7 +439,7 @@ After `npm install -g @jgalego/teamapi` (or `pnpm build` from a source checkout 
 | `teamapi validate <patterns...>` | Resolve every `$ref` transitively and report unresolved refs |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]` | Render a diagram |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
-| `teamapi generate crewai <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config |
+| `teamapi generate crewai\|backstage <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config or a Backstage `catalog-info.yaml` |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
 | `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |

@@ -45,7 +45,10 @@ console.log(toMermaid(buildTopologyDiagram(graph)));
   responses are identical by construction.
 - **Generators**: `buildCrewAiCrewConfig`/`buildCrewAiOrgConfig` plus the
   `toCrewAiCrewYaml`/`toCrewAiOrgYaml` serializers (`generators/crewai`) — turn a team's (or the
-  whole org's) roles into CrewAI `agents.yaml`/`tasks.yaml`.
+  whole org's) roles into CrewAI `agents.yaml`/`tasks.yaml`. `buildBackstageCatalog`/
+  `buildBackstageOrgCatalog` plus `toBackstageYaml` (`generators/backstage`) — turn a team's (or
+  the whole org's) `services[]`/`members[]` into a Backstage `catalog-info.yaml`
+  (`Group`/`User`/`System`/`Component` entities).
 
 Full docs: **https://github.com/JGalego/TeamAPI**
 
