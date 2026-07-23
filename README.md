@@ -26,6 +26,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
   - [▶️ Running it](#running-it)
   - [🗂️ Backstage catalog](#backstage-catalog)
 - [💻 CLI reference](#cli-reference)
+- [🔁 CI integration](#ci-integration)
 
 <a id="quick-start"></a>
 
@@ -445,6 +446,33 @@ After `npm install -g @jgalego/teamapi` (or `pnpm build` from a source checkout 
 | `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |
 
 `<patterns...>` accepts file paths, globs, or a directory (auto-discovers every `teamapi.yml`/`.yaml` under it).
+
+<a id="ci-integration"></a>
+
+## 🔁 CI integration
+
+Want validation and a diagram preview on every PR that touches your `teamapi.yml` files, without anyone running the CLI locally? Add [`JGalego/TeamAPI/.github/actions/validate`](.github/actions/validate) to a workflow:
+
+```yaml
+on:
+  pull_request:
+    paths: ["org/**/teamapi.yml"]
+
+permissions:
+  pull-requests: write
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: JGalego/TeamAPI/.github/actions/validate@main
+        with:
+          patterns: org
+          render-scope: topology
+```
+
+It installs `@jgalego/teamapi`, runs `teamapi validate`, and — on a pull request — posts (and keeps updated on later pushes) a single PR comment with the result and, if validation passed, a live-rendered Mermaid diagram preview. The job fails if validation fails, so this can gate a required check. This repo dogfoods it against [`examples/acme-org`](examples/acme-org) — see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml). Full inputs/outputs: [`.github/actions/validate/README.md`](.github/actions/validate/README.md).
 
 ## Contributing
 
