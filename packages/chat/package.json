@@ -22,7 +22,7 @@
     "build": "tsc -b",
     "clean": "rm -rf dist *.tsbuildinfo",
     "test": "vitest run",
-    "typecheck": "tsc -b --noEmit",
+    "typecheck": "tsc --noEmit",
     "lint": "eslint src"
   },
   "dependencies": {
