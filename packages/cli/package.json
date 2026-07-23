@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, generate, serve-api, serve-mcp, chat",
   "license": "MIT",
   "engines": {
