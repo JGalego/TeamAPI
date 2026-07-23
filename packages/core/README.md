@@ -49,6 +49,10 @@ console.log(toMermaid(buildTopologyDiagram(graph)));
   `buildBackstageOrgCatalog` plus `toBackstageYaml` (`generators/backstage`) — turn a team's (or
   the whole org's) `services[]`/`members[]` into a Backstage `catalog-info.yaml`
   (`Group`/`User`/`System`/`Component` entities).
+- **Diffing**: `diffOrgGraphs`, `isEmptyDiff`, `formatOrgGraphDiff` (`diff/diff-graph`) — diff two
+  resolved `OrgGraph`s (teams added/removed, per-team role/member/service/cognitive-load changes,
+  edge changes) and render the result as a human-readable report. Git-agnostic — `teamapi diff`
+  is what supplies "the org as of a git revision" as one side of the comparison.
 
 Full docs: **https://github.com/JGalego/TeamAPI**
 

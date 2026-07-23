@@ -26,6 +26,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
   - [▶️ Running it](#running-it)
   - [🗂️ Backstage catalog](#backstage-catalog)
 - [💻 CLI reference](#cli-reference)
+- [🕰️ Org history](#org-history)
 - [🔁 CI integration](#ci-integration)
 
 <a id="quick-start"></a>
@@ -441,11 +442,34 @@ After `npm install -g @jgalego/teamapi` (or `pnpm build` from a source checkout 
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]` | Render a diagram |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
 | `teamapi generate crewai\|backstage <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config or a Backstage `catalog-info.yaml` |
+| `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
 | `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |
 
 `<patterns...>` accepts file paths, globs, or a directory (auto-discovers every `teamapi.yml`/`.yaml` under it).
+
+<a id="org-history"></a>
+
+## 🕰️ Org history
+
+Since your org is just files in git, its history is git history. `teamapi diff <patterns...> --against <ref>` resolves the same patterns two ways — the working tree, and as they existed at any commit, tag, or branch — and reports what changed: teams added/removed, roles/members/services added/removed per team, cognitive-load deltas, and edge changes (interactions, dependencies, cross-team reporting lines). Requires running inside a git repository.
+
+**Example**, run against this very repo — `teamapi diff examples/acme-org --against 931fe6b` (the initial commit, before the org-wide role hierarchy was added):
+
+```
+$ teamapi diff examples/acme-org --against 931fe6b
+~ platform-payments
+  + role added: head-of-engineering
+
+Role edges:
+  + reports-to stream-checkout.tech-lead -> platform-payments.head-of-engineering
+  + aligns-with stream-checkout.tech-lead -> enabling-devex.coach
+  + reports-to stream-onboarding.tech-lead -> platform-payments.head-of-engineering
+  + aligns-with stream-onboarding.tech-lead -> enabling-devex.coach
+```
+
+No differences prints a one-line "No differences between `<ref>` and the working tree." instead of an empty report. Exits 0 either way — this is an inspection tool, not a validation gate (see [CI integration](#ci-integration) for that).
 
 <a id="ci-integration"></a>
 

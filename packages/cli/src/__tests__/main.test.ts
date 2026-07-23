@@ -6,20 +6,24 @@ import type { Command } from "commander";
 // `vi.mock` factories are hoisted above every other statement in this file (including `const`
 // declarations), so the mocked fns they close over must themselves be created inside
 // `vi.hoisted` — a plain top-level `const` here would be used before initialization.
-const { runValidate, runRender, runScaffold, runGenerate, runServeApi, runServeMcp, runChat } = vi.hoisted(() => ({
-  runValidate: vi.fn(async () => 0),
-  runRender: vi.fn(async () => 0),
-  runScaffold: vi.fn(async () => 0),
-  runGenerate: vi.fn(async () => 0),
-  runServeApi: vi.fn(async () => {}),
-  runServeMcp: vi.fn(async () => {}),
-  runChat: vi.fn(async () => 0),
-}));
+const { runValidate, runRender, runScaffold, runGenerate, runDiff, runServeApi, runServeMcp, runChat } = vi.hoisted(
+  () => ({
+    runValidate: vi.fn(async () => 0),
+    runRender: vi.fn(async () => 0),
+    runScaffold: vi.fn(async () => 0),
+    runGenerate: vi.fn(async () => 0),
+    runDiff: vi.fn(async () => 0),
+    runServeApi: vi.fn(async () => {}),
+    runServeMcp: vi.fn(async () => {}),
+    runChat: vi.fn(async () => 0),
+  }),
+);
 
 vi.mock("../commands/validate", () => ({ runValidate }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
+vi.mock("../commands/diff", () => ({ runDiff }));
 vi.mock("../commands/serve-api", () => ({ runServeApi }));
 vi.mock("../commands/serve-mcp", () => ({ runServeMcp }));
 vi.mock("../commands/chat", () => ({ runChat }));
@@ -192,6 +196,20 @@ describe("createProgram — generate", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "generate", "backstage", "some/path", "--out", "out"]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], { target: "backstage", team: undefined, out: "out" });
+  });
+});
+
+describe("createProgram — diff", () => {
+  it("requires --against", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "diff", "some/path"])).rejects.toThrow();
+    expect(runDiff).not.toHaveBeenCalled();
+  });
+
+  it("passes patterns and --against through to runDiff", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "diff", "some/path", "--against", "main"]);
+    expect(runDiff).toHaveBeenCalledWith(["some/path"], { against: "main" });
   });
 });
 

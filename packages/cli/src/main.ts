@@ -7,6 +7,7 @@ import { runValidate } from "./commands/validate";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
+import { runDiff } from "./commands/diff";
 import { runServeApi } from "./commands/serve-api";
 import { runServeMcp } from "./commands/serve-mcp";
 import { runChat } from "./commands/chat";
@@ -99,6 +100,15 @@ generateCommand
   .action(async (target: "crewai" | "backstage", patterns: string[], opts: { team?: string; out: string }) => {
     process.exitCode = await runGenerate(patterns, { target, team: opts.team, out: opts.out });
   });
+
+  program
+    .command("diff")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Diff the resolved org graph against a git revision (requires running inside a git repository)")
+    .requiredOption("--against <ref>", "git revision to diff against, e.g. HEAD, main, a tag, or a commit sha")
+    .action(async (patterns: string[], opts: { against: string }) => {
+      process.exitCode = await runDiff(patterns, { against: opts.against });
+    });
 
   program
     .command("serve-api")

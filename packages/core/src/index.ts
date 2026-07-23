@@ -17,3 +17,4 @@ export * from "./diagrams/dot";
 export * from "./serialize/team-dto";
 export * from "./generators/crewai";
 export * from "./generators/backstage";
+export * from "./diff/diff-graph";
