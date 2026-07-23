@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi-core",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Team API as Code resolution, graph building, cognitive load, context mapping, and diagram generation",
   "license": "MIT",
   "homepage": "https://github.com/JGalego/TeamAPI#readme",
