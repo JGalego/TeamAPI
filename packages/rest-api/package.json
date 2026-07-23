@@ -19,7 +19,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc -b && mkdir -p dist/dashboard && cp src/dashboard/index.html dist/dashboard/index.html",
     "clean": "rm -rf dist *.tsbuildinfo",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

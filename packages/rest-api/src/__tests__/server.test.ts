@@ -282,4 +282,12 @@ describe("REST API", () => {
     expect(res.statusCode).toBe(302);
     expect(res.headers.location).toBe("/docs");
   });
+
+  it("GET /dashboard serves the org dashboard page", async () => {
+    const res = await app.inject({ method: "GET", url: "/dashboard" });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["content-type"]).toContain("text/html");
+    expect(res.body).toContain("Org Dashboard");
+    expect(res.body).toContain("/cognitive-load");
+  });
 });

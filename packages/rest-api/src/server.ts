@@ -13,6 +13,7 @@ import { diagramsRoutes } from "./routes/diagrams";
 import { contextMapRoutes } from "./routes/context-map";
 import { cognitiveLoadRoutes } from "./routes/cognitive-load";
 import { healthRoutes } from "./routes/health";
+import { dashboardRoutes } from "./routes/dashboard";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -73,6 +74,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   await app.register(diagramsRoutes);
   await app.register(contextMapRoutes);
   await app.register(cognitiveLoadRoutes);
+  await app.register(dashboardRoutes);
 
   return app;
 }

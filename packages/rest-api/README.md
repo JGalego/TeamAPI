@@ -2,7 +2,9 @@
 
 A read-only [Fastify](https://fastify.dev/) REST API over a resolved
 [Team API as Code](https://github.com/JGalego/TeamAPI) org graph — teams, roles, services,
-interactions, dependencies, cognitive load, and diagrams, plus interactive Swagger UI at `/docs`.
+interactions, dependencies, cognitive load, and diagrams — plus interactive Swagger UI at `/docs`
+and a live browser dashboard at `/dashboard` (team list, cognitive-load bars, search, and a
+client-side-rendered diagram viewer; no separate process or build step).
 
 Normally started via the `teamapi serve-api` CLI command rather than embedded directly, but it's a
 plain Fastify plugin if you want to mount it yourself.

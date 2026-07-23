@@ -20,6 +20,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
   - [🧑‍💼 Role hierarchy](#role-hierarchy)
   - [🏢 Org-wide role hierarchy](#org-wide-role-hierarchy)
 - [🔌 REST API](#rest-api)
+- [📊 Dashboard](#dashboard)
 - [🤖 MCP tools](#mcp-tools)
 - [💬 Chat](#chat)
 - [⚙️ Generators](#generators)
@@ -219,6 +220,17 @@ Prefer clicking over typing? `teamapi serve-api examples/acme-org --port 3000` s
     "assessment": { "intrinsic": 4, "extraneous": 2, "germane": 5, "notes": "Well-bounded domain, low incidental complexity." }
   }
 ]
+```
+
+<a id="dashboard"></a>
+
+## 📊 Dashboard
+
+Prefer a browser to `curl`? The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — no separate process, no build step, just static HTML/CSS/JS fetching the REST API you already have running. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded — never color alone), free-text search, and a tabbed diagram viewer (topology / org-hierarchy / context-map) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — the team list, cognitive load, and search keep working.
+
+```bash
+teamapi serve-api examples/acme-org --port 3000
+open http://127.0.0.1:3000/dashboard
 ```
 
 <a id="mcp-tools"></a>
