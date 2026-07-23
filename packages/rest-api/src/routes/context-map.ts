@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { buildContextMapDiagram, deriveContextMap, toDot, toMermaid } from "@jgalego/teamapi-core";
+import { errorResponseSchema } from "../schemas/error";
 
 type Format = "json" | "mermaid" | "dot";
 
@@ -24,6 +25,7 @@ export async function contextMapRoutes(app: FastifyInstance): Promise<void> {
             teamId: { type: "string", description: "Scope to one team" },
           },
         },
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {

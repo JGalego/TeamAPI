@@ -1,5 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { getTeam, orgWideCognitiveLoadReport, scoreCognitiveLoad } from "@jgalego/teamapi-core";
+import { errorResponseSchema } from "../schemas/error";
 
 export async function cognitiveLoadRoutes(app: FastifyInstance): Promise<void> {
   app.get(
@@ -28,6 +29,7 @@ export async function cognitiveLoadRoutes(app: FastifyInstance): Promise<void> {
           properties: { teamId: { type: "string", description: "Team id (slug)" } },
           required: ["teamId"],
         },
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {

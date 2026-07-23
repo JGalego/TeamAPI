@@ -10,7 +10,8 @@
     "directory": "packages/chat"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -21,13 +22,14 @@
     "build": "tsc -b",
     "clean": "rm -rf dist *.tsbuildinfo",
     "test": "vitest run",
-    "typecheck": "tsc -b --noEmit false"
+    "typecheck": "tsc -b --noEmit",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@jgalego/teamapi-core": "workspace:*",
     "@jgalego/teamapi-schema": "workspace:*",
     "@anthropic-ai/sdk": "^0.112.3",
-    "zod": "^4.0.0"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "typescript": "^5.6.3",

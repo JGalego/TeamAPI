@@ -60,13 +60,27 @@ function detectConflicts(edges: InteractionEdge[]): ContextMapConflict[] {
   const conflicts: ContextMapConflict[] = [];
   for (const [key, group] of byPair) {
     if (group.length < 2) continue;
+    const [teamA, teamB] = key.split("::") as [TeamId, TeamId];
+
     const modes = new Set(group.map((e) => e.mode));
     if (modes.size > 1) {
-      const [teamA, teamB] = key.split("::") as [TeamId, TeamId];
       conflicts.push({
         teamA,
         teamB,
         description: `Declared with differing interaction modes: ${[...modes].join(", ")}`,
+      });
+    }
+
+    // Two teams can agree on `mode` while still declaring genuinely conflicting DDD patterns
+    // (e.g. one side says `SharedKernel`, the other `Conformist`) — that disagreement is just as
+    // real a signal as a differing `mode`, so it's checked independently rather than folded into
+    // the mode comparison above.
+    const patterns = new Set(group.map((e) => e.contextMappingPattern).filter((p): p is NonNullable<typeof p> => !!p));
+    if (patterns.size > 1) {
+      conflicts.push({
+        teamA,
+        teamB,
+        description: `Declared with differing context-mapping patterns: ${[...patterns].join(", ")}`,
       });
     }
   }

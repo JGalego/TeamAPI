@@ -7,6 +7,7 @@ import {
   toMermaid,
   type DiagramModel,
 } from "@jgalego/teamapi-core";
+import { errorResponseSchema } from "../schemas/error";
 
 type Format = "mermaid" | "dot";
 
@@ -37,6 +38,7 @@ export async function diagramsRoutes(app: FastifyInstance): Promise<void> {
             teamId: { type: "string", description: "Scope to one team's neighborhood" },
           },
         },
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {
@@ -64,6 +66,7 @@ export async function diagramsRoutes(app: FastifyInstance): Promise<void> {
           required: ["teamId"],
         },
         querystring: { type: "object", properties: { format: formatProperty } },
+        response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {

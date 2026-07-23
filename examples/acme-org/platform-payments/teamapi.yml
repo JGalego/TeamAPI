@@ -35,6 +35,7 @@ services:
     repository: https://github.com/acme-example/ledger
     versioning:
       type: semantic
+    x-pagerduty-service: PLEDGER01 # vendor extension field: any x-*-prefixed key is preserved as-is
     boundedContext:
       ubiquitousLanguage:
         - term: Ledger Entry

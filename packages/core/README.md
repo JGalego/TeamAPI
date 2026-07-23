@@ -24,6 +24,29 @@ const graph = await buildOrgGraph({ seedUris: ["./examples/acme-org/stream-check
 console.log(toMermaid(buildTopologyDiagram(graph)));
 ```
 
+## Exports
+
+- **Resolution**: `buildOrgGraph`, `OrgGraphStore` (a live, reloadable wrapper around
+  `buildOrgGraph`), `LoaderRegistry`/`FileLoader`/`HttpLoader` (`resolve/loaders`),
+  `formatZodError` (turns a Zod validation failure into a readable message).
+- **Model**: `OrgGraph`, `GraphEdge`, `RoleGraphEdge`, `ResolvedTeam` types (`model/org-graph`);
+  `listTeams`, `getTeam`, `getInteractions`, `getDependencies`, `listServices`,
+  `findServiceOwner`, `listRoles`, `listMembers`, `searchOrg` (`model/queries`).
+- **Cognitive load**: `scoreCognitiveLoad`, `orgWideCognitiveLoadReport`
+  (`cognitive-load/score`).
+- **DDD context mapping**: `deriveContextMap`, `MODE_TO_PATTERN_HEURISTIC`
+  (`context-map/derive`, `context-map/patterns`).
+- **Diagrams**: `buildTopologyDiagram`, `buildHierarchyDiagram`, `buildOrgHierarchyDiagram`,
+  `buildContextMapDiagram` (one per `--scope`), plus `toMermaid`/`toDot` renderers and the
+  `DiagramModel` type they share.
+- **Serialization**: `toTeamSummaryDto`, `toTeamDetailDto`, `listTeamSummaries`,
+  `toOrgGraphDto` (`serialize/team-dto`) — the single source of truth both the REST API and the
+  MCP server use to turn a `ResolvedTeam`/`OrgGraph` into a wire-format object, so their
+  responses are identical by construction.
+- **Generators**: `buildCrewAiCrewConfig`/`buildCrewAiOrgConfig` plus the
+  `toCrewAiCrewYaml`/`toCrewAiOrgYaml` serializers (`generators/crewai`) — turn a team's (or the
+  whole org's) roles into CrewAI `agents.yaml`/`tasks.yaml`.
+
 Full docs: **https://github.com/JGalego/TeamAPI**
 
 ## License

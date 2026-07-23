@@ -1,6 +1,7 @@
 import { OrgGraphStore } from "@jgalego/teamapi-core";
 import { buildServer } from "@jgalego/teamapi-rest-api";
 import { expandSeeds } from "../seeds";
+import { warnUnresolved } from "../warn-unresolved";
 
 export interface ServeApiOptions {
   port?: number;
@@ -14,6 +15,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
 
   const store = new OrgGraphStore({ seedUris: seeds, allowPartial: true });
   await store.load();
+  warnUnresolved(store.current);
 
   const app = await buildServer(store, { logger: true });
   const port = options.port ?? 3000;

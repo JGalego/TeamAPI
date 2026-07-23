@@ -1,4 +1,11 @@
-import { z } from "zod";
+// `betaZodTool` (below) is typed against zod v4's `ZodType` specifically (it imports from
+// `zod/v4` internally), so these schemas are built with the same v4 API rather than the plain
+// `zod` root import (which resolves to the classic v3 API `@jgalego/teamapi-core`/`-schema`/
+// `-mcp-server` use) — otherwise a v3 schema passed where a v4 `ZodType` is expected can silently
+// produce a wrong/incomplete JSON input schema sent to the model instead of a type error. Zod
+// 3.25+ bundles both APIs in one package, so this and the sibling packages' plain `zod` import
+// still resolve to a single deduped `zod` install workspace-wide — not two coexisting majors.
+import { z } from "zod/v4";
 import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
 import {
   buildContextMapDiagram,

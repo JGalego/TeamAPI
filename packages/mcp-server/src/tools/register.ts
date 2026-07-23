@@ -1,5 +1,6 @@
 import { z } from "zod";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { TeamTypeSchema } from "@jgalego/teamapi-schema";
 import {
   buildContextMapDiagram,
   buildHierarchyDiagram,
@@ -7,6 +8,7 @@ import {
   buildTopologyDiagram,
   deriveContextMap,
   findServiceOwner,
+  getDependencies,
   getInteractions,
   getTeam,
   listMembers,
@@ -18,6 +20,7 @@ import {
   searchOrg,
   toDot,
   toMermaid,
+  toOrgGraphDto,
   toTeamDetailDto,
   toTeamSummaryDto,
   type OrgGraphStore,
@@ -28,7 +31,6 @@ import { looseRegisterTool } from "./loose-register";
 const DiagramScopeSchema = z.enum(["topology", "hierarchy", "context-map", "org-hierarchy"]);
 const DiagramFormatSchema = z.enum(["mermaid", "dot"]);
 const DirectionSchema = z.enum(["in", "out", "both"]);
-const TeamTypeSchema = z.enum(["stream-aligned", "platform", "complicated-subsystem", "enabling"]);
 
 /** Registers every Team API tool on `server`, all reading from the same live `store`. */
 export function registerTools(server: McpServer, store: OrgGraphStore): void {
@@ -39,7 +41,7 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
     {
       title: "List teams",
       description: "List all teams in the org, optionally filtered by team type or a free-text search term.",
-      inputSchema: { type: TeamTypeSchema.optional(), search: z.string().optional() },
+      inputSchema: { type: TeamTypeSchema.optional(), search: z.string().min(1).optional() },
     },
     async ({ type, search }: { type?: string; search?: string }) =>
       jsonResult(listTeams(store.current, { type, search }).map(toTeamSummaryDto)),
@@ -96,12 +98,19 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
     "find_service_owner",
     {
       title: "Find service owner",
-      description: "Find which team owns a named service, including its DDD bounded-context info if declared.",
-      inputSchema: { serviceName: z.string() },
+      description:
+        "Find which team owns a named service, including its DDD bounded-context info if declared. Requires " +
+        "an exact (case-insensitive) service name match — use list_services or search_org for a partial/substring " +
+        "match instead.",
+      inputSchema: { serviceName: z.string().min(1) },
     },
     async ({ serviceName }: { serviceName: string }) => {
       const result = findServiceOwner(store.current, serviceName);
-      if (!result) return errorResult(`No service found matching '${serviceName}'`);
+      if (!result) {
+        return errorResult(
+          `No service found with the exact name '${serviceName}'. Try list_services or search_org for a partial match.`,
+        );
+      }
       return jsonResult(result);
     },
   );
@@ -111,7 +120,7 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
     {
       title: "List services",
       description: "List all services declared across the org, optionally filtered by a search term.",
-      inputSchema: { search: z.string().optional() },
+      inputSchema: { search: z.string().min(1).optional() },
     },
     async ({ search }: { search?: string }) => jsonResult(listServices(store.current, search)),
   );
@@ -127,6 +136,22 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
       const team = getTeam(store.current, teamId);
       if (!team) return errorResult(`Unknown team id '${teamId}'`);
       return jsonResult(getInteractions(store.current, teamId, direction ?? "both"));
+    },
+  );
+
+  registerTool(
+    "get_team_dependencies",
+    {
+      title: "Get team dependencies",
+      description:
+        "Get a team's dependencies on other teams (or, with direction='in', which teams depend on it), each " +
+        "flagged OK/Slowing/Blocking.",
+      inputSchema: { teamId: z.string(), direction: DirectionSchema.optional() },
+    },
+    async ({ teamId, direction }: { teamId: string; direction?: "in" | "out" | "both" }) => {
+      const team = getTeam(store.current, teamId);
+      if (!team) return errorResult(`Unknown team id '${teamId}'`);
+      return jsonResult(getDependencies(store.current, teamId, direction ?? "out"));
     },
   );
 
@@ -189,7 +214,7 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
     {
       title: "Search the org",
       description: "Unified search across team names/focus, services, roles, members, and search terms.",
-      inputSchema: { query: z.string() },
+      inputSchema: { query: z.string().min(1) },
     },
     async ({ query }: { query: string }) => jsonResult(searchOrg(store.current, query)),
   );
@@ -199,18 +224,11 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
     {
       title: "Get the full org graph",
       description:
-        "Get the full resolved org graph (all teams + all edges) as JSON. Heavier; prefer narrower tools when possible.",
+        "Get the full resolved org graph (all teams + all team-level edges + all role-level reportsTo/alignsWith " +
+        "edges) as JSON. Heavier; prefer narrower tools when possible.",
       inputSchema: {},
     },
-    async () => {
-      const graph = store.current;
-      return jsonResult({
-        teams: [...graph.teams.values()].map(toTeamDetailDto),
-        edges: graph.edges,
-        unresolved: graph.unresolved,
-        meta: graph.meta,
-      });
-    },
+    async () => jsonResult(toOrgGraphDto(store.current)),
   );
 
   registerTool(

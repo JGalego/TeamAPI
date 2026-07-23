@@ -73,17 +73,21 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
     }
 
     const doc = parsed.data;
-    if (teams.has(doc.id)) {
-      const existing = teams.get(doc.id)!;
-      if (existing.sourceUri !== loaded.canonicalUri) {
-        const reason = `Duplicate team id '${doc.id}' declared in both ${existing.sourceUri} and ${loaded.canonicalUri}`;
-        unresolved.push({ fromUri: uri, ref: uri, reason });
-        if (!allowPartial) throw new Error(reason);
-      }
-      continue;
+    const existing = teams.get(doc.id);
+    if (existing && existing.sourceUri !== loaded.canonicalUri) {
+      const reason = `Duplicate team id '${doc.id}' declared in both ${existing.sourceUri} and ${loaded.canonicalUri}`;
+      unresolved.push({ fromUri: uri, ref: uri, reason });
+      if (!allowPartial) throw new Error(reason);
+      // Deliberately fall through (not `continue`) even for a rejected duplicate: this document's
+      // own outbound $refs are still traversed below, under the original team's id, so a team
+      // reachable *only* through the shadowed duplicate doesn't silently vanish from the graph.
     }
 
-    teams.set(doc.id, { id: doc.id, sourceUri: loaded.canonicalUri, doc });
+    if (!existing) {
+      teams.set(doc.id, { id: doc.id, sourceUri: loaded.canonicalUri, doc });
+    }
+    // Map this specific URI to the team id even when it's a duplicate, so a `$ref` pointing
+    // exactly at the duplicate's own file still resolves to the (one) team id in the graph.
     uriToTeamId.set(loaded.canonicalUri, doc.id);
 
     const enqueue = (ref: string, build: (toId: string) => GraphEdge) => {

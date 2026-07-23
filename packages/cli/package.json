@@ -1,8 +1,11 @@
 {
   "name": "@jgalego/teamapi",
   "version": "0.1.1",
-  "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, serve-api, serve-mcp, chat",
+  "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, generate, serve-api, serve-mcp, chat",
   "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
   "homepage": "https://github.com/JGalego/TeamAPI#readme",
   "repository": {
     "type": "git",
@@ -10,7 +13,8 @@
     "directory": "packages/cli"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "bin": {
     "teamapi": "dist/main.js"
@@ -25,7 +29,8 @@
     "postbuild": "[ \"$CI\" = \"true\" ] || npm link",
     "clean": "rm -rf dist *.tsbuildinfo",
     "test": "vitest run",
-    "typecheck": "tsc -b --noEmit false"
+    "typecheck": "tsc -b --noEmit",
+    "lint": "eslint src"
   },
   "dependencies": {
     "@jgalego/teamapi-core": "workspace:*",
@@ -37,7 +42,8 @@
     "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^12.1.0",
     "fast-glob": "^3.3.2",
-    "js-yaml": "^4.1.0"
+    "js-yaml": "^4.1.0",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",

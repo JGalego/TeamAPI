@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { TeamApiDocumentSchema } from "../v1/team";
 import { responsibilityDoneWhen, responsibilityText } from "../v1/roles";
 import { getTeamApiJsonSchema } from "../json-schema";
+import { isSupportedVersion, resolveSchemaForVersion, SCHEMA_REGISTRY } from "../index";
+import { SUGGESTED_ROLE_KINDS } from "../v1/primitives";
 
 const minimalValid = {
   teamApiVersion: "1.0.0",
@@ -118,6 +120,139 @@ describe("TeamApiDocumentSchema", () => {
     const withExtension = { ...minimalValid, "x-internal-notes": "some note" };
     const parsed = TeamApiDocumentSchema.parse(withExtension);
     expect((parsed as Record<string, unknown>)["x-internal-notes"]).toBe("some note");
+  });
+
+  it("allows vendor extension fields on a platform ref via passthrough", () => {
+    const withExtension = {
+      ...minimalValid,
+      platform: { $ref: "../platform-payments/teamapi.yml", "x-owner": "platform-team" },
+    };
+    const parsed = TeamApiDocumentSchema.parse(withExtension);
+    expect((parsed.platform as Record<string, unknown> | undefined)?.["x-owner"]).toBe(
+      "platform-team",
+    );
+  });
+
+  it("allows vendor extension fields on a role's reportsToRef via passthrough", () => {
+    const withExtension = {
+      ...minimalValid,
+      roles: [
+        {
+          id: "engineer",
+          name: "Engineer",
+          kind: "Engineer",
+          reportsToRef: {
+            teamName: "Platform Payments",
+            roleId: "head-of-engineering",
+            $ref: "../platform-payments/teamapi.yml",
+            "x-since": "2025-01-01",
+          },
+        },
+      ],
+    };
+    const parsed = TeamApiDocumentSchema.parse(withExtension);
+    expect((parsed.roles[0]?.reportsToRef as Record<string, unknown> | undefined)?.["x-since"]).toBe(
+      "2025-01-01",
+    );
+  });
+});
+
+describe("role cross-field validation", () => {
+  it("rejects a role with both reportsTo and reportsToRef set", () => {
+    const invalid = {
+      ...minimalValid,
+      roles: [
+        { id: "tech-lead", name: "Tech Lead", kind: "TechLead" },
+        {
+          id: "engineer",
+          name: "Engineer",
+          kind: "Engineer",
+          reportsTo: "tech-lead",
+          reportsToRef: {
+            teamName: "Platform Payments",
+            roleId: "head-of-engineering",
+            $ref: "../platform-payments/teamapi.yml",
+          },
+        },
+      ],
+    };
+    expect(() => TeamApiDocumentSchema.parse(invalid)).toThrow(/mutually exclusive/);
+  });
+
+  it("rejects a reportsTo that doesn't match any role id in the team", () => {
+    const invalid = {
+      ...minimalValid,
+      roles: [{ id: "engineer", name: "Engineer", kind: "Engineer", reportsTo: "tech-laed" }],
+    };
+    expect(() => TeamApiDocumentSchema.parse(invalid)).toThrow(/does not match any role id/);
+  });
+
+  it("rejects a same-team reportsTo cycle", () => {
+    const invalid = {
+      ...minimalValid,
+      roles: [
+        { id: "a", name: "A", kind: "Engineer", reportsTo: "b" },
+        { id: "b", name: "B", kind: "Engineer", reportsTo: "a" },
+      ],
+    };
+    expect(() => TeamApiDocumentSchema.parse(invalid)).toThrow(/cycle detected/);
+  });
+
+  it("rejects a role that reports to itself", () => {
+    const invalid = {
+      ...minimalValid,
+      roles: [{ id: "a", name: "A", kind: "Engineer", reportsTo: "a" }],
+    };
+    expect(() => TeamApiDocumentSchema.parse(invalid)).toThrow(/cycle detected/);
+  });
+
+  it("rejects duplicate role ids within a team", () => {
+    const invalid = {
+      ...minimalValid,
+      roles: [
+        { id: "engineer", name: "Engineer One", kind: "Engineer" },
+        { id: "engineer", name: "Engineer Two", kind: "Engineer" },
+      ],
+    };
+    expect(() => TeamApiDocumentSchema.parse(invalid)).toThrow(/Duplicate role id/);
+  });
+
+  it("rejects duplicate member ids within a team", () => {
+    const invalid = {
+      ...minimalValid,
+      members: [
+        { id: "ada-lovelace", name: "Ada Lovelace" },
+        { id: "ada-lovelace", name: "Ada L." },
+      ],
+    };
+    expect(() => TeamApiDocumentSchema.parse(invalid)).toThrow(/Duplicate member id/);
+  });
+});
+
+describe("version registry", () => {
+  it("recognizes the currently-supported version", () => {
+    expect(isSupportedVersion("1.0.0")).toBe(true);
+    expect(isSupportedVersion("2.0.0")).toBe(false);
+  });
+
+  it("resolves the schema for a supported version and not for an unsupported one", () => {
+    expect(resolveSchemaForVersion("1.0.0")).toBe(SCHEMA_REGISTRY["1.0.0"]);
+    expect(resolveSchemaForVersion("0.9.0")).toBeUndefined();
+  });
+});
+
+describe("SUGGESTED_ROLE_KINDS", () => {
+  it("is a non-empty list of suggested (non-exhaustive) role kinds", () => {
+    expect(SUGGESTED_ROLE_KINDS.length).toBeGreaterThan(0);
+    expect(SUGGESTED_ROLE_KINDS).toContain("TechLead");
+  });
+
+  it("does not constrain roles[].kind to only these values", () => {
+    const withCustomKind = {
+      ...minimalValid,
+      roles: [{ id: "wizard", name: "Wizard", kind: "SomeCustomKind" }],
+    };
+    expect(() => TeamApiDocumentSchema.parse(withCustomKind)).not.toThrow();
   });
 });
 

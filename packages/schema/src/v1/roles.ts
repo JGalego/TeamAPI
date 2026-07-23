@@ -7,7 +7,7 @@ import { RefSchema, RoleKindSchema, SlugSchema } from "./primitives";
 export const RoleRefSchema = RefSchema.extend({
   teamName: z.string().min(1),
   roleId: SlugSchema,
-});
+}).passthrough();
 export type RoleRef = z.infer<typeof RoleRefSchema>;
 
 /** A responsibility can be a plain string, or — when a consumer like the CrewAI generator needs
@@ -48,17 +48,74 @@ export const RoleSchema = z
     responsibilities: z.array(ResponsibilitySchema).default([]),
     reportsTo: SlugSchema.optional(),
     /** Formal reporting line to a role on another team, e.g. a tech lead reporting to a
-     * cross-team engineering manager. Mutually exclusive with `reportsTo` in practice, since a
-     * role reports to exactly one manager, same-team or not. */
+     * cross-team engineering manager. Mutually exclusive with `reportsTo`: a role reports to
+     * exactly one manager, same-team or not, and setting both is rejected below. */
     reportsToRef: RoleRefSchema.optional(),
     /** Dotted-line / matrix relationships that aren't formal reporting — e.g. a community of
      * practice lead a role coordinates with, same-team or cross-team. */
     alignsWith: z.array(RoleRefSchema).default([]),
   })
-  .passthrough();
+  .passthrough()
+  .superRefine((role, ctx) => {
+    if (role.reportsTo !== undefined && role.reportsToRef !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "reportsTo and reportsToRef are mutually exclusive: a role reports to exactly one manager",
+        path: ["reportsToRef"],
+      });
+    }
+  });
 export type Role = z.infer<typeof RoleSchema>;
 
-export const RolesSchema = z.array(RoleSchema).default([]);
+export const RolesSchema = z
+  .array(RoleSchema)
+  .default([])
+  .superRefine((roles, ctx) => {
+    const seenIds = new Set<string>();
+    for (let i = 0; i < roles.length; i++) {
+      const id = roles[i]!.id;
+      if (seenIds.has(id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate role id '${id}': role ids must be unique within a team's roles[]`,
+          path: [i, "id"],
+        });
+      }
+      seenIds.add(id);
+    }
+
+    const reportsToById = new Map(roles.map((role) => [role.id, role.reportsTo]));
+    for (let i = 0; i < roles.length; i++) {
+      const role = roles[i]!;
+      if (role.reportsTo === undefined) continue;
+
+      if (!reportsToById.has(role.reportsTo)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `reportsTo '${role.reportsTo}' does not match any role id in this team's roles[]`,
+          path: [i, "reportsTo"],
+        });
+        continue;
+      }
+
+      // Walk the same-team reportsTo chain looking for a cycle back to this role (including a
+      // role reporting to itself).
+      const chain = new Set([role.id]);
+      let cursor: string | undefined = role.reportsTo;
+      for (let steps = 0; steps < roles.length && cursor !== undefined; steps++) {
+        if (chain.has(cursor)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `reportsTo cycle detected: ${[...chain, cursor].join(" -> ")}`,
+            path: [i, "reportsTo"],
+          });
+          break;
+        }
+        chain.add(cursor);
+        cursor = reportsToById.get(cursor);
+      }
+    }
+  });
 
 /** A person on the team, optionally assigned to one or more `roles[]` by id. */
 export const MemberSchema = z
@@ -72,4 +129,20 @@ export const MemberSchema = z
   .passthrough();
 export type Member = z.infer<typeof MemberSchema>;
 
-export const MembersSchema = z.array(MemberSchema).default([]);
+export const MembersSchema = z
+  .array(MemberSchema)
+  .default([])
+  .superRefine((members, ctx) => {
+    const seenIds = new Set<string>();
+    for (let i = 0; i < members.length; i++) {
+      const id = members[i]!.id;
+      if (seenIds.has(id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate member id '${id}': member ids must be unique within a team's members[]`,
+          path: [i, "id"],
+        });
+      }
+      seenIds.add(id);
+    }
+  });

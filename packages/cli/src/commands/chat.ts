@@ -3,6 +3,11 @@ import Anthropic from "@anthropic-ai/sdk";
 import { buildOrgGraph } from "@jgalego/teamapi-core";
 import { buildChatPersona, buildChatTools, DEFAULT_CHAT_MODEL, type ChatToolCall } from "@jgalego/teamapi-chat";
 import { expandSeeds } from "../seeds";
+import { warnUnresolved } from "../warn-unresolved";
+
+/** Hard ceiling on tool round-trips per user turn: without this, a model stuck in a
+ * call-observe-call loop has no cost/latency guard and no way to ever hand back control. */
+const MAX_TOOL_ITERATIONS = 20;
 
 export interface ChatOptions {
   team: string;
@@ -28,8 +33,8 @@ const TOOL_OUTPUT_INDENT = "       "; // aligns continuation lines under "→ "
 
 /** Re-indents a JSON tool output as pretty-printed JSON (dropping any indentation the tool
  * itself already applied and re-formatting from scratch, so nesting never stacks); anything
- * that isn't JSON (e.g. a rendered diagram) is left as-is. */
-function prettyToolOutput(output: string): string {
+ * that isn't JSON (e.g. a rendered diagram) is left as-is. Exported for direct unit testing. */
+export function prettyToolOutput(output: string): string {
   try {
     return JSON.stringify(JSON.parse(output), null, 2);
   } catch {
@@ -37,7 +42,8 @@ function prettyToolOutput(output: string): string {
   }
 }
 
-function indentContinuationLines(text: string, indent: string): string {
+/** Exported for direct unit testing. */
+export function indentContinuationLines(text: string, indent: string): string {
   return text
     .split("\n")
     .map((line, i) => (i === 0 ? line : indent + line))
@@ -74,6 +80,7 @@ export async function runChat(patterns: string[], options: ChatOptions): Promise
   }
 
   const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  warnUnresolved(graph);
   if (!graph.teams.has(options.team)) {
     console.error(`Unknown team id: ${options.team}`);
     return 1;
@@ -88,7 +95,11 @@ export async function runChat(patterns: string[], options: ChatOptions): Promise
   }
 
   const client = new Anthropic({ apiKey });
-  const tools = buildChatTools(graph, { onToolCall: options.debug ? printToolCall : undefined });
+  // Outside --debug, still surface that a tool call happened (not the full call/response) so a
+  // multi-tool-call turn reads as "working" rather than looking indistinguishable from a hang.
+  const tools = buildChatTools(graph, {
+    onToolCall: options.debug ? printToolCall : () => process.stdout.write(gray(".")),
+  });
   const model = options.model ?? DEFAULT_CHAT_MODEL;
   const messages: Anthropic.Beta.BetaMessageParam[] = [];
 
@@ -122,6 +133,7 @@ export async function runChat(patterns: string[], options: ChatOptions): Promise
         finalMessage = await client.beta.messages.toolRunner({
           model,
           max_tokens: 4096,
+          max_iterations: MAX_TOOL_ITERATIONS,
           system: persona.systemPrompt,
           tools,
           messages,
@@ -138,7 +150,23 @@ export async function runChat(patterns: string[], options: ChatOptions): Promise
         .filter((block): block is Anthropic.Beta.BetaTextBlock => block.type === "text")
         .map((block) => block.text)
         .join("\n");
-      console.log(`\n${magenta(bold(`${persona.name}>`))} ${text}\n`);
+
+      // A 200 response doesn't mean a complete answer: `toolRunner` returns whatever the last
+      // message was even if it stopped for a reason other than naturally finishing, so surface
+      // that instead of silently printing an empty or truncated reply as if nothing were wrong.
+      if (finalMessage.stop_reason === "tool_use") {
+        console.log(`\n${magenta(bold(`${persona.name}>`))} ${text}`);
+        console.log(
+          gray(`  (hit the ${MAX_TOOL_ITERATIONS}-tool-call limit before finishing — try a narrower question.)\n`),
+        );
+      } else if (finalMessage.stop_reason === "refusal") {
+        console.log(`\n${magenta(bold(`${persona.name}>`))} ${red("(response withheld by the model for this message.)")}\n`);
+      } else if (finalMessage.stop_reason !== "end_turn" && finalMessage.stop_reason !== "stop_sequence") {
+        console.log(`\n${magenta(bold(`${persona.name}>`))} ${text}`);
+        console.log(gray(`  (response ended early: stop_reason=${finalMessage.stop_reason})\n`));
+      } else {
+        console.log(`\n${magenta(bold(`${persona.name}>`))} ${text}\n`);
+      }
     }
   } finally {
     rl.close();

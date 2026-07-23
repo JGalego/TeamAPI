@@ -2,6 +2,7 @@ import { OrgGraphStore } from "@jgalego/teamapi-core";
 import { createMcpServer } from "@jgalego/teamapi-mcp-server";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { expandSeeds } from "../seeds";
+import { warnUnresolved } from "../warn-unresolved";
 
 /** Note: never write to stdout here — it's the MCP protocol channel. Status goes to stderr only. */
 export async function runServeMcp(patterns: string[]): Promise<void> {
@@ -12,6 +13,7 @@ export async function runServeMcp(patterns: string[]): Promise<void> {
 
   const store = new OrgGraphStore({ seedUris: seeds, allowPartial: true });
   await store.load();
+  warnUnresolved(store.current);
 
   const server = createMcpServer(store);
   const transport = new StdioServerTransport();
