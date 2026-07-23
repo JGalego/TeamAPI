@@ -1,5 +1,22 @@
 # @jgalego/teamapi
 
+## 0.2.0
+
+### Minor Changes
+
+- df017b2: Add a Backstage catalog generator: `teamapi generate backstage <patterns...> [--team <id>] --out <dir>` turns the resolved org graph into a Backstage `catalog-info.yaml` — a `Group` per team (with its members), a `User` per member, and, for any team with `services[]`, a `System` grouping them plus a `Component` per service, owned by that team's `Group`. Exported from `@jgalego/teamapi-core` as `buildBackstageCatalog`/`buildBackstageOrgCatalog`/`toBackstageYaml`.
+- 1a5ce98: Add org-history diffing: `teamapi diff <patterns...> --against <ref>` resolves the same patterns against the working tree and against a git revision (a branch, tag, or commit sha), then reports teams added/removed, per-team role/member/service changes, cognitive-load deltas, and edge changes (interactions, dependencies, cross-team reporting lines). Exported from `@jgalego/teamapi-core` as `diffOrgGraphs`/`isEmptyDiff`/`formatOrgGraphDiff`, independent of git — `teamapi diff` is what supplies "the org as of a revision" as one side of the comparison via a git-show-backed loader.
+
+### Patch Changes
+
+- Updated dependencies [df017b2]
+- Updated dependencies [1a5ce98]
+- Updated dependencies [5056af1]
+  - @jgalego/teamapi-core@0.3.0
+  - @jgalego/teamapi-rest-api@0.2.0
+  - @jgalego/teamapi-chat@0.1.3
+  - @jgalego/teamapi-mcp-server@0.2.1
+
 ## 0.1.2
 
 ### Patch Changes
