@@ -6,19 +6,19 @@ import type { Command } from "commander";
 // `vi.mock` factories are hoisted above every other statement in this file (including `const`
 // declarations), so the mocked fns they close over must themselves be created inside
 // `vi.hoisted` — a plain top-level `const` here would be used before initialization.
-const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runServeApi, runServeMcp, runChat } = vi.hoisted(
-  () => ({
+const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runImport, runServeApi, runServeMcp, runChat } =
+  vi.hoisted(() => ({
     runValidate: vi.fn(async () => 0),
     runRender: vi.fn(async () => 0),
     runScaffold: vi.fn(async () => 0),
     runGenerate: vi.fn(async () => 0),
     runDiff: vi.fn(async () => 0),
     runApply: vi.fn(async () => 0),
+    runImport: vi.fn(async () => 0),
     runServeApi: vi.fn(async () => {}),
     runServeMcp: vi.fn(async () => {}),
     runChat: vi.fn(async () => 0),
-  }),
-);
+  }));
 
 vi.mock("../commands/validate", () => ({ runValidate }));
 vi.mock("../commands/render", () => ({ runRender }));
@@ -26,6 +26,7 @@ vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
 vi.mock("../commands/diff", () => ({ runDiff }));
 vi.mock("../commands/apply", () => ({ runApply }));
+vi.mock("../commands/import", () => ({ runImport }));
 vi.mock("../commands/serve-api", () => ({ runServeApi }));
 vi.mock("../commands/serve-mcp", () => ({ runServeMcp }));
 vi.mock("../commands/chat", () => ({ runChat }));
@@ -232,6 +233,26 @@ describe("createProgram — apply", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "apply", "some/path", "--org", "acme"]);
     expect(runApply).toHaveBeenCalledWith(["some/path"], { org: "acme", token: undefined, yes: undefined });
+  });
+});
+
+describe("createProgram — import", () => {
+  it("only accepts github-org as a source", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "import", "slack-org", "acme", "--out", "out"])).rejects.toThrow();
+    expect(runImport).not.toHaveBeenCalled();
+  });
+
+  it("requires --out", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "import", "github-org", "acme"])).rejects.toThrow();
+    expect(runImport).not.toHaveBeenCalled();
+  });
+
+  it("passes source, org, --token, and --out through to runImport", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "import", "github-org", "acme", "--token", "t", "--out", "out"]);
+    expect(runImport).toHaveBeenCalledWith("github-org", "acme", { token: "t", out: "out" });
   });
 });
 

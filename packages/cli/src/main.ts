@@ -9,6 +9,7 @@ import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
 import { runApply } from "./commands/apply";
+import { runImport, type ImportSource } from "./commands/import";
 import { runServeApi } from "./commands/serve-api";
 import { runServeMcp } from "./commands/serve-mcp";
 import { runChat } from "./commands/chat";
@@ -120,6 +121,19 @@ generateCommand
     .option("--yes", "execute the plan instead of just printing it")
     .action(async (patterns: string[], opts: { org: string; token?: string; yes?: boolean }) => {
       process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
+    });
+
+  const IMPORT_SOURCES = ["github-org"] as const;
+  const importCommand = program
+    .command("import")
+    .description("Bootstrap Team API document(s) from an existing system")
+    .option("--token <token>", "GitHub token (defaults to GITHUB_TOKEN/GH_TOKEN env var)")
+    .requiredOption("--out <dir>", "output directory, one <team-id>/teamapi.yml per team");
+  importCommand
+    .addArgument(importCommand.createArgument("<source>", "github-org").choices(IMPORT_SOURCES))
+    .argument("<org>", "GitHub organization login to import teams from")
+    .action(async (source: ImportSource, org: string, opts: { token?: string; out: string }) => {
+      process.exitCode = await runImport(source, org, { token: opts.token, out: opts.out });
     });
 
   program

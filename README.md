@@ -26,6 +26,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
 - [⚙️ Generators](#generators)
   - [▶️ Running it](#running-it)
   - [🗂️ Backstage catalog](#backstage-catalog)
+- [📥 Import from GitHub](#import)
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
 - [🕰️ Org history](#org-history)
@@ -454,13 +455,26 @@ spec:
 
 Cross-team `interactions[]`/`dependencies[]` aren't translated into Backstage's `dependsOn` relations — those model service-to-service dependencies, and Team API only tracks team-level ones, so guessing a mapping would produce plausible-looking but misleading catalog data. `roles[]` aren't represented either: Backstage's `Group`/`User` model has no concept of a role independent of the person filling it.
 
+<a id="import"></a>
+
+## 📥 Import from GitHub
+
+Hand-writing 20 `teamapi.yml` files for an org that already exists is the first thing that stops anyone from trying this — `teamapi import github-org <org> --out <dir>` bootstraps them instead, one `<team-id>/teamapi.yml` per GitHub team: members (name/email resolved from GitHub's user profiles, plus `githubUsername` — see [Sync with GitHub teams](#apply) below) and, for any team whose GitHub team owns repos, a `services[]` entry per repo.
+
+```
+$ teamapi import github-org acme-example --out ./imported
+Wrote 4 team(s) to ./imported/ — every team defaulted to type: stream-aligned with no roles[]; review and adjust both by hand, then run `teamapi validate`.
+```
+
+GitHub teams carry no Team Topologies typing or role hierarchy, so every generated team defaults to `type: stream-aligned` with an empty `roles[]` — both are meant to be corrected by hand, not taken as ground truth. Run `teamapi validate ./imported` next, then fill in `roles[]`, fix each team's `type`, and add `cognitiveLoad`/`interactions`/`dependencies` as you would for any hand-authored team. Requires a GitHub token via `--token` or `GITHUB_TOKEN`/`GH_TOKEN`.
+
 <a id="apply"></a>
 
 ## 🔄 Sync with GitHub teams
 
 Everything above reads the spec; `teamapi apply` is the one command that writes back to a real system — it reconciles actual GitHub teams and memberships in a GitHub org with what the spec declares, the way `terraform plan`/`apply` reconciles infrastructure. One GitHub team per Team API team, matched by slug === team `id`; members are resolved via each member's `githubUsername` (add it alongside `contact` — see the [spec](docs/spec/teamapi-extended-v1.md#member)). A member with no `githubUsername` set is reported as skipped, not silently dropped from the plan.
 
-It always prints a plan first:
+It always prints a plan first. ACME Org's members don't carry a `githubUsername` (they're fictional), so running it as-is reports every member as skipped; add the field to see adds/removes, e.g.:
 
 ```
 $ teamapi apply examples/acme-org --org acme-example
@@ -486,6 +500,7 @@ After `npm install -g @jgalego/teamapi` (or `pnpm build` from a source checkout 
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
 | `teamapi generate crewai\|backstage <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config or a Backstage `catalog-info.yaml` |
 | `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
+| `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
