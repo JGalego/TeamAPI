@@ -1,5 +1,22 @@
 # @jgalego/teamapi
 
+## 0.3.0
+
+### Minor Changes
+
+- dbf75f6: Add `teamapi apply <patterns...> --org <github-org> [--yes]`: reconciles real GitHub teams and memberships with the resolved org graph, the way `terraform plan`/`apply` reconciles infrastructure. One GitHub team per Team API team (matched by slug === team id), members resolved via a new optional `Member.githubUsername` field. Always prints a plan first (`+ create team`, `+`/`- add`/`remove @user`, `!` for members with no `githubUsername` set) and only writes to GitHub when re-run with `--yes`. Exported from `@jgalego/teamapi-core` as `GithubClient`, `planGithubTeamsApply`, `formatApplyPlan`, and `executeGithubTeamsApply`.
+- b73cbfd: Add `teamapi import github-org <org> --out <dir>`: bootstraps `teamapi.yml` documents from an existing GitHub org instead of hand-authoring every team from scratch — one `<team-id>/teamapi.yml` per GitHub team, with members enriched from GitHub user profiles (name, email, `githubUsername`) and `services[]` inferred from the team's repos. Every generated team defaults to `type: stream-aligned` with empty `roles[]`, since GitHub teams carry neither Team Topologies typing nor a role hierarchy — both are meant to be reviewed and corrected by hand. Exported from `@jgalego/teamapi-core` as `importGithubOrg`.
+
+### Patch Changes
+
+- Updated dependencies [dbf75f6]
+- Updated dependencies [b73cbfd]
+  - @jgalego/teamapi-schema@0.3.0
+  - @jgalego/teamapi-core@0.4.0
+  - @jgalego/teamapi-chat@0.1.4
+  - @jgalego/teamapi-mcp-server@0.2.2
+  - @jgalego/teamapi-rest-api@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
