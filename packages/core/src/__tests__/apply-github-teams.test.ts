@@ -19,6 +19,16 @@ function makeTeam(id: string, members: ResolvedTeam["doc"]["members"] = [], focu
       meetings: [],
       interactions: [],
       dependencies: [],
+      agents: [],
+      memory: [],
+      specifications: [],
+      steeringDocuments: [],
+      prompts: [],
+      playbooks: [],
+      policies: [],
+      knowledgeBase: [],
+      workflows: [],
+      sessions: [],
     },
   };
 }

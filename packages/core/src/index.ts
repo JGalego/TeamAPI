@@ -1,5 +1,6 @@
 export * from "./model/org-graph";
 export * from "./model/queries";
+export * from "./model/knowledge-resources";
 export * from "./resolve/loaders";
 export * from "./resolve/graph-builder";
 export * from "./resolve/store";
@@ -15,6 +16,8 @@ export * from "./diagrams/context-map";
 export * from "./diagrams/mermaid";
 export * from "./diagrams/dot";
 export * from "./serialize/team-dto";
+export * from "./context-bundle/derive";
+export * from "./knowledge-graph/derive";
 export * from "./generators/crewai";
 export * from "./generators/backstage";
 export * from "./diff/diff-graph";

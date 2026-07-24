@@ -66,6 +66,16 @@ which is what `info.name`/`role.name`/`member.name` are for.
 | `meetings` | [Meeting](#meeting) | No | Recurring meetings. |
 | `interactions` | [Interaction](#interactions-and-context-mapping) | No | Team Topologies interactions with other teams. |
 | `dependencies` | [Dependency](#dependencies) | No | Dependencies on other teams. |
+| `agents` | [Agent](#ai-native-domains) | No | AI assistants treated as first-class team participants. |
+| `memory` | [MemoryEntry](#ai-native-domains) | No | Persistent organizational memory. |
+| `specifications` | [Specification](#ai-native-domains) | No | Specification-driven-development artifacts. |
+| `steeringDocuments` | [SteeringDocument](#ai-native-domains) | No | Coding standards, conventions, principles — inheritable org->team->project. |
+| `prompts` | [Prompt](#ai-native-domains) | No | Version-controlled, renderable prompt library. |
+| `playbooks` | [Playbook](#ai-native-domains) | No | Structured operational procedures. |
+| `policies` | [Policy](#ai-native-domains) | No | Machine-readable governance for external automation. |
+| `knowledgeBase` | [KnowledgeBaseEntry](#ai-native-domains) | No | ADRs, FAQs, meeting notes, runbooks, design docs. |
+| `workflows` | [Workflow](#ai-native-domains) | No | Process state machines, independent of any CI/CD system. |
+| `sessions` | [AiSession](#ai-native-domains) | No | Record of AI collaboration sessions. |
 
 ## Info
 
@@ -261,6 +271,88 @@ silently reconciling — that disagreement is itself useful organizational signa
 `{ teamName, description?, type: "OK" | "Slowing" | "Blocking", $ref }` — unchanged from the base
 spec.
 
+## AI-native domains
+
+Every section below is additive/optional (`.default([])`), so a document written before they
+existed still parses identically. Every resource in every array below requires a slug `id`, unique within
+that array (validated the same way `roles[].id`/`members[].id` are). Every array-of-objects field
+not called out below (`capabilities`, `tags`, `reviewers`, etc.) is a plain string array.
+
+**Agent**: `{ id, name, description?, provider, model?, role, capabilities: string[], status: "active" | "inactive" | "deprecated" (default "active"), ownerId?: slug (a members[].id), permissions: string[], tags: string[] }`. Worked example: `examples/acme-org/platform-payments/teamapi.yml` declares five agents, each scoped to one review concern (architecture, tests, security, docs, compliance) rather than one do-everything agent — `platform-payments`'s `memory[]` (below) records why. `examples/acme-org/stream-onboarding/teamapi.yml` declares none, backed by a `policies[]` entry rather than silent omission.
+
+**MemoryEntry**: `{ id, title, kind: "architecture-decision" | "convention" | "lesson-learned" | "recurring-issue" | "domain-knowledge" | "historical-decision", body (markdown), tags: string[], contributors: string[], relatedRefs: Ref[], createdAt?, updatedAt? }`.
+
+**Specification**: `{ id, title, kind: "requirement" | "design" | "task" | "acceptance-criteria", status: "draft" | "in-review" | "approved" | "in-progress" | "implemented" | "deprecated" (default "draft"), body?, reviewers: string[], approvals: { reviewer, approvedAt?, comment? }[], linkedPullRequests: string[], linkedIssues: string[], linkedDocuments: Ref[], tags: string[] }`. `linkedPullRequests`/`linkedIssues` are plain strings (URLs or `owner/repo#123`), not `$ref`s — they point at GitHub/GitLab/Jira, not another team's document.
+
+**SteeringDocument**: `{ id, title, category: "coding-standards" | "api-conventions" | "security-guidelines" | "architecture-principles" | "documentation-style" | "custom", scope: "organization" | "team" | "project" (default "team"), appliesTo?, body, tags: string[] }`. `@jgalego/teamapi-core`'s `resolveEffectiveSteering(graph, teamId)` returns a team's own documents plus every document declared on the team(s) reachable by walking the existing `platform.$ref` chain upward — reusing that edge rather than inventing a second hierarchy mechanism. A document the team declares itself always wins over an inherited one sharing its `id`.
+
+**Prompt**: `{ id, name, description?, template (with {{variable}} placeholders), variables: { name, description?, required (default false), default? }[], version (default "1.0.0"), versions: { version, template, changelog?, publishedAt? }[], tags: string[], owner? }`. `@jgalego/teamapi-core`'s `renderPrompt(prompt, variables)` fills placeholders, falling back to each variable's `default`, and throws `MissingPromptVariableError` for a `required` variable left unfilled.
+
+**Playbook**: `{ id, name, category: "incident-response" | "release" | "onboarding" | "offboarding" | "production-deployment" | "custom", steps: { order, title, description?, requiredRoles: string[], automationHook? }[], documentation?, attachments: Ref[], tags: string[] }`.
+
+**Policy**: `{ id, name, category: "pr-requirements" | "required-approvals" | "documentation" | "security" | "dependency" | "custom", severity: "info" | "warning" | "blocking" (default "warning"), description?, rules: { key, description?, value? }[], enforcedBy: string[], tags: string[] }`. This schema declares what a policy requires; enforcing it is external automation's job, named (loosely) in `enforcedBy`.
+
+**KnowledgeBaseEntry**: `{ id, title, kind: "adr" | "faq" | "meeting-notes" | "architecture-doc" | "runbook" | "design-doc", category?, body (markdown), relatedRefs: Ref[], attachments: Ref[], tags: string[] }`.
+
+**Workflow**: `{ id, name, description?, states: { id, name, description? }[], transitions: { from, to, trigger }[], automation: { trigger, action }[], tags: string[] }`. Validated: every `transitions[].from`/`.to` must match a declared `states[].id`.
+
+**AiSession**: `{ id, agentId?: slug (an agents[].id), assistant, model?, objective, promptIds: slug[] (this team's prompts[].id), generatedArtifacts: Ref[], referencedDocuments: Ref[], decisions: string[], startedAt?, endedAt?, tags: string[] }`. Written after the fact — a durable record, the same way `meetings[]` records a standing meeting rather than driving one live.
+
+### Context bundles
+
+`@jgalego/teamapi-core`'s `deriveContextBundle(graph, { goal, teamId?, limit? })` (exposed as `POST /context` and the
+`get_context_bundle` MCP tool) assembles the specifications, steering documents, policies, memory,
+knowledge base entries, prompts, and playbooks most relevant to a stated `goal`, plus (when
+`teamId` is given) that team's related teams, members, and services.
+
+Relevance is a heuristic: `goal` is tokenized (lowercased, alphanumeric runs of length >= 3), and
+each candidate resource is scored by how many of those tokens appear in its text fields/tags —
+returned as `matchedTerms` alongside each result, so the ranking is auditable rather than a black
+box. A resource belonging to the scoped `teamId` gets a fixed score boost, so a team's own material
+usually outranks equally-relevant org-wide material without burying something more relevant found
+elsewhere. This is a v1 scorer — nothing about the interface assumes keyword overlap specifically,
+so a semantic/embeddings-based scorer can replace it later without changing the request/response shape.
+
+### Knowledge graph
+
+`@jgalego/teamapi-core`'s `deriveKnowledgeGraph(graph)` (exposed as `GET /knowledge-graph` and the
+`get_knowledge_graph` MCP tool) links every team, member, role, service, agent, and AI-native
+document into one graph of `{ nodes, edges }`. Edge kinds, each backed by something the schema can
+actually resolve:
+
+- **`owns`** — every resource belongs to the team whose document declares it.
+- **`fills`** — `members[].roleIds` -> `roles[]`.
+- **`reportsTo`/`alignsWith`** — reuses the graph's existing role-level edges.
+- **`interaction`/`dependency`/`platform`** — reuses the graph's existing team-level edges.
+- **`usedPrompt`/`ranBy`** — `sessions[].promptIds`/`.agentId`, same-team fields needing no `$ref` resolution.
+- **`references`** — resolved from `$ref`-bearing fields not otherwise traversed by the graph
+  builder (`memory[].relatedRefs`, `specifications[].linkedDocuments`, `knowledgeBase[].relatedRefs`/`.attachments`,
+  `playbooks[].attachments`), by resolving each `$ref` against its declaring team's `sourceUri` and
+  matching it against another team's `sourceUri`. A `$ref` that doesn't resolve to a known team
+  (e.g. a wiki page) is omitted rather than guessed at.
+
+`traverseKnowledgeGraph(graph, nodeId, maxDepth)` (exposed as `GET /knowledge-graph/:nodeId/traverse`
+and `traverse_knowledge_graph`) does a breadth-first, edges-treated-as-undirected walk from one
+node, for scoping a visualization or answering "what's connected to this ADR."
+
+### Unified search
+
+`searchOrg`/`GET /search`/`search_org` now also covers every AI-native domain — agent, memory,
+specification, steeringDocument, prompt, playbook, policy, knowledgeBase, workflow, and session are
+all valid `SearchResult.kind` values, matched the same way team/service/role/member always were
+(case-insensitive substring, now also over each resource's `tags`).
+
+### Design note: read-only, git-managed, no new persistence
+
+Every AI-native domain above follows the same rule as the rest of this API: **there is no write
+path**. A `POST` you might expect from a typical CRUD API (`POST /teams/:id/agents` to register a
+new agent, say) does not exist here — an agent, a policy, a prompt is added the same way a role or
+a service is: by editing `teamapi.yml` and committing it. The only new `POST` endpoints
+are `POST /context` (a stateless computation over the current graph, not a resource creation) and
+`POST /teams/:id/prompts/:promptId/render` (ditto). This preserves the existing architecture's
+central property — the YAML documents, versioned in git, are the single source of truth — rather
+than bolting on a second, parallel persistence layer that could drift from it.
+
 ## Toolchain-generated artifacts
 
 Given a resolved org graph, `@jgalego/teamapi-core` (consumed identically by the REST API, MCP server, and
@@ -275,6 +367,10 @@ CLI) can produce:
 - **Context map** — DDD relationship diagram derived from `interactions[]`.
 - **Cognitive load report** — per-team or org-wide, sorted by total load.
 - **Full graph JSON** — every resolved team plus every edge, for custom tooling.
+- **Context bundle** — the goal-relevant slice of specifications/steering/policies/memory/knowledge
+  base/prompts/playbooks (see [Context bundles](#context-bundles) above).
+- **Knowledge graph** — every team/person/agent/document as linked nodes (see
+  [Knowledge graph](#knowledge-graph) above), with breadth-first traversal from any node.
 
 See the root `README.md` (or `packages/cli`) for the CLI commands, REST endpoints, and MCP tools
 that expose these.
@@ -292,3 +388,13 @@ documented above):
 | Context-mapping pattern | `Partnership \| CustomerSupplier \| Conformist \| OpenHostService \| AnticorruptionLayer \| SharedKernel` | `interactions[].contextMappingPattern` |
 | Dependency type | `OK \| Slowing \| Blocking` | `dependencies[].type` |
 | Suggested role kind (not enforced) | `ProductManager \| TechLead \| EngineeringManager \| Engineer \| Designer \| SRE \| DataScientist \| DomainExpert \| DeliveryLead` (`SUGGESTED_ROLE_KINDS`; `roles[].kind` accepts any non-empty string) | `roles[].kind` |
+| Agent status | `active \| inactive \| deprecated` | `agents[].status` |
+| Memory kind | `architecture-decision \| convention \| lesson-learned \| recurring-issue \| domain-knowledge \| historical-decision` | `memory[].kind` |
+| Specification kind | `requirement \| design \| task \| acceptance-criteria` | `specifications[].kind` |
+| Specification status | `draft \| in-review \| approved \| in-progress \| implemented \| deprecated` | `specifications[].status` |
+| Steering category | `coding-standards \| api-conventions \| security-guidelines \| architecture-principles \| documentation-style \| custom` | `steeringDocuments[].category` |
+| Steering scope | `organization \| team \| project` | `steeringDocuments[].scope` |
+| Playbook category | `incident-response \| release \| onboarding \| offboarding \| production-deployment \| custom` | `playbooks[].category` |
+| Policy category | `pr-requirements \| required-approvals \| documentation \| security \| dependency \| custom` | `policies[].category` |
+| Policy severity | `info \| warning \| blocking` | `policies[].severity` |
+| Knowledge base kind | `adr \| faq \| meeting-notes \| architecture-doc \| runbook \| design-doc` | `knowledgeBase[].kind` |

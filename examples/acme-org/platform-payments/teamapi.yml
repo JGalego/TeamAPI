@@ -104,3 +104,231 @@ meetings:
 work:
   waysOfWorking:
     - name: Trunk-based development
+agents:
+  - id: architecture-reviewer
+    name: Architecture Reviewer
+    provider: OpenAI
+    model: gpt-4.1
+    role: reviewer
+    capabilities: [code-review, spec-generation, documentation]
+    status: active
+    ownerId: priya-raman
+    permissions: [read:specifications, comment:pull-requests]
+    tags: [architecture, reviews]
+  - id: test-generator
+    name: Test Generator
+    provider: Anthropic
+    model: claude-sonnet-4-5
+    role: qa
+    capabilities: [test-generation, coverage-analysis]
+    status: active
+    ownerId: sam-okafor
+    permissions: [read:specifications, write:pull-requests]
+    tags: [testing, automation]
+  - id: security-scanner
+    name: Security Scanner
+    provider: in-house
+    model: acme-secscan-v3
+    role: security-auditor
+    capabilities: [dependency-scanning, secret-detection, sast]
+    status: active
+    ownerId: priya-raman
+    permissions: [read:pull-requests, comment:pull-requests]
+    tags: [security, ci]
+  - id: docs-writer
+    name: Docs Writer
+    provider: Anthropic
+    model: claude-haiku-4-5
+    role: technical-writer
+    capabilities: [documentation, changelog-generation]
+    status: active
+    ownerId: lin-zhao
+    permissions: [read:specifications, write:documentation]
+    tags: [documentation]
+  - id: compliance-auditor
+    name: Compliance Auditor
+    provider: OpenAI
+    model: gpt-4.1
+    role: compliance-auditor
+    capabilities: [pci-compliance-check, audit-log-review]
+    status: inactive # paused pending a redesign of audit-log retention; see memory/pci-scope-creep-lesson
+    ownerId: priya-raman
+    permissions: [read:knowledge-base, read:policies]
+    tags: [compliance, pci]
+steeringDocuments:
+  - id: security-guidelines
+    title: Payments Security Guidelines
+    category: security-guidelines
+    scope: organization
+    body: >
+      All services handling cardholder data must be PCI-DSS scoped. OAuth 2.0 / OIDC is the only
+      approved authentication protocol for new customer-facing login flows; no home-grown auth.
+    tags: [security, oauth, pci]
+  - id: api-conventions
+    title: Acme API Conventions
+    category: api-conventions
+    scope: organization
+    body: >
+      REST APIs are versioned via the URL path (/v1/...), use kebab-case resource names, and
+      return RFC 7807 problem+json error bodies.
+    tags: [api, conventions]
+policies:
+  - id: pr-requires-two-approvals
+    name: Pull requests require two approvals
+    category: required-approvals
+    severity: blocking
+    description: Every PR touching a payments service must get two approvals before merge.
+    rules:
+      - key: min_approvals
+        value: 2
+    enforcedBy: [github-actions:pr-gate]
+    tags: [governance]
+playbooks:
+  - id: incident-response
+    name: Payments Incident Response
+    category: incident-response
+    steps:
+      - order: 1
+        title: Acknowledge the page
+        requiredRoles: [tech-lead]
+      - order: 2
+        title: Open an incident channel and post initial status
+        requiredRoles: [tech-lead]
+      - order: 3
+        title: Mitigate, then write a postmortem within 48 hours
+        requiredRoles: [tech-lead]
+    documentation: See the on-call runbook for escalation contacts.
+    tags: [incident, on-call]
+knowledgeBase:
+  - id: adr-oauth-for-login
+    title: "ADR: Adopt OAuth 2.0 / OIDC for customer login"
+    kind: adr
+    category: authentication
+    body: >
+      We will use OAuth 2.0 with OIDC for all new customer-facing login flows, delegating to a
+      managed identity provider rather than building password storage ourselves.
+    tags: [oauth, authentication, adr]
+memory:
+  - id: pci-scope-creep-lesson
+    title: PCI scope creep from logging raw card data
+    kind: lesson-learned
+    body: >
+      A 2025 incident traced back to a debug log line that captured raw card numbers, expanding
+      PCI audit scope to the whole logging pipeline. Never log full payment payloads; redact PANs
+      at the edge.
+    tags: [pci, security, logging]
+    contributors: [priya-raman]
+  - id: conways-law-for-agents
+    title: Conway's Law now applies to our agent roster, not just our services
+    kind: architecture-decision
+    body: >
+      We started with one general-purpose "Payments Assistant" agent doing review, tests, security,
+      and docs. Its prompt turned into an unmaintainable pile of conditionals, and three review
+      comments on the same PR would routinely contradict each other. Splitting it into agents
+      scoped the same way our service ownership already is (architecture, tests, security, docs,
+      compliance) fixed both problems: each agent's prompt stays small, and its output maps onto
+      exactly one review concern. Conway's Law says a system mirrors the org that builds it; ours
+      says the agent roster mirrors it too, whether or not anyone designs it that way on purpose.
+    tags: [conways-law, agents, architecture]
+    contributors: [priya-raman]
+workflows:
+  - id: release-workflow
+    name: Release Workflow
+    description: Testing -> approval -> deployment -> announcement.
+    states:
+      - id: testing
+        name: Testing
+      - id: approval
+        name: Approval
+      - id: deployment
+        name: Deployment
+      - id: announcement
+        name: Announcement
+    transitions:
+      - from: testing
+        to: approval
+        trigger: ci-green
+      - from: approval
+        to: deployment
+        trigger: two-approvals
+      - from: deployment
+        to: announcement
+        trigger: deploy-succeeded
+    automation:
+      - trigger: ci-green
+        action: github-actions:promote-to-approval
+    tags: [release]
+prompts:
+  - id: code-review
+    name: Code Review
+    description: Reviews a diff against Acme's API conventions and security guidelines.
+    template: >
+      Review the following diff for {{repository}} against our API conventions and security
+      guidelines. Flag anything that touches authentication or PCI-scoped data.
+    variables:
+      - name: repository
+        required: true
+    version: "1.1.0"
+    tags: [code-review, oauth]
+    owner: priya-raman
+  - id: generate-tests
+    name: Generate Tests
+    description: Generates unit/integration tests for a changed module against its bounded context.
+    template: >
+      Write tests for {{module}} covering its published events and aggregate invariants. Use the
+      bounded context declared in this team's teamapi.yml as ground truth for expected behavior.
+    variables:
+      - name: module
+        required: true
+    version: "1.0.0"
+    tags: [testing]
+    owner: sam-okafor
+  - id: security-scan
+    name: Security Scan
+    description: Scans a diff for secrets, unsafe logging of PCI-scoped fields, and dependency CVEs.
+    template: >
+      Scan {{repository}}@{{ref}} for hardcoded secrets, PCI-scoped fields (PAN, CVV) reaching a
+      log statement, and dependencies with known CVEs.
+    variables:
+      - name: repository
+        required: true
+      - name: ref
+        required: false
+        default: main
+    version: "1.0.0"
+    tags: [security]
+    owner: priya-raman
+sessions:
+  - id: 2026-07-01-oauth-spike
+    agentId: architecture-reviewer
+    assistant: Architecture Reviewer
+    model: gpt-4.1
+    objective: Review the OAuth 2.0 login design for stream-checkout
+    promptIds: [code-review]
+    decisions:
+      - Recommended the authorization-code-with-PKCE flow over implicit grant
+    startedAt: "2026-07-01T09:00:00Z"
+    endedAt: "2026-07-01T10:15:00Z"
+    tags: [oauth]
+  - id: 2026-07-02-oauth-test-coverage
+    agentId: test-generator
+    assistant: Test Generator
+    model: claude-sonnet-4-5
+    objective: Generate test coverage for the OAuth authorization-code-with-PKCE flow in checkout-api
+    promptIds: [generate-tests]
+    decisions:
+      - Added coverage for state-parameter validation and PKCE code-verifier mismatch
+    startedAt: "2026-07-02T09:00:00Z"
+    endedAt: "2026-07-02T09:40:00Z"
+    tags: [oauth, testing]
+  - id: 2026-07-02-oauth-security-scan
+    agentId: security-scanner
+    assistant: Security Scanner
+    model: acme-secscan-v3
+    objective: Scan the OAuth login PR for secret leakage and PCI-scoped logging
+    promptIds: [security-scan]
+    decisions:
+      - No secrets or PCI-scoped fields found in logs; flagged one dependency with a known CVE for upgrade
+    startedAt: "2026-07-02T09:05:00Z"
+    endedAt: "2026-07-02T09:20:00Z"
+    tags: [oauth, security]

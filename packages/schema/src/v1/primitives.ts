@@ -61,3 +61,24 @@ export const SUGGESTED_ROLE_KINDS = [
 
 export const RoleKindSchema = z.string().min(1);
 export type RoleKind = z.infer<typeof RoleKindSchema>;
+
+/**
+ * Shared duplicate-id check for the many AI-native resource arrays (agents, memory, prompts,
+ * etc.) that each need "ids must be unique within this array" validation, the same rule
+ * `RolesSchema`/`MembersSchema` already enforce by hand. Factored out here (rather than copied
+ * per array like those two) because ten-plus call sites made the copy genuinely worse than a
+ * shared helper — call it from inside each array schema's own `.superRefine()`.
+ */
+export function checkUniqueIds(ids: readonly string[], ctx: z.RefinementCtx, arrayLabel: string): void {
+  const seen = new Set<string>();
+  ids.forEach((id, i) => {
+    if (seen.has(id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: `Duplicate id '${id}': ids must be unique within ${arrayLabel}`,
+        path: [i, "id"],
+      });
+    }
+    seen.add(id);
+  });
+}

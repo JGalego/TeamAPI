@@ -106,3 +106,15 @@ dependencies:
     description: Checkout waits on the new applicant activation event schema before it can drop legacy polling
     type: Slowing
     $ref: ../stream-onboarding/teamapi.yml
+specifications:
+  - id: oauth-login-support
+    title: Implement OAuth 2.0 login for checkout
+    kind: requirement
+    status: in-review
+    body: >
+      Checkout must support OAuth 2.0 / OIDC login so customers can authenticate with an external
+      identity provider instead of Acme's legacy password flow.
+    reviewers: [diego-alves]
+    linkedDocuments:
+      - $ref: ../platform-payments/teamapi.yml
+    tags: [oauth, authentication]

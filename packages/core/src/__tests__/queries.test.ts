@@ -127,6 +127,16 @@ describe("listServices / findServiceOwner", () => {
         meetings: [],
         interactions: [],
         dependencies: [],
+        agents: [],
+        memory: [],
+        specifications: [],
+        steeringDocuments: [],
+        prompts: [],
+        playbooks: [],
+        policies: [],
+        knowledgeBase: [],
+        workflows: [],
+        sessions: [],
       },
     });
     const collidingGraph: OrgGraph = {

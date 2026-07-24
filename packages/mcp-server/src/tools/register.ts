@@ -27,6 +27,7 @@ import {
 } from "@jgalego/teamapi-core";
 import { errorResult, jsonResult, textResult } from "./result";
 import { looseRegisterTool } from "./loose-register";
+import { registerKnowledgeTools } from "./register-knowledge";
 
 const DiagramScopeSchema = z.enum(["topology", "hierarchy", "context-map", "org-hierarchy"]);
 const DiagramFormatSchema = z.enum(["mermaid", "dot"]);
@@ -240,4 +241,6 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
     },
     async () => jsonResult(orgWideCognitiveLoadReport(store.current)),
   );
+
+  registerKnowledgeTools(server, store);
 }
