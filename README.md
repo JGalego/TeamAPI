@@ -1,19 +1,23 @@
 <div align="center">
   <img src="docs/assets/logo.svg" alt="Team API Toolchain" width="164"><br>
   <h1>TeamAPI</h1>
-  <p>Your org chart, compiled.</p>
+  <p>Who owns this? Just <code>curl</code> your org.</p>
 
   [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 </div>
 
-Write your org as a **Team API as Code** spec — one YAML file per team — and this toolchain turns it into organigrams, a REST API, an MCP server for LLM assistants, and config for other tools like [CrewAI](https://crewai.com/) and [Backstage](https://backstage.io/).
+Every team has an API: what it owns, who's accountable for what, how to ask it for things, how much it can take on. Every other team depends on it, and none of them can look it up. Usually this information is scattered across wikis, onboarding docs, and people's heads, where it drifts out of date.
 
-Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design).
+[Team API as Code](docs/spec/teamapi-extended-v1.md) solves this by writing it all down: one `teamapi.yml` per team declaring `services`, `roles`, `members`, `interactions`, and `cognitiveLoad` — reviewed in pull requests and versioned in git.
+
+**TeamAPI** makes that spec executable. It renders diagrams, serves a read-only REST API and an MCP server for LLM assistants, gives any team a chat persona, and generates config for tools like [CrewAI](https://crewai.com/) and [Backstage](https://backstage.io/).
+
+The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/TeamTopologies/TeamAPI-As-Code), adding roles, people, and cognitive load. The concept comes from [Team Topologies](https://teamtopologies.com/); the bounded-context and context-map vocabulary from [Domain-Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design).
 
 ## 🧭 Contents
 
 - [🚀 Quick start](#quick-start)
-- [📦 What you get](#what-you-get)
+- [📚 Examples](#examples)
 - [🧠 AI-native team knowledge](#ai-native)
 - [📊 Diagrams](#diagrams)
   - [🔀 Team-interaction organigram](#team-interaction-organigram)
@@ -21,7 +25,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
   - [🧑‍💼 Role hierarchy](#role-hierarchy)
   - [🏢 Org-wide role hierarchy](#org-wide-role-hierarchy)
 - [🔌 REST API](#rest-api)
-- [📊 Dashboard](#dashboard)
+- [🖥️ Dashboard](#dashboard)
 - [🤖 MCP tools](#mcp-tools)
 - [💬 Chat](#chat)
 - [⚙️ Generators](#generators)
@@ -32,6 +36,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
 - [💻 CLI reference](#cli-reference)
 - [🕰️ Org history](#org-history)
 - [🔁 CI integration](#ci-integration)
+- [🤝 Contributing](#contributing)
 
 <a id="quick-start"></a>
 
@@ -43,7 +48,7 @@ Install the CLI from npm:
 npm install -g @jgalego/teamapi
 ```
 
-Want to try it against a sample org first, or contribute? Clone and build from source instead:
+Or clone and build from source:
 
 ```bash
 git clone https://github.com/JGalego/TeamAPI.git && cd TeamAPI
@@ -51,7 +56,7 @@ pnpm install
 pnpm build
 ```
 
-Then run any `teamapi` command against **ACME Org**, the small sample company bundled with this repo at [`examples/acme-org`](examples/acme-org):
+Try it against the sample org bundled with this repo, [`examples/acme-org`](examples/acme-org):
 
 ```bash
 teamapi validate examples/acme-org
@@ -60,9 +65,15 @@ teamapi serve-api examples/acme-org --port 3000
 teamapi serve-mcp examples/acme-org     # point Claude Desktop/Code at this command
 ```
 
-ACME Org is a small, fictional e-commerce company that ships payments and checkout software. Platform Payments runs the payments and ledger services that everyone else depends on; Stream Checkout owns the cart and checkout flow; Stream Onboarding handles sign-up and KYC; and Enabling DevEx coaches the other three on testing and delivery practices. Every example in this README runs against ACME Org, so you can try everything below right now — no setup beyond the two commands above.
+[Examples](#examples) covers ACME Org and the other sample orgs, each modeled on a real company's topology.
 
-Want a bigger gallery, or a shape closer to your own org? Four more fictional-but-recognizable orgs ship alongside ACME, each modeled after a well-known real-world team topology:
+<a id="examples"></a>
+
+## 📚 Examples
+
+Every example in this README runs against **ACME Org** ([`examples/acme-org`](examples/acme-org)), a small fictional e-commerce company: Platform Payments runs the `payments-api` and `ledger` services everyone else depends on, Stream Checkout owns the cart and checkout flow, Stream Onboarding handles sign-up and KYC, and Enabling DevEx coaches the other three on testing and delivery practices.
+
+Four more fictional-but-recognizable orgs ship alongside it, each modeled after a real-world team topology:
 
 | Example | Modeled after | Shape |
 |---|---|---|
@@ -71,19 +82,13 @@ Want a bigger gallery, or a shape closer to your own org? Four more fictional-bu
 | [`examples/cartwell-org`](examples/cartwell-org) | Amazon-style marketplace | Two-pizza, single-threaded-owner teams (Search, Fulfillment) plus a seller-enablement team |
 | [`examples/wavelength-org`](examples/wavelength-org) | Spotify-style squads/chapters | A playlists squad, an audio-platform team, and a cross-squad chapter-coaching team |
 
-They work with every command in this README — just swap in the path, e.g. `teamapi render examples/meridian-pay-org --scope topology`.
-
-<a id="what-you-get"></a>
-
-## 📦 What you get
-
-Render [diagrams](#diagrams) from the spec — team-interaction organigrams, DDD context maps, and role hierarchies — as Mermaid or DOT. Query it live through a read-only [REST API](#rest-api) with interactive Swagger docs, or an [MCP server](#mcp-tools) that exposes the same data as tools an LLM assistant can call. [Chat](#chat) with a team or a specific team member instead of querying it directly. Or turn it into config for other tools, like [CrewAI](https://docs.crewai.com/), with the built-in [generators](#generators). See the [CLI reference](#cli-reference) for every command and flag.
+They work with every command in this README — swap in the path, e.g. `teamapi render examples/meridian-pay-org --scope topology`.
 
 <a id="ai-native"></a>
 
 ## 🧠 AI-native team knowledge
 
-A team also includes the AI agents working alongside its people, and the specifications, standards, prompts, playbooks, policies, and history they all draw on. These are modeled as new, optional sections on the same `teamapi.yml` document model everything else already uses:
+A team includes the AI agents working alongside its people, and the knowledge they all draw on. Both live as optional sections in the same `teamapi.yml` document as everything else:
 
 | Section | What it is |
 |---|---|
@@ -98,25 +103,25 @@ A team also includes the AI agents working alongside its people, and the specifi
 | `workflows[]` | Process state machines (e.g. testing → approval → deployment → announcement), independent of any particular CI/CD system. |
 | `sessions[]` | A record of AI collaboration sessions: objective, prompts used, artifacts produced, decisions made. |
 
-Since a document without any of these still parses identically to before they existed, adopting them is purely additive — no migration required for existing `teamapi.yml` files. Same read-only design as the rest of this API: these are edited in git, not `POST`ed — the YAML file stays the single source of truth.
+Every section is optional, so documents written before they existed keep validating unchanged — there's no migration. And like the rest of the toolchain, they're read-only: edited in git, never `POST`ed.
 
-**Worked example — agents mirror team boundaries, same as services do.** In `examples/acme-org`, `platform-payments` runs a five-agent fleet (`architecture-reviewer`, `test-generator`, `security-scanner`, `docs-writer`, `compliance-auditor`), scoped narrowly enough that three of them review the same OAuth pull request in parallel without contradicting each other — `memory/conways-law-for-agents` records why that split replaced an earlier single do-everything agent. `stream-onboarding`, the only team touching raw KYC data, carries a `policies/no-agents-on-applicant-pii` entry instead of any `agents[]` at all: `GET /teams/platform-payments/agents` returns five entries, `GET /teams/stream-onboarding/agents` returns `[]` for a documented reason, not an oversight.
+**Worked example — agents mirror team boundaries, the same way services do.** In `examples/acme-org`, `platform-payments` runs a five-agent fleet (`architecture-reviewer`, `test-generator`, `security-scanner`, `docs-writer`, `compliance-auditor`), each scoped narrowly enough that three can review the same OAuth pull request in parallel without contradicting each other; `memory/conways-law-for-agents` records why that split replaced a single do-everything agent. `stream-onboarding`, the only team touching raw KYC data, carries a `policies/no-agents-on-applicant-pii` entry and no `agents[]` at all — so `GET /teams/stream-onboarding/agents` returns `[]` for a documented reason, not an oversight.
 
-**Context bundles**: `POST /context` (or the `get_context_bundle` MCP tool) takes a `goal` — e.g. `{ "goal": "Implement OAuth" }`, optionally `teamId`-scoped — and returns the minimum high-quality set of specifications, steering documents, policies, memory, knowledge base entries, prompts, and playbooks relevant to it (a transparent keyword-overlap ranking, with `matchedTerms` per result — not an opaque embedding score), plus the scoped team's related teams, members, and services. It's the one call an AI assistant needs to get oriented on a task instead of walking the whole graph by hand.
+**Context bundles**: `POST /context` (or the `get_context_bundle` MCP tool) takes a goal — `{ "goal": "Implement OAuth" }`, optionally scoped to one `teamId` — and returns just the entries relevant to it from across those sections, plus the scoped team's related teams, members, and services. Ranking is keyword overlap, and each hit carries the `matchedTerms` behind it rather than an opaque similarity score. It's the one call that orients an assistant on a task without walking the whole graph.
 
-**The knowledge graph** (`GET /knowledge-graph`, `GET /knowledge-graph/:nodeId/traverse`, or the `get_knowledge_graph`/`traverse_knowledge_graph` MCP tools) links every team, person, agent, and document by ownership, role, team-topology, and resolved cross-team `$ref` edges — for traversal or visualization tooling to walk.
+**The knowledge graph** (`GET /knowledge-graph`, `GET /knowledge-graph/:nodeId/traverse`, or the `get_knowledge_graph`/`traverse_knowledge_graph` MCP tools) links every team, person, agent, and document by ownership, role, team topology, and resolved cross-team `$ref` edges, for visualization or traversal tooling to consume.
 
-Every other domain gets the same read-only REST shape: `GET /<plural>` (org-wide, searchable), `GET /teams/:id/<plural>`, `GET /teams/:id/<plural>/:resourceId` — e.g. `/agents`, `/teams/stream-checkout/specifications`, `/teams/platform-payments/prompts/code-review` — plus a matching `list_*`/`get_*` MCP tool pair. `POST /teams/:id/prompts/:promptId/render` (or `render_prompt`) fills a prompt's `{{variable}}` placeholders. `GET /search?q=` now covers every new domain too. See [`docs/spec/teamapi-extended-v1.md`](docs/spec/teamapi-extended-v1.md) for the full field-by-field spec.
+Each section gets the same read-only REST shape — `GET /<plural>`, `GET /teams/:id/<plural>`, `GET /teams/:id/<plural>/:resourceId`, e.g. `/teams/platform-payments/prompts/code-review` — plus a matching `list_*`/`get_*` MCP tool pair, and all of them are covered by `GET /search?q=`. `POST /teams/:id/prompts/:promptId/render` (or `render_prompt`) fills a prompt's `{{variable}}` placeholders. Field-by-field reference: [`docs/spec/teamapi-extended-v1.md`](docs/spec/teamapi-extended-v1.md).
 
 <a id="diagrams"></a>
 
 ## 📊 Diagrams
 
-Four kinds of diagram, rendered from ACME Org's resolved org graph as Mermaid or DOT: run `teamapi render <patterns> --scope <scope>`, where `<scope>` is `topology`, `context-map`, `hierarchy` (needs `--team <id>`), or `org-hierarchy`. Add `--format dot` for Graphviz, or `--out <file>` to write to disk instead of stdout.
+`teamapi render <patterns> --scope <scope>` renders the resolved org graph as Mermaid or DOT, where `<scope>` is `topology`, `context-map`, `hierarchy` (needs `--team <id>`), or `org-hierarchy`. Add `--format dot` for Graphviz, or `--out <file>` to write to disk instead of stdout. The diagrams below are ACME Org's.
 
 <a id="team-interaction-organigram"></a>
 
-#### 🔀 Team-interaction organigram: `--scope topology`
+### 🔀 Team-interaction organigram: `--scope topology`
 
 Who talks to whom, and how tightly.
 
@@ -135,11 +140,9 @@ flowchart LR
 
 <a id="ddd-context-map"></a>
 
-#### 🗺️ DDD context map: `--scope context-map`
+### 🗺️ DDD context map: `--scope context-map`
 
-The same relationships, focused on how the underlying software should actually fit together.
-
-Reinterprets the same interactions as DDD relationships: an explicit `contextMappingPattern` wins where a team declares one, otherwise it's inferred from the Team Topologies interaction mode (`x-as-a-service` → Open Host Service, `collaboration` → Partnership; `facilitating` is left unclassified — it's coaching, not a runtime integration).
+The same relationships, reinterpreted as DDD patterns — how the underlying software should actually fit together. An explicit `contextMappingPattern` wins where a team declares one; otherwise it's inferred from the Team Topologies interaction mode (`x-as-a-service` → `OpenHostService`, `collaboration` → `Partnership`). `facilitating` is left unclassified: it's coaching, not a runtime integration.
 
 ```mermaid
 flowchart LR
@@ -155,11 +158,9 @@ flowchart LR
 
 <a id="role-hierarchy"></a>
 
-#### 🧑‍💼 Role hierarchy: `--scope hierarchy --team stream-checkout`
+### 🧑‍💼 Role hierarchy: `--scope hierarchy --team stream-checkout`
 
-Who reports to whom on one team, and who's actually sitting in each seat.
-
-`roles[]`/`reportsTo` annotated with the `members[]` filling each seat, laid out top-down like a conventional org chart (manager above, reports below).
+Who reports to whom on one team, and who's actually sitting in each seat: `roles[]`/`reportsTo` annotated with the `members[]` filling them, laid out top-down like a conventional org chart.
 
 ```mermaid
 flowchart TD
@@ -175,9 +176,7 @@ flowchart TD
 
 ### 🏢 Org-wide role hierarchy: `--scope org-hierarchy`
 
-The same reporting lines, zoomed out to the whole company.
-
-Every team's roles, grouped into one box per team: a solid `reports to` arrow for formal reporting (`reportsTo`/`reportsToRef`, same-team or cross-team) and a dashed `aligns with` arrow for `alignsWith` (dotted-line/matrix relationships, e.g. a community-of-practice lead a role coordinates with but doesn't report to).
+The same reporting lines, zoomed out to the whole company, one box per team. A solid arrow is formal reporting (`reportsTo`/`reportsToRef`, same-team or cross-team); a dashed one is `alignsWith`, for matrix relationships like a community-of-practice lead a role coordinates with but doesn't report to.
 
 ```mermaid
 flowchart TD
@@ -216,7 +215,7 @@ flowchart TD
 
 ## 🔌 REST API
 
-Prefer clicking over typing? `teamapi serve-api examples/acme-org --port 3000` spins up a live REST API over ACME Org. Open **`/docs`** for a full Swagger UI — every endpoint has a "Try it out" button — or grab `/docs/json` for the raw OpenAPI spec.
+`teamapi serve-api examples/acme-org --port 3000` spins up a live REST API over ACME Org. Open **`/docs`** for a Swagger UI with a "Try it out" button on every endpoint, or `/docs/json` for the raw OpenAPI spec.
 
 | Endpoint | Returns |
 |---|---|
@@ -228,13 +227,13 @@ Prefer clicking over typing? `teamapi serve-api examples/acme-org --port 3000` s
 | `GET /diagrams/topology`, `/diagrams/hierarchy/:teamId`, `/diagrams/org-hierarchy` | Diagram data |
 | `GET /context-map` | DDD context map |
 | `GET /cognitive-load`, `/cognitive-load/:teamId` | Cognitive load assessments |
-| `GET /agents`, `/memory`, `/specifications`, `/steering`, `/prompts`, `/playbooks`, `/policies`, `/knowledge-base`, `/workflows`, `/sessions` (and `/teams/:id/<these>`, `/teams/:id/<these>/:resourceId`) | [AI-native resource domains](#ai-native) |
+| `GET /<domain>`, `/teams/:id/<domain>`, `/teams/:id/<domain>/:resourceId` | Any [AI-native section](#ai-native): `/agents`, `/memory`, `/specifications`, `/steering`, `/prompts`, `/playbooks`, `/policies`, `/knowledge-base`, `/workflows`, `/sessions` |
 | `POST /teams/:id/prompts/:promptId/render` | Fill a prompt's `{{variable}}` placeholders |
 | `POST /context` | [Context bundle](#ai-native) for a stated goal |
 | `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse` | [Knowledge graph](#ai-native) traversal |
 | `GET /health` | Health check |
 
-**Example:** <code>curl http://127.0.0.1:3000/cognitive-load</code>
+**Example:** `curl http://127.0.0.1:3000/cognitive-load`
 
 ```json
 [
@@ -271,9 +270,9 @@ Prefer clicking over typing? `teamapi serve-api examples/acme-org --port 3000` s
 
 <a id="dashboard"></a>
 
-## 📊 Dashboard
+## 🖥️ Dashboard
 
-Prefer a browser to `curl`? The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — no separate process, no build step, just static HTML/CSS/JS fetching the REST API you already have running. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded — never color alone), free-text search, and a tabbed diagram viewer (topology / org-hierarchy / context-map) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — the team list, cognitive load, and search keep working.
+The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — static HTML/CSS/JS fetching the REST API you already have running, no separate process or build step. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded, never color alone), free-text search, and a tabbed diagram viewer (`topology` / `org-hierarchy` / `context-map`) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — team list, cognitive load, and search keep working.
 
 ```bash
 teamapi serve-api examples/acme-org --port 3000
@@ -286,11 +285,11 @@ open http://127.0.0.1:3000/dashboard
 
 ## 🤖 MCP tools
 
-Prefer just asking? `teamapi serve-mcp examples/acme-org` starts an MCP server you can point Claude Desktop or Claude Code at. Then ask about ACME Org like you'd ask a colleague — "who owns checkout-api?", "which team's overloaded?" — no query language needed.
+`teamapi serve-mcp examples/acme-org` starts an MCP server you can point Claude Desktop or Claude Code at, then ask about ACME Org like you'd ask a colleague — "who owns checkout-api?", "which team's overloaded?" — no query language needed.
 
-`list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, `get_org_cognitive_load_report` — plus a `list_*`/`get_*` pair per [AI-native resource domain](#ai-native) (`list_agents`/`get_agent`, `list_memory_entries`/`get_memory_entry`, `list_specifications`/`get_specification`, `list_steering_documents`/`get_steering_document`, `list_prompts`/`get_prompt`/`render_prompt`, `list_playbooks`/`get_playbook`, `list_policies`/`get_policy`, `list_knowledge_base_entries`/`get_knowledge_base_entry`, `list_workflows`/`get_workflow`, `list_ai_sessions`/`get_ai_session`), plus `get_context_bundle`, `get_knowledge_graph`, and `traverse_knowledge_graph`.
+The core tools are `list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, and `get_org_cognitive_load_report`. Each [AI-native section](#ai-native) adds a `list_*`/`get_*` pair — `list_agents`/`get_agent`, `list_prompts`/`get_prompt`, and so on — alongside `render_prompt`, `get_context_bundle`, `get_knowledge_graph`, and `traverse_knowledge_graph`.
 
-**Example:** an assistant calling <code>find_service_owner</code> with <code>{ "serviceName": "checkout-api" }</code>
+**Example:** an assistant calling `find_service_owner` with `{ "serviceName": "checkout-api" }`
 
 ```json
 {
@@ -316,7 +315,7 @@ Prefer just asking? `teamapi serve-mcp examples/acme-org` starts an MCP server y
 
 ## 💬 Chat
 
-Want to talk to a team instead of querying it? `teamapi chat examples/acme-org --team stream-checkout` starts an interactive session where the assistant speaks as that team — or, with `--member <id>`, as one specific person on it. It's backed by a live tool-use loop over the same org-graph operations the MCP server exposes, so it can accurately answer questions about any team, not just its own. Requires `ANTHROPIC_API_KEY` in your environment. Add `--debug` to see the persona's system prompt and every tool call as it happens.
+`teamapi chat examples/acme-org --team stream-checkout` starts an interactive session where the assistant speaks as that team — or, with `--member <id>`, as one specific person on it. It's backed by a live tool-use loop over the same org-graph operations the MCP server exposes, so it can accurately answer questions about any team, not just its own. Requires `ANTHROPIC_API_KEY` in your environment; add `--debug` to see the persona's system prompt and every tool call as it happens.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -366,24 +365,6 @@ You> what's the worst thing about your job?
          }
        }
 
-  ⚙  get_team_interactions({"teamId":"stream-checkout","direction":"both"})
-     → [
-         {
-           "kind": "interaction",
-           "from": "stream-checkout",
-           "to": "platform-payments",
-           "mode": "x-as-a-service",
-           "purpose": "Consume payment processing and ledger services to reduce cognitive load"
-         },
-         {
-           "kind": "interaction",
-           "from": "stream-checkout",
-           "to": "stream-onboarding",
-           "mode": "collaboration",
-           "purpose": "Jointly define the applicant-to-customer handoff contract"
-         }
-       ]
-
 Diego Alves> Honestly? We're carrying real extraneous load — three upstream integrations
 (payments, onboarding, fulfillment) with inconsistent contracts, so a chunk of my week goes to
 translating between them instead of building. Our own self-assessment flags us as "overloaded."
@@ -394,9 +375,9 @@ An anticorruption layer would help a lot.
 
 ## ⚙️ Generators
 
-Want your teams to double as AI agents? `teamapi generate crewai examples/acme-org --out ./crews` turns each team into a [CrewAI](https://docs.crewai.com/) crew — roles become agents, responsibilities become tasks. Give a responsibility an optional `doneWhen` and it becomes that task's `expected_output`; without one, you get a generic status-report stand-in instead.
+`teamapi generate crewai examples/acme-org --out ./crews` turns each team into a [CrewAI](https://docs.crewai.com/) crew — roles become agents, responsibilities become tasks. A responsibility's optional `doneWhen` becomes that task's `expected_output`; without one, you get a generic status-report stand-in.
 
-**Example:** <code>crews/platform-payments/agents.yaml</code>
+**Example:** `crews/platform-payments/agents.yaml`
 
 ```yaml
 tech_lead:
@@ -456,9 +437,9 @@ For a crew `org.yaml` marks `sequential` (most of them), skip `process`/`manager
 
 ### 🗂️ Backstage catalog
 
-Already running [Backstage](https://backstage.io/)? `teamapi generate backstage examples/acme-org --out ./catalog` turns the same org graph into a `catalog-info.yaml`: one `Group` per team (with its `members[]`), one `User` per member, and — for any team that owns `services[]` — a `System` grouping them plus one `Component` per service, owned by that team's `Group`. Drop the file at your catalog's discovery root (or point Backstage's `catalog.locations` config at it) and it imports directly — no hand-maintained catalog YAML to keep in sync with your org chart.
+`teamapi generate backstage examples/acme-org --out ./catalog` turns the same org graph into a `catalog-info.yaml` for [Backstage](https://backstage.io/): one `Group` per team (with its `members[]`), one `User` per member, and — for any team that owns `services[]` — a `System` grouping them plus one `Component` per service, owned by that team's `Group`. Drop the file at your catalog's discovery root (or point Backstage's `catalog.locations` config at it) and it imports directly — no hand-maintained catalog YAML to keep in sync with your org chart.
 
-**Example:** <code>catalog/catalog-info.yaml</code> (excerpt, `--team stream-checkout`)
+**Example:** `catalog/catalog-info.yaml` (excerpt, `--team stream-checkout`)
 
 ```yaml
 apiVersion: backstage.io/v1alpha1
@@ -495,7 +476,7 @@ Cross-team `interactions[]`/`dependencies[]` aren't translated into Backstage's 
 
 ## 📥 Import from GitHub
 
-Hand-writing 20 `teamapi.yml` files for an org that already exists is the first thing that stops anyone from trying this — `teamapi import github-org <org> --out <dir>` bootstraps them instead, one `<team-id>/teamapi.yml` per GitHub team: members (name/email resolved from GitHub's user profiles, plus `githubUsername` — see [Sync with GitHub teams](#apply) below) and, for any team whose GitHub team owns repos, a `services[]` entry per repo.
+`teamapi import github-org <org> --out <dir>` bootstraps `teamapi.yml` files from an org that already exists on GitHub, instead of hand-writing them: one `<team-id>/teamapi.yml` per GitHub team, with members resolved from GitHub's user profiles (name, email, and the `githubUsername` that [Sync with GitHub teams](#apply) needs) and a `services[]` entry per repo the team owns.
 
 ```
 $ teamapi import github-org acme-example --out ./imported
@@ -527,7 +508,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 
 ## 💻 CLI reference
 
-After `npm install -g @jgalego/teamapi` (or `pnpm build` from a source checkout — see [Quick start](#quick-start)) `teamapi` is on your PATH — run commands directly as `teamapi <command> ...` from anywhere. If you built from source with `CI=true` (linking is skipped there), use `pnpm teamapi <command> ...` from the repo root instead.
+`npm install -g @jgalego/teamapi` — or `pnpm build` from a source checkout — puts `teamapi` on your PATH. If you built with `CI=true`, which skips linking, run `pnpm teamapi <command> ...` from the repo root instead.
 
 | Command | Purpose |
 |---|---|
@@ -564,13 +545,13 @@ Role edges:
   + aligns-with stream-onboarding.tech-lead -> enabling-devex.coach
 ```
 
-No differences prints a one-line "No differences between `<ref>` and the working tree." instead of an empty report. Exits 0 either way — this is an inspection tool, not a validation gate (see [CI integration](#ci-integration) for that).
+When nothing has changed, it prints a single line rather than an empty report. Either way it exits 0 — this is an inspection tool, not a validation gate (see [CI integration](#ci-integration) for that).
 
 <a id="ci-integration"></a>
 
 ## 🔁 CI integration
 
-Want validation and a diagram preview on every PR that touches your `teamapi.yml` files, without anyone running the CLI locally? Add [`JGalego/TeamAPI/.github/actions/validate`](.github/actions/validate) to a workflow:
+Add [`JGalego/TeamAPI/.github/actions/validate`](.github/actions/validate) to a workflow for validation and a diagram preview on every PR that touches your `teamapi.yml` files, without anyone running the CLI locally:
 
 ```yaml
 on:
@@ -591,9 +572,11 @@ jobs:
           render-scope: topology
 ```
 
-It installs `@jgalego/teamapi`, runs `teamapi validate`, and — on a pull request — posts (and keeps updated on later pushes) a single PR comment with the result and, if validation passed, a live-rendered Mermaid diagram preview. The job fails if validation fails, so this can gate a required check. This repo dogfoods it against [`examples/acme-org`](examples/acme-org) — see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml). Full inputs/outputs: [`.github/actions/validate/README.md`](.github/actions/validate/README.md).
+It installs `@jgalego/teamapi` and runs `teamapi validate`, then posts a single PR comment with the result — kept up to date on later pushes, and carrying a live-rendered Mermaid preview when validation passes. The job fails when validation fails, so it can gate a required check. This repo dogfoods it against [`examples/acme-org`](examples/acme-org); see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml) and the action's [inputs and outputs](.github/actions/validate/README.md).
 
-## Contributing
+<a id="contributing"></a>
+
+## 🤝 Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, everyday commands, and the release process.
 Security issues: see [SECURITY.md](SECURITY.md) rather than filing a public issue.
