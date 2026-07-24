@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="docs/assets/logo.svg" alt="Team API Toolchain" width="164"><br>
+  <img src="docs/assets/logo.svg" alt="TeamAPI" width="112"><br>
   <h1>TeamAPI</h1>
   <p>Who owns this? Just <code>curl</code> your org.</p>
 
