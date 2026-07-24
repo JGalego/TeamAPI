@@ -1,12 +1,12 @@
 <div align="center">
   <img src="docs/assets/logo.svg" alt="Team API Toolchain" width="164"><br>
   <h1>TeamAPI</h1>
-  <p>Every team has an API. Write it down.</p>
+  <p>Documentation you can call.</p>
 
   [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 </div>
 
-What a team owns, who's accountable for what, how to ask it for things, how much it can take on — every other team depends on this, and none of them can look it up. Usually this information is scattered across wikis, onboarding docs, and people's heads, where it drifts out of date.
+Every team has an API: what it owns, who's accountable for what, how to ask it for things, how much it can take on. Every other team depends on it, and none of them can look it up. Usually this information is scattered across wikis, onboarding docs, and people's heads, where it drifts out of date.
 
 [Team API as Code](docs/spec/teamapi-extended-v1.md) solves this by writing it all down: one `teamapi.yml` per team declaring `services`, `roles`, `members`, `interactions`, and `cognitiveLoad` — reviewed in pull requests and versioned in git.
 
