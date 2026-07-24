@@ -14,6 +14,9 @@ import { contextMapRoutes } from "./routes/context-map";
 import { cognitiveLoadRoutes } from "./routes/cognitive-load";
 import { healthRoutes } from "./routes/health";
 import { dashboardRoutes } from "./routes/dashboard";
+import { knowledgeRoutes } from "./routes/knowledge";
+import { contextRoutes } from "./routes/context";
+import { knowledgeGraphRoutes } from "./routes/knowledge-graph";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -44,7 +47,10 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
       info: {
         title: "Team API",
         description:
-          "Read-only API over a resolved Team API as Code org graph: teams, services, roles, interactions, dependencies, cognitive load, DDD context mapping, and rendered organigrams.",
+          "Read-only API over a resolved Team API as Code org graph: teams, people, AI agents, services, " +
+          "specifications, steering documents, prompts, playbooks, policies, knowledge base, workflows, sessions, " +
+          "interactions, dependencies, cognitive load, DDD context mapping, context bundles, and a cross-resource " +
+          "knowledge graph.",
         version: packageVersion,
       },
       tags: [
@@ -55,6 +61,18 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Diagrams", description: "Rendered Mermaid/DOT organigrams" },
         { name: "Context Map", description: "DDD context mapping derived from interactions" },
         { name: "Cognitive Load", description: "Team Topologies cognitive load reports" },
+        { name: "Agents", description: "AI agents declared as first-class team participants" },
+        { name: "Memory", description: "Persistent organizational memory" },
+        { name: "Specifications", description: "Specification-driven-development artifacts" },
+        { name: "Steering", description: "Coding standards, conventions, and principles, with org->team inheritance" },
+        { name: "Prompts", description: "Version-controlled, renderable prompt library" },
+        { name: "Playbooks", description: "Structured operational procedures" },
+        { name: "Policies", description: "Machine-readable governance for external automation to enforce" },
+        { name: "Knowledge Base", description: "ADRs, FAQs, runbooks, design docs" },
+        { name: "Workflows", description: "Process state machines, independent of any CI/CD system" },
+        { name: "Sessions", description: "AI collaboration session history" },
+        { name: "Context", description: "Context bundle assembly for AI assistants" },
+        { name: "Knowledge Graph", description: "Cross-resource graph traversal and visualization" },
         { name: "Health", description: "Liveness check" },
       ],
     },
@@ -74,6 +92,9 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   await app.register(diagramsRoutes);
   await app.register(contextMapRoutes);
   await app.register(cognitiveLoadRoutes);
+  await app.register(knowledgeRoutes);
+  await app.register(contextRoutes);
+  await app.register(knowledgeGraphRoutes);
   await app.register(dashboardRoutes);
 
   return app;

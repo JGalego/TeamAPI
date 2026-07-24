@@ -14,6 +14,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
 
 - [🚀 Quick start](#quick-start)
 - [📦 What you get](#what-you-get)
+- [🧠 AI-native team knowledge](#ai-native)
 - [📊 Diagrams](#diagrams)
   - [🔀 Team-interaction organigram](#team-interaction-organigram)
   - [🗺️ DDD context map](#ddd-context-map)
@@ -77,6 +78,33 @@ They work with every command in this README — just swap in the path, e.g. `tea
 ## 📦 What you get
 
 Render [diagrams](#diagrams) from the spec — team-interaction organigrams, DDD context maps, and role hierarchies — as Mermaid or DOT. Query it live through a read-only [REST API](#rest-api) with interactive Swagger docs, or an [MCP server](#mcp-tools) that exposes the same data as tools an LLM assistant can call. [Chat](#chat) with a team or a specific team member instead of querying it directly. Or turn it into config for other tools, like [CrewAI](https://docs.crewai.com/), with the built-in [generators](#generators). See the [CLI reference](#cli-reference) for every command and flag.
+
+<a id="ai-native"></a>
+
+## 🧠 AI-native team knowledge
+
+A team isn't just people and services — it's also the AI agents working alongside them, and the specifications, standards, prompts, playbooks, policies, and history they all draw on. Ten new, fully optional, additive sections on the same `teamapi.yml` document model everything else already uses:
+
+| Section | What it is |
+|---|---|
+| `agents[]` | AI assistants treated as first-class team participants — provider, model, role, capabilities, permissions. |
+| `memory[]` | Persistent organizational memory: architecture decisions, conventions, lessons learned, recurring issues. |
+| `specifications[]` | Specification-driven-development artifacts — requirements/design/tasks/acceptance criteria, with a lifecycle, reviewers, approvals, and linked PRs/issues. |
+| `steeringDocuments[]` | Coding standards, API conventions, security guidelines, architecture principles — inherited **organization → team → project** by walking the existing `platform` team-reference chain. |
+| `prompts[]` | A version-controlled, renderable prompt library (`{{variable}}` templating, with history). |
+| `playbooks[]` | Ordered operational procedures — incident response, release, onboarding — with required roles and automation hooks. |
+| `policies[]` | Machine-readable governance (PR requirements, required approvals, security/dependency policy) for external automation to enforce. |
+| `knowledgeBase[]` | ADRs, FAQs, meeting notes, runbooks, design docs. |
+| `workflows[]` | Process state machines (e.g. testing → approval → deployment → announcement), independent of any particular CI/CD system. |
+| `sessions[]` | A record of AI collaboration sessions: objective, prompts used, artifacts produced, decisions made. |
+
+Since a document without any of these still parses identically to before they existed, adopting them is purely additive — no migration required for existing `teamapi.yml` files. Same read-only design as the rest of this API: these are edited in git, not `POST`ed — the YAML file stays the single source of truth.
+
+**Context bundles** are the flagship feature: `POST /context` (or the `get_context_bundle` MCP tool) takes a `goal` — e.g. `{ "goal": "Implement OAuth" }`, optionally `teamId`-scoped — and returns the minimum high-quality set of specifications, steering documents, policies, memory, knowledge base entries, prompts, and playbooks relevant to it (a transparent keyword-overlap ranking, with `matchedTerms` per result — not an opaque embedding score), plus the scoped team's related teams, members, and services. It's the one call an AI assistant needs to get oriented on a task instead of walking the whole graph by hand.
+
+**The knowledge graph** (`GET /knowledge-graph`, `GET /knowledge-graph/:nodeId/traverse`, or the `get_knowledge_graph`/`traverse_knowledge_graph` MCP tools) links every team, person, agent, and document by ownership, role, team-topology, and resolved cross-team `$ref` edges — for traversal or visualization tooling to walk.
+
+Every other domain gets the same read-only REST shape: `GET /<plural>` (org-wide, searchable), `GET /teams/:id/<plural>`, `GET /teams/:id/<plural>/:resourceId` — e.g. `/agents`, `/teams/stream-checkout/specifications`, `/teams/platform-payments/prompts/code-review` — plus a matching `list_*`/`get_*` MCP tool pair. `POST /teams/:id/prompts/:promptId/render` (or `render_prompt`) fills a prompt's `{{variable}}` placeholders. `GET /search?q=` now covers every new domain too. See [`docs/spec/teamapi-extended-v1.md`](docs/spec/teamapi-extended-v1.md) for the full field-by-field spec.
 
 <a id="diagrams"></a>
 
@@ -198,6 +226,10 @@ Prefer clicking over typing? `teamapi serve-api examples/acme-org --port 3000` s
 | `GET /diagrams/topology`, `/diagrams/hierarchy/:teamId`, `/diagrams/org-hierarchy` | Diagram data |
 | `GET /context-map` | DDD context map |
 | `GET /cognitive-load`, `/cognitive-load/:teamId` | Cognitive load assessments |
+| `GET /agents`, `/memory`, `/specifications`, `/steering`, `/prompts`, `/playbooks`, `/policies`, `/knowledge-base`, `/workflows`, `/sessions` (and `/teams/:id/<these>`, `/teams/:id/<these>/:resourceId`) | [AI-native resource domains](#ai-native) |
+| `POST /teams/:id/prompts/:promptId/render` | Fill a prompt's `{{variable}}` placeholders |
+| `POST /context` | [Context bundle](#ai-native) for a stated goal |
+| `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse` | [Knowledge graph](#ai-native) traversal |
 | `GET /health` | Health check |
 
 **Example:** <code>curl http://127.0.0.1:3000/cognitive-load</code>
@@ -252,7 +284,7 @@ open http://127.0.0.1:3000/dashboard
 
 Prefer just asking? `teamapi serve-mcp examples/acme-org` starts an MCP server you can point Claude Desktop or Claude Code at. Then ask about ACME Org like you'd ask a colleague — "who owns checkout-api?", "which team's overloaded?" — no query language needed.
 
-`list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, `get_org_cognitive_load_report`.
+`list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, `get_org_cognitive_load_report` — plus a `list_*`/`get_*` pair per [AI-native resource domain](#ai-native) (`list_agents`/`get_agent`, `list_memory_entries`/`get_memory_entry`, `list_specifications`/`get_specification`, `list_steering_documents`/`get_steering_document`, `list_prompts`/`get_prompt`/`render_prompt`, `list_playbooks`/`get_playbook`, `list_policies`/`get_policy`, `list_knowledge_base_entries`/`get_knowledge_base_entry`, `list_workflows`/`get_workflow`, `list_ai_sessions`/`get_ai_session`), plus `get_context_bundle`, `get_knowledge_graph`, and `traverse_knowledge_graph`.
 
 **Example:** an assistant calling <code>find_service_owner</code> with <code>{ "serviceName": "checkout-api" }</code>
 

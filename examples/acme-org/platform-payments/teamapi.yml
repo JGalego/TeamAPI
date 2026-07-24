@@ -104,3 +104,129 @@ meetings:
 work:
   waysOfWorking:
     - name: Trunk-based development
+agents:
+  - id: architecture-reviewer
+    name: Architecture Reviewer
+    provider: OpenAI
+    model: gpt-4.1
+    role: reviewer
+    capabilities: [code-review, spec-generation, documentation]
+    status: active
+    ownerId: priya-raman
+    permissions: [read:specifications, comment:pull-requests]
+    tags: [architecture, reviews]
+steeringDocuments:
+  - id: security-guidelines
+    title: Payments Security Guidelines
+    category: security-guidelines
+    scope: organization
+    body: >
+      All services handling cardholder data must be PCI-DSS scoped. OAuth 2.0 / OIDC is the only
+      approved authentication protocol for new customer-facing login flows; no home-grown auth.
+    tags: [security, oauth, pci]
+  - id: api-conventions
+    title: Acme API Conventions
+    category: api-conventions
+    scope: organization
+    body: >
+      REST APIs are versioned via the URL path (/v1/...), use kebab-case resource names, and
+      return RFC 7807 problem+json error bodies.
+    tags: [api, conventions]
+policies:
+  - id: pr-requires-two-approvals
+    name: Pull requests require two approvals
+    category: required-approvals
+    severity: blocking
+    description: Every PR touching a payments service must get two approvals before merge.
+    rules:
+      - key: min_approvals
+        value: 2
+    enforcedBy: [github-actions:pr-gate]
+    tags: [governance]
+playbooks:
+  - id: incident-response
+    name: Payments Incident Response
+    category: incident-response
+    steps:
+      - order: 1
+        title: Acknowledge the page
+        requiredRoles: [tech-lead]
+      - order: 2
+        title: Open an incident channel and post initial status
+        requiredRoles: [tech-lead]
+      - order: 3
+        title: Mitigate, then write a postmortem within 48 hours
+        requiredRoles: [tech-lead]
+    documentation: See the on-call runbook for escalation contacts.
+    tags: [incident, on-call]
+knowledgeBase:
+  - id: adr-oauth-for-login
+    title: "ADR: Adopt OAuth 2.0 / OIDC for customer login"
+    kind: adr
+    category: authentication
+    body: >
+      We will use OAuth 2.0 with OIDC for all new customer-facing login flows, delegating to a
+      managed identity provider rather than building password storage ourselves.
+    tags: [oauth, authentication, adr]
+memory:
+  - id: pci-scope-creep-lesson
+    title: PCI scope creep from logging raw card data
+    kind: lesson-learned
+    body: >
+      A 2025 incident traced back to a debug log line that captured raw card numbers, expanding
+      PCI audit scope to the whole logging pipeline. Never log full payment payloads; redact PANs
+      at the edge.
+    tags: [pci, security, logging]
+    contributors: [priya-raman]
+workflows:
+  - id: release-workflow
+    name: Release Workflow
+    description: Testing -> approval -> deployment -> announcement.
+    states:
+      - id: testing
+        name: Testing
+      - id: approval
+        name: Approval
+      - id: deployment
+        name: Deployment
+      - id: announcement
+        name: Announcement
+    transitions:
+      - from: testing
+        to: approval
+        trigger: ci-green
+      - from: approval
+        to: deployment
+        trigger: two-approvals
+      - from: deployment
+        to: announcement
+        trigger: deploy-succeeded
+    automation:
+      - trigger: ci-green
+        action: github-actions:promote-to-approval
+    tags: [release]
+prompts:
+  - id: code-review
+    name: Code Review
+    description: Reviews a diff against Acme's API conventions and security guidelines.
+    template: >
+      Review the following diff for {{repository}} against our API conventions and security
+      guidelines. Flag anything that touches authentication or PCI-scoped data.
+    variables:
+      - name: repository
+        required: true
+    version: "1.1.0"
+    tags: [code-review, oauth]
+    owner: priya-raman
+sessions:
+  - id: 2026-07-01-oauth-spike
+    agentId: architecture-reviewer
+    assistant: Architecture Reviewer
+    model: gpt-4.1
+    objective: Review the OAuth 2.0 login design for stream-checkout
+    promptIds: [code-review]
+    decisions:
+      - Recommended the authorization-code-with-PKCE flow over implicit grant
+    startedAt: "2026-07-01T09:00:00Z"
+    endedAt: "2026-07-01T10:15:00Z"
+    tags: [oauth]

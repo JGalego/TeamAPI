@@ -115,37 +115,117 @@ export function listMembers(graph: OrgGraph, teamId: TeamId): MemberEntry[] {
   return [...team.doc.members].sort((a, b) => a.id.localeCompare(b.id)).map((member) => ({ teamId, member }));
 }
 
+export type SearchResultKind =
+  | "team"
+  | "service"
+  | "role"
+  | "member"
+  | "searchTerm"
+  | "agent"
+  | "memory"
+  | "specification"
+  | "steeringDocument"
+  | "prompt"
+  | "playbook"
+  | "policy"
+  | "knowledgeBase"
+  | "workflow"
+  | "session";
+
 export interface SearchResult {
-  kind: "team" | "service" | "role" | "member" | "searchTerm";
+  kind: SearchResultKind;
   teamId: TeamId;
+  /** The matched resource's id within its team array, for kinds other than "team" (which is
+   * already identified by `teamId`) — lets a caller fetch the full resource via the matching
+   * `get*` query without re-searching. */
+  resourceId?: string;
   label: string;
 }
 
+/**
+ * Unified search across every resource kind: teams, services, roles, members, search terms, and
+ * every AI-native domain (agents, memory, specifications, steering documents, prompts, playbooks,
+ * policies, knowledge base, workflows, sessions). A simple case-insensitive substring match, same
+ * as the original team/service/role/member search — deliberately not semantic/embedding-based (a
+ * heuristic v1; nothing here stops a future `search` implementation from swapping in a real
+ * scorer, same spirit as `deriveContextBundle`'s relevance scoring).
+ */
 export function searchOrg(graph: OrgGraph, query: string): SearchResult[] {
   const q = query.toLowerCase();
+  const includes = (text: string | undefined) => (text ?? "").toLowerCase().includes(q);
   const results: SearchResult[] = [];
   for (const team of graph.teams.values()) {
-    if (team.doc.info.name.toLowerCase().includes(q) || (team.doc.info.focus ?? "").toLowerCase().includes(q)) {
+    if (includes(team.doc.info.name) || includes(team.doc.info.focus)) {
       results.push({ kind: "team", teamId: team.id, label: team.doc.info.name });
     }
     for (const service of team.doc.services) {
-      if (service.name.toLowerCase().includes(q)) {
+      if (includes(service.name)) {
         results.push({ kind: "service", teamId: team.id, label: service.name });
       }
     }
     for (const role of team.doc.roles) {
-      if (role.name.toLowerCase().includes(q) || role.kind.toLowerCase().includes(q)) {
-        results.push({ kind: "role", teamId: team.id, label: `${role.name} (${role.kind})` });
+      if (includes(role.name) || includes(role.kind)) {
+        results.push({ kind: "role", teamId: team.id, resourceId: role.id, label: `${role.name} (${role.kind})` });
       }
     }
     for (const member of team.doc.members) {
-      if (member.name.toLowerCase().includes(q)) {
-        results.push({ kind: "member", teamId: team.id, label: member.name });
+      if (includes(member.name)) {
+        results.push({ kind: "member", teamId: team.id, resourceId: member.id, label: member.name });
       }
     }
     for (const term of team.doc.searchTerms) {
-      if (term.term.toLowerCase().includes(q)) {
+      if (includes(term.term)) {
         results.push({ kind: "searchTerm", teamId: team.id, label: term.term });
+      }
+    }
+    for (const agent of team.doc.agents) {
+      if (includes(agent.name) || includes(agent.role) || includes(agent.description) || agent.tags.some(includes)) {
+        results.push({ kind: "agent", teamId: team.id, resourceId: agent.id, label: agent.name });
+      }
+    }
+    for (const entry of team.doc.memory) {
+      if (includes(entry.title) || includes(entry.body) || entry.tags.some(includes)) {
+        results.push({ kind: "memory", teamId: team.id, resourceId: entry.id, label: entry.title });
+      }
+    }
+    for (const spec of team.doc.specifications) {
+      if (includes(spec.title) || includes(spec.body) || spec.tags.some(includes)) {
+        results.push({ kind: "specification", teamId: team.id, resourceId: spec.id, label: spec.title });
+      }
+    }
+    for (const doc of team.doc.steeringDocuments) {
+      if (includes(doc.title) || includes(doc.body) || doc.tags.some(includes)) {
+        results.push({ kind: "steeringDocument", teamId: team.id, resourceId: doc.id, label: doc.title });
+      }
+    }
+    for (const prompt of team.doc.prompts) {
+      if (includes(prompt.name) || includes(prompt.description) || includes(prompt.template) || prompt.tags.some(includes)) {
+        results.push({ kind: "prompt", teamId: team.id, resourceId: prompt.id, label: prompt.name });
+      }
+    }
+    for (const playbook of team.doc.playbooks) {
+      if (includes(playbook.name) || includes(playbook.documentation) || playbook.tags.some(includes)) {
+        results.push({ kind: "playbook", teamId: team.id, resourceId: playbook.id, label: playbook.name });
+      }
+    }
+    for (const policy of team.doc.policies) {
+      if (includes(policy.name) || includes(policy.description) || policy.tags.some(includes)) {
+        results.push({ kind: "policy", teamId: team.id, resourceId: policy.id, label: policy.name });
+      }
+    }
+    for (const entry of team.doc.knowledgeBase) {
+      if (includes(entry.title) || includes(entry.body) || includes(entry.category) || entry.tags.some(includes)) {
+        results.push({ kind: "knowledgeBase", teamId: team.id, resourceId: entry.id, label: entry.title });
+      }
+    }
+    for (const workflow of team.doc.workflows) {
+      if (includes(workflow.name) || includes(workflow.description) || workflow.tags.some(includes)) {
+        results.push({ kind: "workflow", teamId: team.id, resourceId: workflow.id, label: workflow.name });
+      }
+    }
+    for (const session of team.doc.sessions) {
+      if (includes(session.objective) || includes(session.assistant) || session.tags.some(includes)) {
+        results.push({ kind: "session", teamId: team.id, resourceId: session.id, label: session.objective });
       }
     }
   }

@@ -9,7 +9,10 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Search"],
         summary: "Search the org",
-        description: "Unified search across team names/focus, services, roles, members, and search terms.",
+        description:
+          "Unified search across team names/focus, services, roles, members, search terms, and every AI-native " +
+          "resource domain (agents, memory, specifications, steering documents, prompts, playbooks, policies, " +
+          "knowledge base, workflows, sessions).",
         querystring: {
           type: "object",
           properties: { q: { type: "string", description: "Search query" } },
