@@ -69,7 +69,7 @@ teamapi serve-mcp examples/acme-org     # point Claude Desktop/Code at this comm
 
 ## 📚 Examples
 
-Every example in this README runs against **ACME Org** ([`examples/acme-org`](examples/acme-org)), a small fictional e-commerce company: Platform Payments runs the payments and ledger services everyone else depends on, Stream Checkout owns the cart and checkout flow, Stream Onboarding handles sign-up and KYC, and Enabling DevEx coaches the other three on testing and delivery practices.
+Every example in this README runs against **ACME Org** ([`examples/acme-org`](examples/acme-org)), a small fictional e-commerce company: Platform Payments runs the `payments-api` and `ledger` services everyone else depends on, Stream Checkout owns the cart and checkout flow, Stream Onboarding handles sign-up and KYC, and Enabling DevEx coaches the other three on testing and delivery practices.
 
 Four more fictional-but-recognizable orgs ship alongside it, each modeled after a real-world team topology:
 
@@ -140,7 +140,7 @@ flowchart LR
 
 ### 🗺️ DDD context map: `--scope context-map`
 
-The same relationships, reinterpreted as DDD patterns — how the underlying software should actually fit together. An explicit `contextMappingPattern` wins where a team declares one; otherwise it's inferred from the Team Topologies interaction mode (`x-as-a-service` → Open Host Service, `collaboration` → Partnership). `facilitating` is left unclassified: it's coaching, not a runtime integration.
+The same relationships, reinterpreted as DDD patterns — how the underlying software should actually fit together. An explicit `contextMappingPattern` wins where a team declares one; otherwise it's inferred from the Team Topologies interaction mode (`x-as-a-service` → `OpenHostService`, `collaboration` → `Partnership`). `facilitating` is left unclassified: it's coaching, not a runtime integration.
 
 ```mermaid
 flowchart LR
@@ -231,7 +231,7 @@ flowchart TD
 | `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse` | [Knowledge graph](#ai-native) traversal |
 | `GET /health` | Health check |
 
-**Example:** <code>curl http://127.0.0.1:3000/cognitive-load</code>
+**Example:** `curl http://127.0.0.1:3000/cognitive-load`
 
 ```json
 [
@@ -270,7 +270,7 @@ flowchart TD
 
 ## 🖥️ Dashboard
 
-The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — static HTML/CSS/JS fetching the REST API you already have running, no separate process or build step. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded, never color alone), free-text search, and a tabbed diagram viewer (topology / org-hierarchy / context-map) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — team list, cognitive load, and search keep working.
+The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — static HTML/CSS/JS fetching the REST API you already have running, no separate process or build step. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded, never color alone), free-text search, and a tabbed diagram viewer (`topology` / `org-hierarchy` / `context-map`) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — team list, cognitive load, and search keep working.
 
 ```bash
 teamapi serve-api examples/acme-org --port 3000
@@ -287,7 +287,7 @@ open http://127.0.0.1:3000/dashboard
 
 The core tools are `list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, and `get_org_cognitive_load_report`. Each [AI-native section](#ai-native) adds a `list_*`/`get_*` pair — `list_agents`/`get_agent`, `list_prompts`/`get_prompt`, and so on — alongside `render_prompt`, `get_context_bundle`, `get_knowledge_graph`, and `traverse_knowledge_graph`.
 
-**Example:** an assistant calling <code>find_service_owner</code> with <code>{ "serviceName": "checkout-api" }</code>
+**Example:** an assistant calling `find_service_owner` with `{ "serviceName": "checkout-api" }`
 
 ```json
 {
@@ -375,7 +375,7 @@ An anticorruption layer would help a lot.
 
 `teamapi generate crewai examples/acme-org --out ./crews` turns each team into a [CrewAI](https://docs.crewai.com/) crew — roles become agents, responsibilities become tasks. A responsibility's optional `doneWhen` becomes that task's `expected_output`; without one, you get a generic status-report stand-in.
 
-**Example:** <code>crews/platform-payments/agents.yaml</code>
+**Example:** `crews/platform-payments/agents.yaml`
 
 ```yaml
 tech_lead:
@@ -437,7 +437,7 @@ For a crew `org.yaml` marks `sequential` (most of them), skip `process`/`manager
 
 `teamapi generate backstage examples/acme-org --out ./catalog` turns the same org graph into a `catalog-info.yaml` for [Backstage](https://backstage.io/): one `Group` per team (with its `members[]`), one `User` per member, and — for any team that owns `services[]` — a `System` grouping them plus one `Component` per service, owned by that team's `Group`. Drop the file at your catalog's discovery root (or point Backstage's `catalog.locations` config at it) and it imports directly — no hand-maintained catalog YAML to keep in sync with your org chart.
 
-**Example:** <code>catalog/catalog-info.yaml</code> (excerpt, `--team stream-checkout`)
+**Example:** `catalog/catalog-info.yaml` (excerpt, `--team stream-checkout`)
 
 ```yaml
 apiVersion: backstage.io/v1alpha1
