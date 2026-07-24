@@ -1,7 +1,7 @@
 <div align="center">
   <img src="docs/assets/logo.svg" alt="Team API Toolchain" width="164"><br>
   <h1>TeamAPI</h1>
-  <p><code>curl</code> your org.</p>
+  <p>Who owns this? Just <code>curl</code> your org.</p>
 
   [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 </div>
