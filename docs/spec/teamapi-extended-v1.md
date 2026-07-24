@@ -278,7 +278,7 @@ existed still parses identically. Every resource in every array below requires a
 that array (validated the same way `roles[].id`/`members[].id` are). Every array-of-objects field
 not called out below (`capabilities`, `tags`, `reviewers`, etc.) is a plain string array.
 
-**Agent**: `{ id, name, description?, provider, model?, role, capabilities: string[], status: "active" | "inactive" | "deprecated" (default "active"), ownerId?: slug (a members[].id), permissions: string[], tags: string[] }`.
+**Agent**: `{ id, name, description?, provider, model?, role, capabilities: string[], status: "active" | "inactive" | "deprecated" (default "active"), ownerId?: slug (a members[].id), permissions: string[], tags: string[] }`. Worked example: `examples/acme-org/platform-payments/teamapi.yml` declares five agents, each scoped to one review concern (architecture, tests, security, docs, compliance) rather than one do-everything agent — `platform-payments`'s `memory[]` (below) records why. `examples/acme-org/stream-onboarding/teamapi.yml` declares none, backed by a `policies[]` entry rather than silent omission.
 
 **MemoryEntry**: `{ id, title, kind: "architecture-decision" | "convention" | "lesson-learned" | "recurring-issue" | "domain-knowledge" | "historical-decision", body (markdown), tags: string[], contributors: string[], relatedRefs: Ref[], createdAt?, updatedAt? }`.
 
