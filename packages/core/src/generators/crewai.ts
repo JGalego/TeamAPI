@@ -112,10 +112,14 @@ export function buildCrewAiCrewConfig(graph: OrgGraph, teamId: TeamId): CrewAiCr
   );
 
   const manager = managerCandidates.length === 1 ? managerCandidates[0] : undefined;
-  const process: CrewAiProcess = manager ? "hierarchical" : "sequential";
+  // Named `crewProcess`, not `process`: a local variable literally named `process` shadows (and
+  // reads as a reference to) Node's global `process` object to naive static analysis, which was
+  // tripping supply-chain scanners' "environment variable access" heuristic despite this code
+  // never touching `process.env` or anything else on the real global.
+  const crewProcess: CrewAiProcess = manager ? "hierarchical" : "sequential";
   const managerAgent = manager ? slug(manager.id) : undefined;
 
-  return { teamId, name: team.doc.info.name, process, managerAgent, agents, tasks };
+  return { teamId, name: team.doc.info.name, process: crewProcess, managerAgent, agents, tasks };
 }
 
 function describeEdge(edge: GraphEdge): string {
