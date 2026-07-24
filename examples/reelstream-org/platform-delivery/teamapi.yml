@@ -1,0 +1,106 @@
+teamApiVersion: "1.0.0"
+id: platform-delivery
+info:
+  name: Platform Delivery
+  focus: Provide global video encoding and CDN delivery as internal platform services
+  type: platform
+channels:
+  - type: slack
+    name: platform-delivery
+searchTerms:
+  - term: encoding
+  - term: cdn
+  - term: streaming
+services:
+  - name: encoding-pipeline
+    repository: https://github.com/reelstream-example/encoding-pipeline
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Title
+          definition: A piece of video content identified by a catalog id
+        - term: Rendition
+          definition: An encoded, bitrate-specific output of a Title
+      aggregates:
+        - Title
+        - Rendition
+      publishedEvents:
+        - RenditionReady
+      subscribedEvents: []
+  - name: cdn-edge
+    repository: https://github.com/reelstream-example/cdn-edge
+    versioning:
+      type: semantic
+    x-pagerduty-service: PDELIVER01 # vendor extension field: any x-*-prefixed key is preserved as-is
+    boundedContext:
+      ubiquitousLanguage:
+        - term: EdgeNode
+          definition: A point-of-presence cache node serving playback requests
+      aggregates:
+        - EdgeNode
+      publishedEvents:
+        - EdgeNodeDegraded
+      subscribedEvents:
+        - RenditionReady
+roles:
+  - id: vp-engineering
+    name: VP of Engineering
+    kind: EngineeringManager
+    responsibilities:
+      - Engineering org structure and staffing
+      - Cross-team technical direction
+  - id: tech-lead
+    name: Delivery Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Delivery platform architecture
+      - text: On-call escalation point
+        doneWhen: A runbook exists and the on-call rotation is staffed for the current quarter.
+    reportsTo: vp-engineering
+  - id: encoding-engineer
+    name: Encoding Pipeline Engineer
+    kind: Engineer
+    responsibilities:
+      - encoding-pipeline development
+    reportsTo: tech-lead
+  - id: cdn-engineer
+    name: CDN Engineer
+    kind: Engineer
+    responsibilities:
+      - cdn-edge development
+    reportsTo: tech-lead
+members:
+  - id: elena-vasquez
+    name: Elena Vasquez
+    contact: elena.vasquez@reelstream.example
+    roleIds: [vp-engineering]
+    allocation: 100
+  - id: marcus-chen
+    name: Marcus Chen
+    contact: marcus.chen@reelstream.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: ingrid-solberg
+    name: Ingrid Solberg
+    contact: ingrid.solberg@reelstream.example
+    roleIds: [encoding-engineer]
+    allocation: 100
+  - id: tariq-hassan
+    name: Tariq Hassan
+    contact: tariq.hassan@reelstream.example
+    roleIds: [cdn-engineer]
+    allocation: 100
+cognitiveLoad:
+  intrinsic: 7
+  extraneous: 5
+  germane: 6
+  notes: Global multi-region delivery and per-territory licensing constraints add real intrinsic complexity.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Tuesday
+    timeOfDay: "09:30"
+    durationMinutes: 15
+work:
+  waysOfWorking:
+    - name: Trunk-based development

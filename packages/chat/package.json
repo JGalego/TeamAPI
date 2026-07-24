@@ -1,0 +1,38 @@
+{
+  "name": "@jgalego/teamapi-chat",
+  "version": "0.1.6",
+  "description": "Chat as a team or a member, backed by an Anthropic tool-use loop over the resolved org graph",
+  "license": "MIT",
+  "homepage": "https://github.com/JGalego/TeamAPI#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JGalego/TeamAPI.git",
+    "directory": "packages/chat"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@jgalego/teamapi-core": "workspace:*",
+    "@jgalego/teamapi-schema": "workspace:*",
+    "@anthropic-ai/sdk": "^0.112.3",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

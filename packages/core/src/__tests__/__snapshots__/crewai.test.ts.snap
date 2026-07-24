@@ -1,0 +1,84 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`crewai generator — examples/acme-org > serializes a single crew to YAML 1`] = `
+"tech_lead:
+  role: Checkout Tech Lead
+  goal: Ensure that Checkout architecture; Incident response lead.
+  backstory: 'You are the Checkout Tech Lead (TechLead) on Stream Checkout, which focuses on: Shopping cart, checkout flow, and order placement. The team owns: checkout-api.'
+backend_engineer:
+  role: Checkout Backend Engineer
+  goal: Ensure that checkout-api development.
+  backstory: 'You are the Checkout Backend Engineer (Engineer) on Stream Checkout, which focuses on: Shopping cart, checkout flow, and order placement. The team owns: checkout-api.'
+frontend_engineer:
+  role: Checkout Frontend Engineer
+  goal: Ensure that Checkout frontend.
+  backstory: 'You are the Checkout Frontend Engineer (Engineer) on Stream Checkout, which focuses on: Shopping cart, checkout flow, and order placement. The team owns: checkout-api.'
+"
+`;
+
+exports[`crewai generator — examples/acme-org > serializes a single crew to YAML 2`] = `
+"tech_lead_task_1:
+  description: Checkout architecture
+  expected_output: 'A short status report confirming progress on: Checkout architecture.'
+  agent: tech_lead
+tech_lead_task_2:
+  description: Incident response lead
+  expected_output: 'A short status report confirming progress on: Incident response lead.'
+  agent: tech_lead
+backend_engineer_task_1:
+  description: checkout-api development
+  expected_output: 'A short status report confirming progress on: checkout-api development.'
+  agent: backend_engineer
+frontend_engineer_task_1:
+  description: Checkout frontend
+  expected_output: 'A short status report confirming progress on: Checkout frontend.'
+  agent: frontend_engineer
+"
+`;
+
+exports[`crewai generator — examples/acme-org > serializes the whole-org manifest to YAML 1`] = `
+"crews:
+  enabling-devex:
+    name: Enabling DevEx
+    config: enabling-devex/
+    process: sequential
+  platform-payments:
+    name: Platform Payments
+    config: platform-payments/
+    process: hierarchical
+    managerAgent: head_of_engineering
+  stream-checkout:
+    name: Stream Checkout
+    config: stream-checkout/
+    process: sequential
+  stream-onboarding:
+    name: Stream Onboarding
+    config: stream-onboarding/
+    process: sequential
+relationships:
+  - from: stream-checkout
+    to: platform-payments
+    kind: platform
+    label: platform
+  - from: stream-checkout
+    to: platform-payments
+    kind: interaction
+    label: 'interaction (x-as-a-service): Consume payment processing and ledger services to reduce cognitive load'
+  - from: stream-checkout
+    to: stream-onboarding
+    kind: interaction
+    label: 'interaction (collaboration): Jointly define the applicant-to-customer handoff contract'
+  - from: stream-checkout
+    to: stream-onboarding
+    kind: dependency
+    label: 'dependency (Slowing): Checkout waits on the new applicant activation event schema before it can drop legacy polling'
+  - from: stream-onboarding
+    to: enabling-devex
+    kind: interaction
+    label: 'interaction (facilitating): Improve end-to-end test automation for the sign-up flow'
+  - from: stream-onboarding
+    to: platform-payments
+    kind: dependency
+    label: 'dependency (OK): Onboarding relies on the payments platform''s KYC verification integration'
+"
+`;

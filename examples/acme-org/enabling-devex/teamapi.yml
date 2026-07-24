@@ -1,0 +1,29 @@
+teamApiVersion: "1.0.0"
+id: enabling-devex
+info:
+  name: Enabling DevEx
+  focus: Help stream-aligned teams adopt stronger testing and delivery practices
+  type: enabling
+channels:
+  - type: slack
+    name: enabling-devex
+searchTerms:
+  - term: developer experience
+  - term: test automation
+  - term: ci/cd
+roles:
+  - id: coach
+    name: DevEx Coach
+    kind: DeliveryLead
+    responsibilities:
+      - Coaching engagements
+      - Internal tooling for test automation
+members:
+  - id: marta-kowalski
+    name: Marta Kowalski
+    contact: marta.kowalski@acme.example
+    roleIds: [coach]
+    allocation: 100
+work:
+  waysOfWorking:
+    - name: Coaching engagement playbook

@@ -1,0 +1,108 @@
+teamApiVersion: "1.0.0"
+id: platform-ledger
+info:
+  name: Platform Ledger
+  focus: Provide core ledger and payment-processing primitives as internal platform services
+  type: platform
+channels:
+  - type: slack
+    name: platform-ledger
+searchTerms:
+  - term: ledger
+  - term: payments
+  - term: api primitives
+services:
+  - name: payments-processing
+    repository: https://github.com/meridian-example/payments-processing
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: PaymentIntent
+          definition: A customer's declared intent to pay, before funds move
+        - term: Charge
+          definition: A single attempt to capture funds against a PaymentIntent
+      aggregates:
+        - PaymentIntent
+        - Charge
+      publishedEvents:
+        - PaymentIntentSucceeded
+        - ChargeFailed
+      subscribedEvents: []
+  - name: ledger-core
+    repository: https://github.com/meridian-example/ledger-core
+    versioning:
+      type: semantic
+    x-pagerduty-service: PLEDGERCORE01 # vendor extension field: any x-*-prefixed key is preserved as-is
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Ledger Entry
+          definition: An immutable, double-entry record of a movement of funds
+      aggregates:
+        - Account
+        - LedgerEntry
+      publishedEvents:
+        - LedgerEntryPosted
+      subscribedEvents:
+        - PaymentIntentSucceeded
+roles:
+  - id: head-of-platform-engineering
+    name: Head of Platform Engineering
+    kind: EngineeringManager
+    responsibilities:
+      - Engineering org structure and staffing
+      - Cross-team technical direction
+  - id: tech-lead
+    name: Ledger Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Ledger platform architecture
+      - text: On-call escalation point
+        doneWhen: A runbook exists and the on-call rotation is staffed for the current quarter.
+    reportsTo: head-of-platform-engineering
+  - id: payments-engineer
+    name: Payments Processing Engineer
+    kind: Engineer
+    responsibilities:
+      - payments-processing development
+    reportsTo: tech-lead
+  - id: ledger-engineer
+    name: Ledger Engineer
+    kind: Engineer
+    responsibilities:
+      - ledger-core development
+    reportsTo: tech-lead
+members:
+  - id: adaeze-nwosu
+    name: Adaeze Nwosu
+    contact: adaeze.nwosu@meridianpay.example
+    roleIds: [head-of-platform-engineering]
+    allocation: 100
+  - id: viktor-petrov
+    name: Viktor Petrov
+    contact: viktor.petrov@meridianpay.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: hana-kobayashi
+    name: Hana Kobayashi
+    contact: hana.kobayashi@meridianpay.example
+    roleIds: [payments-engineer]
+    allocation: 100
+  - id: miguel-santos
+    name: Miguel Santos
+    contact: miguel.santos@meridianpay.example
+    roleIds: [ledger-engineer]
+    allocation: 100
+cognitiveLoad:
+  intrinsic: 7
+  extraneous: 4
+  germane: 6
+  notes: PCI and multi-jurisdiction regulatory scope adds real intrinsic complexity; onboarding docs are solid.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Monday
+    timeOfDay: "09:00"
+    durationMinutes: 15
+work:
+  waysOfWorking:
+    - name: API-first design review

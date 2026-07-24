@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Team API — Org Dashboard</title>
+<style>
+  :root {
+    color-scheme: light;
+    --page:        #f9f9f7;
+    --surface:     #fcfcfb;
+    --ink:         #0b0b0b;
+    --ink-2:       #52514e;
+    --ink-muted:   #898781;
+    --border:      #e1e0d9;
+    --brand:       #7c3aed;
+    --brand-bg:    #ede9fe;
+    --good:        #0ca30c;
+    --warning:     #fab219;
+    --critical:    #d03b3b;
+    --type-stream-aligned:         #2a78d6;
+    --type-platform:               #eb6834;
+    --type-complicated-subsystem:  #1baf7a;
+    --type-enabling:                #eda100;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --page:        #0d0d0d;
+      --surface:     #1a1a19;
+      --ink:         #ffffff;
+      --ink-2:       #c3c2b7;
+      --ink-muted:   #898781;
+      --border:      #2c2c2a;
+      --brand-bg:    rgba(124, 58, 237, 0.22);
+      --type-stream-aligned:         #3987e5;
+      --type-platform:               #d95926;
+      --type-complicated-subsystem:  #199e70;
+      --type-enabling:                #c98500;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page:        #0d0d0d;
+    --surface:     #1a1a19;
+    --ink:         #ffffff;
+    --ink-2:       #c3c2b7;
+    --ink-muted:   #898781;
+    --border:      #2c2c2a;
+    --brand-bg:    rgba(124, 58, 237, 0.22);
+    --type-stream-aligned:         #3987e5;
+    --type-platform:               #d95926;
+    --type-complicated-subsystem:  #199e70;
+    --type-enabling:                #c98500;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--page);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.45;
+  }
+  a { color: var(--brand); }
+  main {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 20px 64px;
+  }
+  header.top {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  header.top h1 {
+    font-size: 1.5rem;
+    margin: 0;
+  }
+  header.top .sub {
+    color: var(--ink-2);
+    font-size: 0.9rem;
+  }
+  input#search {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--ink);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    width: 220px;
+  }
+  input#search:focus { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+  section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  section h2 {
+    font-size: 1rem;
+    margin: 0 0 14px;
+    color: var(--ink-2);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  #search-results { margin-top: 10px; font-size: 0.9rem; color: var(--ink-2); }
+  #search-results ul { list-style: none; margin: 6px 0 0; padding: 0; }
+  #search-results li { padding: 4px 0; border-bottom: 1px solid var(--border); }
+  #search-results li:last-child { border-bottom: none; }
+  .search-kind {
+    display: inline-block;
+    font-size: 0.72rem;
+    color: var(--ink-muted);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0 5px;
+    margin-right: 8px;
+    text-transform: uppercase;
+  }
+
+  .load-row {
+    display: grid;
+    grid-template-columns: 160px 1fr 90px;
+    align-items: center;
+    gap: 12px;
+    padding: 7px 0;
+  }
+  .load-row .name { font-size: 0.9rem; }
+  .load-bar-track {
+    background: var(--border);
+    border-radius: 5px;
+    height: 10px;
+    overflow: hidden;
+  }
+  .load-bar-fill { height: 100%; border-radius: 5px 0 0 5px; }
+  .load-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.78rem;
+    justify-content: flex-end;
+    white-space: nowrap;
+  }
+  .load-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+
+  .teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+    gap: 12px;
+  }
+  .team-card {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .team-card h3 { margin: 0 0 4px; font-size: 0.95rem; }
+  .team-card .focus { color: var(--ink-2); font-size: 0.82rem; margin: 4px 0 8px; }
+  .type-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.72rem;
+    color: var(--ink-2);
+  }
+  .type-dot { width: 8px; height: 8px; border-radius: 2px; flex: none; }
+
+  .tabs {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+  }
+  .tabs button {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--ink-2);
+    border-radius: 999px;
+    padding: 6px 14px;
+    font-size: 0.85rem;
+    cursor: pointer;
+  }
+  .tabs button.active {
+    background: var(--brand-bg);
+    border-color: var(--brand);
+    color: var(--brand);
+    font-weight: 600;
+  }
+  #diagram {
+    overflow-x: auto;
+    min-height: 120px;
+  }
+  #diagram .placeholder { color: var(--ink-muted); font-size: 0.9rem; }
+
+  footer {
+    text-align: center;
+    color: var(--ink-muted);
+    font-size: 0.8rem;
+    margin-top: 32px;
+  }
+  footer a { color: var(--ink-muted); }
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div>
+      <h1>🧭 Team API — Org Dashboard</h1>
+      <div class="sub" id="org-summary">Loading…</div>
+    </div>
+    <div>
+      <input id="search" type="search" placeholder="Search teams, services, roles…" autocomplete="off" />
+      <div id="search-results"></div>
+    </div>
+  </header>
+
+  <section>
+    <h2>Cognitive load</h2>
+    <div id="load-list"></div>
+  </section>
+
+  <section>
+    <h2>Teams</h2>
+    <div class="teams-grid" id="teams-grid"></div>
+  </section>
+
+  <section>
+    <h2>Diagram</h2>
+    <div class="tabs" id="diagram-tabs">
+      <button data-scope="topology" class="active">Topology</button>
+      <button data-scope="org-hierarchy">Org hierarchy</button>
+      <button data-scope="context-map">Context map</button>
+    </div>
+    <div id="diagram"><span class="placeholder">Loading diagram…</span></div>
+  </section>
+
+  <footer>
+    Rendered from a live <a href="/docs">REST API</a> — <a href="https://github.com/JGalego/TeamAPI">TeamAPI</a>
+  </footer>
+</main>
+
+<script type="module">
+  // Loaded lazily (not a static top-level import) and wrapped in try/catch: a static import that
+  // fails to resolve aborts the *entire* module — every other section below with it. Diagrams are
+  // the one thing on this page that need Mermaid; the team list, cognitive load, and search must
+  // keep working even on a network that blocks the CDN (a real scenario for an internal-org
+  // dashboard, not just a test-environment quirk).
+  let mermaidModulePromise;
+  function loadMermaid() {
+    if (!mermaidModulePromise) {
+      mermaidModulePromise = import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs").then(
+        (mod) => {
+          mod.default.initialize({ startOnLoad: false, securityLevel: "strict" });
+          return mod.default;
+        },
+      );
+    }
+    return mermaidModulePromise;
+  }
+
+  const STATUS = {
+    sustainable: { color: "var(--good)", icon: "✓" },
+    elevated: { color: "var(--warning)", icon: "▲" },
+    overloaded: { color: "var(--critical)", icon: "⛔" },
+  };
+  const TYPE_VAR = {
+    "stream-aligned": "--type-stream-aligned",
+    platform: "--type-platform",
+    "complicated-subsystem": "--type-complicated-subsystem",
+    enabling: "--type-enabling",
+  };
+
+  function h(tag, attrs = {}, children = []) {
+    const el = document.createElement(tag);
+    for (const [k, v] of Object.entries(attrs)) {
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else el.setAttribute(k, v);
+    }
+    for (const child of [].concat(children)) {
+      if (child) el.appendChild(child);
+    }
+    return el;
+  }
+
+  async function getJson(url) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${url}: ${res.status}`);
+    return res.json();
+  }
+
+  async function loadSummary() {
+    const teams = await getJson("/teams");
+    document.getElementById("org-summary").textContent =
+      `${teams.length} team${teams.length === 1 ? "" : "s"}`;
+    return teams;
+  }
+
+  async function loadCognitiveLoad() {
+    const report = await getJson("/cognitive-load");
+    const list = document.getElementById("load-list");
+    list.innerHTML = "";
+    if (report.length === 0) {
+      list.appendChild(h("div", { class: "placeholder", text: "No teams have a cognitive-load assessment yet." }));
+      return;
+    }
+    const max = Math.max(...report.map((r) => r.total), 1);
+    for (const r of report) {
+      const status = STATUS[r.label] ?? STATUS.sustainable;
+      const row = h("div", { class: "load-row" }, [
+        h("div", { class: "name", text: r.teamId }),
+        h("div", { class: "load-bar-track" }, [
+          h("div", {
+            class: "load-bar-fill",
+            style: `width:${Math.round((r.total / max) * 100)}%;background:${status.color}`,
+          }),
+        ]),
+        h("div", { class: "load-badge" }, [
+          h("span", { class: "load-dot", style: `background:${status.color}` }),
+          h("span", { text: `${status.icon} ${r.total} · ${r.label}` }),
+        ]),
+      ]);
+      list.appendChild(row);
+    }
+  }
+
+  function renderTeamCards(teams) {
+    const grid = document.getElementById("teams-grid");
+    grid.innerHTML = "";
+    for (const team of teams) {
+      const typeVar = TYPE_VAR[team.type] ?? "--ink-muted";
+      grid.appendChild(
+        h("div", { class: "team-card" }, [
+          h("h3", { text: team.name }),
+          team.focus ? h("div", { class: "focus", text: team.focus }) : null,
+          h("span", { class: "type-chip" }, [
+            h("span", { class: "type-dot", style: `background:var(${typeVar})` }),
+            h("span", { text: team.type }),
+          ]),
+        ]),
+      );
+    }
+  }
+
+  async function loadDiagram(scope) {
+    const container = document.getElementById("diagram");
+    container.innerHTML = "";
+    container.appendChild(h("span", { class: "placeholder", text: "Rendering…" }));
+
+    const url = scope === "context-map" ? "/context-map?format=mermaid" : `/diagrams/${scope}?format=mermaid`;
+    let text;
+    try {
+      const res = await fetch(url);
+      text = await res.text();
+    } catch (err) {
+      container.innerHTML = "";
+      container.appendChild(h("span", { class: "placeholder", text: `Could not load diagram: ${err}` }));
+      return;
+    }
+
+    let mermaid;
+    try {
+      mermaid = await loadMermaid();
+    } catch (err) {
+      container.innerHTML = "";
+      container.appendChild(
+        h("span", { class: "placeholder", text: "Could not load the diagram renderer (offline, or the CDN is blocked on this network)." }),
+      );
+      return;
+    }
+
+    container.innerHTML = "";
+    const id = `mermaid-${scope}-${Date.now()}`;
+    try {
+      const { svg } = await mermaid.render(id, text);
+      container.innerHTML = svg;
+    } catch (err) {
+      container.appendChild(h("span", { class: "placeholder", text: `Could not render diagram: ${err}` }));
+    }
+  }
+
+  function wireTabs() {
+    const tabs = document.getElementById("diagram-tabs");
+    tabs.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-scope]");
+      if (!btn) return;
+      for (const b of tabs.querySelectorAll("button")) b.classList.remove("active");
+      btn.classList.add("active");
+      loadDiagram(btn.dataset.scope);
+    });
+  }
+
+  function wireSearch() {
+    const input = document.getElementById("search");
+    const results = document.getElementById("search-results");
+    let debounce;
+    input.addEventListener("input", () => {
+      clearTimeout(debounce);
+      const q = input.value.trim();
+      if (!q) {
+        results.innerHTML = "";
+        return;
+      }
+      debounce = setTimeout(async () => {
+        let hits;
+        try {
+          hits = await getJson(`/search?q=${encodeURIComponent(q)}`);
+        } catch (err) {
+          results.textContent = `Search failed: ${err}`;
+          return;
+        }
+        results.innerHTML = "";
+        if (hits.length === 0) {
+          results.appendChild(h("div", { text: "No matches." }));
+          return;
+        }
+        const list = h("ul");
+        for (const hit of hits.slice(0, 12)) {
+          list.appendChild(
+            h("li", {}, [
+              h("span", { class: "search-kind", text: hit.kind }),
+              h("span", { text: `${hit.label} — ${hit.teamId}` }),
+            ]),
+          );
+        }
+        results.appendChild(list);
+      }, 200);
+    });
+  }
+
+  async function init() {
+    wireTabs();
+    wireSearch();
+
+    // Each section is independent: the org summary/team grid, the cognitive-load list, and the
+    // diagram all come from separate requests and (in the diagram's case) a separate CDN
+    // dependency — one failing must not blank out the sections that didn't.
+    const results = await Promise.allSettled([
+      loadSummary().then(renderTeamCards),
+      loadCognitiveLoad(),
+      loadDiagram("topology"),
+    ]);
+
+    const summaryResult = results[0];
+    if (summaryResult.status === "rejected") {
+      document.getElementById("org-summary").textContent = `Failed to load teams: ${summaryResult.reason}`;
+    }
+    const loadResult = results[1];
+    if (loadResult.status === "rejected") {
+      document.getElementById("load-list").textContent = `Failed to load cognitive load: ${loadResult.reason}`;
+    }
+  }
+
+  init();
+</script>
+</body>
+</html>

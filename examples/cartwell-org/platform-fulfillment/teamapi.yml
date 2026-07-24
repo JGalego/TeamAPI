@@ -1,0 +1,104 @@
+teamApiVersion: "1.0.0"
+id: platform-fulfillment
+info:
+  name: Platform Fulfillment
+  focus: Provide inventory, warehousing, and order-fulfillment capabilities as internal platform services
+  type: platform
+channels:
+  - type: slack
+    name: platform-fulfillment
+searchTerms:
+  - term: inventory
+  - term: warehousing
+  - term: fulfillment
+services:
+  - name: fulfillment-api
+    repository: https://github.com/cartwell-example/fulfillment-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Shipment
+          definition: A physical parcel dispatched to fulfill part or all of an Order
+      aggregates:
+        - Shipment
+      publishedEvents:
+        - ShipmentDispatched
+      subscribedEvents:
+        - InventoryReserved
+  - name: inventory-service
+    repository: https://github.com/cartwell-example/inventory-service
+    versioning:
+      type: semantic
+    x-pagerduty-service: PFULFILL01 # vendor extension field: any x-*-prefixed key is preserved as-is
+    boundedContext:
+      ubiquitousLanguage:
+        - term: SKU
+          definition: A single stock-keeping unit tracked across warehouses
+      aggregates:
+        - SKU
+        - Reservation
+      publishedEvents:
+        - InventoryReserved
+      subscribedEvents: []
+roles:
+  - id: director-of-engineering
+    name: Director of Engineering
+    kind: EngineeringManager
+    responsibilities:
+      - Engineering org structure and staffing
+      - Cross-team technical direction
+  - id: tech-lead
+    name: Fulfillment Tech Lead
+    kind: SingleThreadedOwner
+    responsibilities:
+      - Fulfillment platform architecture
+      - text: On-call escalation point
+        doneWhen: A runbook exists and the on-call rotation is staffed for the current quarter.
+    reportsTo: director-of-engineering
+  - id: fulfillment-engineer
+    name: Fulfillment Engineer
+    kind: Engineer
+    responsibilities:
+      - fulfillment-api development
+    reportsTo: tech-lead
+  - id: inventory-engineer
+    name: Inventory Engineer
+    kind: Engineer
+    responsibilities:
+      - inventory-service development
+    reportsTo: tech-lead
+members:
+  - id: grace-whitfield
+    name: Grace Whitfield
+    contact: grace.whitfield@cartwell.example
+    roleIds: [director-of-engineering]
+    allocation: 100
+  - id: kenji-watanabe
+    name: Kenji Watanabe
+    contact: kenji.watanabe@cartwell.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: amara-chukwu
+    name: Amara Chukwu
+    contact: amara.chukwu@cartwell.example
+    roleIds: [fulfillment-engineer]
+    allocation: 100
+  - id: piotr-nowak
+    name: Piotr Nowak
+    contact: piotr.nowak@cartwell.example
+    roleIds: [inventory-engineer]
+    allocation: 100
+cognitiveLoad:
+  intrinsic: 8
+  extraneous: 4
+  germane: 6
+  notes: Warehouse-automation integrations across dozens of physical sites add real intrinsic complexity.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Tuesday
+    timeOfDay: "08:30"
+    durationMinutes: 15
+work:
+  waysOfWorking:
+    - name: Two-pizza team charter

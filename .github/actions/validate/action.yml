@@ -1,0 +1,143 @@
+name: "Team API Validate & Preview"
+description: "Validate Team API as Code documents and post a rendered diagram preview as a PR comment"
+author: "JGalego"
+branding:
+  icon: "git-pull-request"
+  color: "purple"
+
+inputs:
+  patterns:
+    description: >-
+      File paths, globs, or a directory to auto-discover teamapi.yml under (passed straight
+      through to `teamapi validate`/`teamapi render`).
+    required: false
+    default: "."
+  render-scope:
+    description: "Diagram scope to preview: topology | hierarchy | context-map | org-hierarchy"
+    required: false
+    default: "topology"
+  render-team:
+    description: "Team id to scope the preview to (required for --scope hierarchy)"
+    required: false
+    default: ""
+  comment:
+    description: "Post (and keep updated on later pushes) a PR comment with the result"
+    required: false
+    default: "true"
+  github-token:
+    description: "Token used to read/post the PR comment"
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  success:
+    description: "'true' if `teamapi validate` passed, 'false' otherwise"
+    value: ${{ steps.validate.outputs.success }}
+  diagram:
+    description: "The rendered Mermaid diagram text (empty if validation failed)"
+    value: ${{ steps.render.outputs.diagram }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v7
+      with:
+        node-version: "22"
+
+    - name: Install teamapi
+      shell: bash
+      run: npm install --global @jgalego/teamapi
+
+    - name: Validate
+      id: validate
+      shell: bash
+      run: |
+        set +e
+        OUTPUT="$(teamapi validate ${{ inputs.patterns }} 2>&1)"
+        CODE=$?
+        set -e
+        {
+          echo "output<<TEAMAPI_VALIDATE_EOF"
+          echo "$OUTPUT"
+          echo "TEAMAPI_VALIDATE_EOF"
+        } >> "$GITHUB_OUTPUT"
+        if [ "$CODE" -eq 0 ]; then
+          echo "success=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "success=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Render preview diagram
+      id: render
+      if: steps.validate.outputs.success == 'true'
+      shell: bash
+      run: |
+        set +e
+        TEAM_FLAG=""
+        if [ -n "${{ inputs.render-team }}" ]; then
+          TEAM_FLAG="--team ${{ inputs.render-team }}"
+        fi
+        DIAGRAM="$(teamapi render ${{ inputs.patterns }} --scope ${{ inputs.render-scope }} --format mermaid $TEAM_FLAG 2>&1)"
+        set -e
+        {
+          echo "diagram<<TEAMAPI_RENDER_EOF"
+          echo "$DIAGRAM"
+          echo "TEAMAPI_RENDER_EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    # Values that can contain PR-controlled content (validate/render output derives from the PR's
+    # own teamapi.yml files) are passed via `env:` and read as plain strings through
+    # `process.env` — never interpolated directly into the `script:` body via `${{ }}`, which
+    # would let attacker-controlled YAML content (e.g. a crafted `focus:` field) get evaluated as
+    # JavaScript instead of treated as inert text.
+    - name: Comment on pull request
+      if: always() && inputs.comment == 'true' && github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      env:
+        TEAMAPI_SUCCESS: ${{ steps.validate.outputs.success }}
+        TEAMAPI_VALIDATE_OUTPUT: ${{ steps.validate.outputs.output }}
+        TEAMAPI_DIAGRAM: ${{ steps.render.outputs.diagram }}
+        TEAMAPI_RENDER_SCOPE: ${{ inputs.render-scope }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          const marker = "<!-- teamapi-action -->";
+          const success = process.env.TEAMAPI_SUCCESS === "true";
+          const validateOutput = process.env.TEAMAPI_VALIDATE_OUTPUT || "";
+          const diagram = process.env.TEAMAPI_DIAGRAM || "";
+          const renderScope = process.env.TEAMAPI_RENDER_SCOPE || "topology";
+
+          const lines = [
+            marker,
+            success ? "### :white_check_mark: Team API validation passed" : "### :x: Team API validation failed",
+            "",
+            "<details><summary><code>teamapi validate</code> output</summary>",
+            "",
+            "```",
+            validateOutput,
+            "```",
+            "",
+            "</details>",
+          ];
+          if (success) {
+            lines.push("", `#### Preview: \`--scope ${renderScope}\``, "", "```mermaid", diagram, "```");
+          }
+          const body = lines.join("\n");
+
+          const { owner, repo } = context.repo;
+          const issue_number = context.issue.number;
+
+          const comments = await github.rest.issues.listComments({ owner, repo, issue_number });
+          const existing = comments.data.find((c) => c.body && c.body.includes(marker));
+
+          if (existing) {
+            await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+          } else {
+            await github.rest.issues.createComment({ owner, repo, issue_number, body });
+          }
+
+    - name: Fail the job if validation failed
+      if: steps.validate.outputs.success == 'false'
+      shell: bash
+      run: exit 1

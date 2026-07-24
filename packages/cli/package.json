@@ -1,0 +1,53 @@
+{
+  "name": "@jgalego/teamapi",
+  "version": "0.3.2",
+  "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, generate, serve-api, serve-mcp, chat",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "homepage": "https://github.com/JGalego/TeamAPI#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JGalego/TeamAPI.git",
+    "directory": "packages/cli"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "bin": {
+    "teamapi": "dist/main.js"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b && chmod +x dist/main.js",
+    "postbuild": "[ \"$CI\" = \"true\" ] || npm link",
+    "clean": "rm -rf dist *.tsbuildinfo",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@jgalego/teamapi-core": "workspace:*",
+    "@jgalego/teamapi-schema": "workspace:*",
+    "@jgalego/teamapi-rest-api": "workspace:*",
+    "@jgalego/teamapi-mcp-server": "workspace:*",
+    "@jgalego/teamapi-chat": "workspace:*",
+    "@anthropic-ai/sdk": "^0.112.3",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "commander": "^12.1.0",
+    "fast-glob": "^3.3.2",
+    "js-yaml": "^4.1.0",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "typescript": "^5.6.3",
+    "vitest": "^2.1.4"
+  }
+}

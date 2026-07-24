@@ -1,0 +1,108 @@
+teamApiVersion: "1.0.0"
+id: stream-playlists
+info:
+  name: Stream Playlists
+  focus: Personalized and editorial playlists, and the weekly discovery mix
+  type: stream-aligned
+channels:
+  - type: slack
+    name: stream-playlists
+searchTerms:
+  - term: playlists
+  - term: discovery
+  - term: personalization
+platform:
+  $ref: ../platform-audio/teamapi.yml
+services:
+  - name: playlist-api
+    repository: https://github.com/wavelength-example/playlist-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Playlist
+          definition: An ordered, named collection of Tracks
+        - term: DiscoveryMix
+          definition: A personalized weekly Playlist generated for one listener
+      aggregates:
+        - Playlist
+        - DiscoveryMix
+      publishedEvents:
+        - DiscoveryMixGenerated
+      subscribedEvents:
+        - StreamStarted
+        - LicenseRevoked
+roles:
+  - id: tech-lead
+    name: Playlists Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Playlists architecture
+      - Incident response lead
+    reportsToRef:
+      teamName: Platform Audio
+      roleId: vp-engineering
+      $ref: ../platform-audio/teamapi.yml
+    alignsWith:
+      - teamName: Enabling Chapter Coaching
+        roleId: coach
+        $ref: ../enabling-chapter-coaching/teamapi.yml
+  - id: ml-engineer
+    name: Discovery ML Engineer
+    kind: DataScientist
+    responsibilities:
+      - Discovery mix model development
+    reportsTo: tech-lead
+  - id: backend-engineer
+    name: Playlists Backend Engineer
+    kind: Engineer
+    responsibilities:
+      - playlist-api development
+    reportsTo: tech-lead
+members:
+  - id: bianca-ferreira
+    name: Bianca Ferreira
+    contact: bianca.ferreira@wavelength.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: theo-andersen
+    name: Theo Andersen
+    contact: theo.andersen@wavelength.example
+    roleIds: [ml-engineer]
+    allocation: 100
+  - id: ravi-chandran
+    name: Ravi Chandran
+    contact: ravi.chandran@wavelength.example
+    roleIds: [backend-engineer]
+    allocation: 80
+cognitiveLoad:
+  intrinsic: 6
+  extraneous: 6
+  germane: 6
+  notes: >
+    Squad owns build, run, and improve end-to-end; license revocations require fast
+    playlist invalidation across every affected listener's mixes.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Friday
+    timeOfDay: "09:15"
+    durationMinutes: 15
+interactions:
+  - teamName: Platform Audio
+    mode: x-as-a-service
+    purpose: Consume playback telemetry and license state to personalize and invalidate playlists
+    contextMappingPattern: CustomerSupplier
+    startDate: "2026-02-20"
+    $ref: ../platform-audio/teamapi.yml
+  - teamName: Enabling Chapter Coaching
+    mode: facilitating
+    purpose: Chapter-led craft coaching on the discovery model's engineering practices
+    startDate: "2026-06-10"
+    expectedDuration: 4
+    expectedDurationUnit: weeks
+    $ref: ../enabling-chapter-coaching/teamapi.yml
+dependencies:
+  - teamName: Platform Audio
+    description: Playlists must react to license revocations within minutes to avoid serving delisted tracks
+    type: Slowing
+    $ref: ../platform-audio/teamapi.yml

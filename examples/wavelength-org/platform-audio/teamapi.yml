@@ -1,0 +1,104 @@
+teamApiVersion: "1.0.0"
+id: platform-audio
+info:
+  name: Platform Audio
+  focus: Provide audio transcoding, streaming delivery, and rights management as internal platform services
+  type: platform
+channels:
+  - type: slack
+    name: platform-audio
+searchTerms:
+  - term: transcoding
+  - term: streaming
+  - term: rights management
+services:
+  - name: audio-delivery
+    repository: https://github.com/wavelength-example/audio-delivery
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Track
+          definition: A single piece of licensed audio content
+        - term: Stream
+          definition: A single client's active playback session for a Track
+      aggregates:
+        - Stream
+      publishedEvents:
+        - StreamStarted
+      subscribedEvents: []
+  - name: rights-engine
+    repository: https://github.com/wavelength-example/rights-engine
+    versioning:
+      type: semantic
+    x-pagerduty-service: PAUDIO01 # vendor extension field: any x-*-prefixed key is preserved as-is
+    boundedContext:
+      ubiquitousLanguage:
+        - term: License
+          definition: A time- and territory-bound grant to stream a Track
+      aggregates:
+        - License
+      publishedEvents:
+        - LicenseRevoked
+      subscribedEvents: []
+roles:
+  - id: vp-engineering
+    name: VP of Engineering
+    kind: EngineeringManager
+    responsibilities:
+      - Engineering org structure and staffing
+      - Cross-team technical direction
+  - id: tech-lead
+    name: Audio Platform Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Audio platform architecture
+      - text: On-call escalation point
+        doneWhen: A runbook exists and the on-call rotation is staffed for the current quarter.
+    reportsTo: vp-engineering
+  - id: audio-engineer
+    name: Audio Delivery Engineer
+    kind: Engineer
+    responsibilities:
+      - audio-delivery development
+    reportsTo: tech-lead
+  - id: rights-engineer
+    name: Rights Engine Engineer
+    kind: Engineer
+    responsibilities:
+      - rights-engine development
+    reportsTo: tech-lead
+members:
+  - id: malik-freeman
+    name: Malik Freeman
+    contact: malik.freeman@wavelength.example
+    roleIds: [vp-engineering]
+    allocation: 100
+  - id: nadia-petrova
+    name: Nadia Petrova
+    contact: nadia.petrova@wavelength.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: liam-oconnor
+    name: Liam O'Connor
+    contact: liam.oconnor@wavelength.example
+    roleIds: [audio-engineer]
+    allocation: 100
+  - id: sana-malik
+    name: Sana Malik
+    contact: sana.malik@wavelength.example
+    roleIds: [rights-engineer]
+    allocation: 100
+cognitiveLoad:
+  intrinsic: 7
+  extraneous: 5
+  germane: 6
+  notes: Territory-by-territory licensing rules add real intrinsic complexity.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Thursday
+    timeOfDay: "09:30"
+    durationMinutes: 15
+work:
+  waysOfWorking:
+    - name: Squad health check
