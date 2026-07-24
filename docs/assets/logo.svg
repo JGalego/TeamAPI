@@ -1,24 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="48 38 164 144" width="164" height="144" role="img" aria-labelledby="title desc">
-  <title id="title">Team API Toolchain</title>
-  <desc id="desc">A stylized graph of four connected team nodes</desc>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-labelledby="title desc">
+  <title id="title">TeamAPI</title>
+  <desc id="desc">A team topology: an enabling team above two stream-aligned teams, resting on a platform</desc>
 
-  <!-- edges -->
-  <g stroke="#64748b" stroke-width="3" fill="none" stroke-linecap="round">
-    <line x1="96" y1="70" x2="154" y2="70"/>
-    <line x1="80" y1="86" x2="80" y2="124"/>
-    <line x1="167.51" y1="140" x2="100.3" y2="86.25" stroke-dasharray="7 7"/>
-  </g>
-  <g fill="#64748b">
-    <path d="M154 65 L164 70 L154 75 Z"/>
-    <path d="M75 124 L80 134 L85 124 Z"/>
-    <path d="M103.4 82.35 L92.49 80 L97.2 90.15 Z"/>
-  </g>
+  <!-- enabling team -->
+  <rect x="34" y="19.5" width="32" height="15" rx="7.5" fill="#fb7185"/>
 
-  <!-- nodes -->
-  <g>
-    <circle cx="80" cy="70" r="16" fill="#2dd4bf"/>
-    <circle cx="180" cy="70" r="16" fill="#a78bfa"/>
-    <circle cx="80" cy="150" r="16" fill="#fb7185"/>
-    <circle cx="180" cy="150" r="16" fill="#fbbf24"/>
-  </g>
+  <!-- stream-aligned teams -->
+  <rect x="14" y="42.5" width="32" height="15" rx="7.5" fill="#a78bfa"/>
+  <rect x="54" y="42.5" width="32" height="15" rx="7.5" fill="#fbbf24"/>
+
+  <!-- platform team -->
+  <rect x="14" y="65.5" width="72" height="15" rx="7.5" fill="#2dd4bf"/>
 </svg>
