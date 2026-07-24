@@ -6,7 +6,7 @@
   [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 </div>
 
-A team's API is what it owns, who's accountable for what, how to ask it for things, and how much it can take on. Usually that's scattered across wikis, onboarding docs, and people's heads, where it drifts out of date and can't be queried.
+What a team owns, who's accountable for what, how to ask it for things, how much it can take on — that's its API. Usually this information is scattered across wikis, onboarding docs, and people's heads, where it drifts out of date and can't be queried.
 
 [Team API as Code](docs/spec/teamapi-extended-v1.md) solves this by writing it all down: one `teamapi.yml` per team declaring `services`, `roles`, `members`, `interactions`, and `cognitiveLoad` — reviewed in pull requests and versioned in git. TeamAPI is the toolchain over that spec. It renders diagrams, serves a read-only REST API and an MCP server for LLM assistants, gives any team a chat persona, and generates config for tools like [CrewAI](https://crewai.com/) and [Backstage](https://backstage.io/).
 
