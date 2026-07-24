@@ -6,9 +6,11 @@
   [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
 </div>
 
-TeamAPI turns a **Team API as Code** spec — one YAML file per team, versioned in git — into diagrams, a live REST API, an MCP server for LLM assistants, a chat persona for any team, and config for tools like [CrewAI](https://crewai.com/) and [Backstage](https://backstage.io/). There's no database: the YAML is the source of truth, and everything else is derived from it on read.
+A **team API** is the interface a team exposes to the rest of the org: what it owns, who's accountable for what, how to ask it for things, and how much it can take on. That knowledge usually lives in wikis, onboarding docs, and people's heads, where it drifts out of date and can't be queried.
 
-Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven Design (DDD)](https://en.wikipedia.org/wiki/Domain-driven_design).
+**Team API as Code** writes it down instead: one `teamapi.yml` per team declaring `services`, `roles`, `members`, `interactions`, and `cognitiveLoad` — reviewed in pull requests and versioned in git. TeamAPI is the toolchain over that spec. It renders diagrams, serves a read-only REST API and an MCP server for LLM assistants, gives any team a chat persona, and generates config for tools like [CrewAI](https://crewai.com/) and [Backstage](https://backstage.io/).
+
+The concept comes from [Team Topologies](https://teamtopologies.com/); the bounded-context and context-map vocabulary from [Domain-Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design).
 
 ## 🧭 Contents
 
