@@ -39,6 +39,33 @@ describe("deriveKnowledgeGraph", () => {
     });
   });
 
+  it("owns one node per agent in a full multi-agent fleet, each ranBy a different session", () => {
+    const kg = deriveKnowledgeGraph(graph);
+    const fleet = ["architecture-reviewer", "test-generator", "security-scanner", "docs-writer", "compliance-auditor"];
+    for (const agentId of fleet) {
+      expect(kg.nodes.some((n) => n.id === `agent:platform-payments:${agentId}`)).toBe(true);
+    }
+    // Two of the fleet reviewed the same OAuth PR in parallel, from different angles (tests vs. security).
+    expect(kg.edges).toContainEqual({
+      from: "session:platform-payments:2026-07-02-oauth-test-coverage",
+      to: "agent:platform-payments:test-generator",
+      relation: "ranBy",
+    });
+    expect(kg.edges).toContainEqual({
+      from: "session:platform-payments:2026-07-02-oauth-security-scan",
+      to: "agent:platform-payments:security-scanner",
+      relation: "ranBy",
+    });
+  });
+
+  it("owns no agent nodes for a team deliberately kept agent-free", () => {
+    const kg = deriveKnowledgeGraph(graph);
+    expect(kg.nodes.some((n) => n.kind === "agent" && n.teamId === "stream-onboarding")).toBe(false);
+    expect(
+      kg.edges.some((e) => e.from === "team:stream-onboarding" && e.relation === "owns" && e.to.startsWith("agent:")),
+    ).toBe(false);
+  });
+
   it("resolves a specification's linkedDocuments $ref to a cross-team 'references' edge", () => {
     const kg = deriveKnowledgeGraph(graph);
     expect(kg.edges).toContainEqual({

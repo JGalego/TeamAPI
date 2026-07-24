@@ -56,10 +56,21 @@ describe("AI-native knowledge tools", () => {
     );
   });
 
-  it("list_agents scoped to a team returns that team's agents", async () => {
+  it("list_agents scoped to a team returns that team's full agent fleet", async () => {
     const result = await client.callTool({ name: "list_agents", arguments: { teamId: "platform-payments" } });
     const agents = JSON.parse(textOf(result));
-    expect(agents.map((a: { id: string }) => a.id)).toEqual(["architecture-reviewer"]);
+    expect(agents.map((a: { id: string }) => a.id)).toEqual([
+      "architecture-reviewer",
+      "compliance-auditor",
+      "docs-writer",
+      "security-scanner",
+      "test-generator",
+    ]);
+  });
+
+  it("list_agents scoped to a deliberately agent-free team returns an empty list", async () => {
+    const result = await client.callTool({ name: "list_agents", arguments: { teamId: "stream-onboarding" } });
+    expect(JSON.parse(textOf(result))).toEqual([]);
   });
 
   it("list_agents without teamId returns an org-wide list", async () => {

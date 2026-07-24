@@ -22,10 +22,28 @@ describe("AI-native resource routes", () => {
     expect(body.some((e: { item: { id: string } }) => e.item.id === "architecture-reviewer")).toBe(true);
   });
 
-  it("GET /teams/:id/agents lists one team's agents", async () => {
+  it("GET /teams/:id/agents lists one team's full agent fleet", async () => {
     const res = await app.inject({ method: "GET", url: "/teams/platform-payments/agents" });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toHaveLength(1);
+    expect(res.json().map((a: { id: string }) => a.id)).toEqual([
+      "architecture-reviewer",
+      "compliance-auditor",
+      "docs-writer",
+      "security-scanner",
+      "test-generator",
+    ]);
+  });
+
+  it("GET /teams/:id/agents is empty for a team deliberately kept agent-free", async () => {
+    const res = await app.inject({ method: "GET", url: "/teams/stream-onboarding/agents" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual([]);
+  });
+
+  it("GET /teams/:id/policies documents why that team stays agent-free", async () => {
+    const res = await app.inject({ method: "GET", url: "/teams/stream-onboarding/policies" });
+    expect(res.statusCode).toBe(200);
+    expect(res.json().map((p: { id: string }) => p.id)).toContain("no-agents-on-applicant-pii");
   });
 
   it("GET /teams/:id/agents 404s for an unknown team", async () => {

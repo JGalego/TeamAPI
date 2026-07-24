@@ -21,12 +21,22 @@ beforeAll(async () => {
 });
 
 describe("agents", () => {
-  it("lists agents declared on a team", () => {
-    expect(listAgents(graph, "platform-payments").map((a) => a.id)).toEqual(["architecture-reviewer"]);
+  it("lists agents declared on a team, sorted by id", () => {
+    expect(listAgents(graph, "platform-payments").map((a) => a.id)).toEqual([
+      "architecture-reviewer",
+      "compliance-auditor",
+      "docs-writer",
+      "security-scanner",
+      "test-generator",
+    ]);
   });
 
   it("returns an empty array for a team with no agents", () => {
     expect(listAgents(graph, "stream-checkout")).toEqual([]);
+  });
+
+  it("returns an empty array for a team deliberately kept agent-free", () => {
+    expect(listAgents(graph, "stream-onboarding")).toEqual([]);
   });
 
   it("gets a single agent by id", () => {

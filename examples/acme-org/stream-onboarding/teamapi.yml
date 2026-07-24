@@ -79,3 +79,29 @@ dependencies:
     description: Onboarding relies on the payments platform's KYC verification integration
     type: OK
     $ref: ../platform-payments/teamapi.yml
+policies:
+  - id: no-agents-on-applicant-pii
+    name: No autonomous AI agents on applicant PII
+    category: security
+    severity: blocking
+    description: >
+      Applicant data (KYC documents, identity-verification results) is regulated PII. No AI agent
+      may be granted read or tool access to onboarding-api or its data stores until a compliance
+      review of agent data handling is complete.
+    rules:
+      - key: agents_allowed
+        value: false
+    enforcedBy: [manual-review:compliance]
+    tags: [pii, compliance, agents]
+memory:
+  - id: why-no-agents-yet
+    title: Why Stream Onboarding runs no AI agents (yet)
+    kind: architecture-decision
+    body: >
+      Every other team at Acme has started delegating review, test-generation, or security-scanning
+      work to AI agents. We deliberately haven't: this is the only team whose services touch raw
+      KYC documents, and nobody has answered "where does the agent's context window go after it
+      reads a passport scan" to Legal's satisfaction. Revisit once the agent-provider data-handling
+      addendum is signed; see policies/no-agents-on-applicant-pii in the meantime.
+    tags: [agents, pii, compliance]
+    contributors: [noah-fischer]
