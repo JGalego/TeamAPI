@@ -280,6 +280,8 @@ teamapi serve-api examples/acme-org --port 3000
 open http://127.0.0.1:3000/dashboard
 ```
 
+![Searching the dashboard for "oauth" and "architecture" surfaces steering docs, prompts, ADRs, sessions, a specification, an AI agent, and a memory entry — all through the same search box.](docs/assets/dashboard-demo.gif)
+
 <a id="mcp-tools"></a>
 
 ## 🤖 MCP tools
