@@ -125,6 +125,8 @@ export const MemberSchema = z
     contact: z.string().optional(),
     roleIds: z.array(SlugSchema).default([]),
     allocation: z.number().min(0).max(100).optional(),
+    /** GitHub login, used to resolve this member to a real account for `teamapi apply`/`import`. */
+    githubUsername: z.string().optional(),
   })
   .passthrough();
 export type Member = z.infer<typeof MemberSchema>;

@@ -26,6 +26,7 @@ Inspired by [Team Topologies](https://teamtopologies.com/) and [Domain-Driven De
 - [⚙️ Generators](#generators)
   - [▶️ Running it](#running-it)
   - [🗂️ Backstage catalog](#backstage-catalog)
+- [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
 - [🕰️ Org history](#org-history)
 - [🔁 CI integration](#ci-integration)
@@ -453,6 +454,25 @@ spec:
 
 Cross-team `interactions[]`/`dependencies[]` aren't translated into Backstage's `dependsOn` relations — those model service-to-service dependencies, and Team API only tracks team-level ones, so guessing a mapping would produce plausible-looking but misleading catalog data. `roles[]` aren't represented either: Backstage's `Group`/`User` model has no concept of a role independent of the person filling it.
 
+<a id="apply"></a>
+
+## 🔄 Sync with GitHub teams
+
+Everything above reads the spec; `teamapi apply` is the one command that writes back to a real system — it reconciles actual GitHub teams and memberships in a GitHub org with what the spec declares, the way `terraform plan`/`apply` reconciles infrastructure. One GitHub team per Team API team, matched by slug === team `id`; members are resolved via each member's `githubUsername` (add it alongside `contact` — see the [spec](docs/spec/teamapi-extended-v1.md#member)). A member with no `githubUsername` set is reported as skipped, not silently dropped from the plan.
+
+It always prints a plan first:
+
+```
+$ teamapi apply examples/acme-org --org acme-example
++ create team 'stream-checkout' in acme-example
+  + add @diego-alves to 'stream-checkout'
+  ! 'stream-checkout': 2 member(s) skipped, no githubUsername set: yuki-tanaka, fatima-al-sayed
+
+Re-run with --yes to apply this plan.
+```
+
+Nothing is written until you re-run with `--yes`. A team that doesn't exist yet in GitHub is created (named after the team `id`, so its slug matches — rename it in GitHub afterward for a friendlier display name); an existing team's membership is diffed and only the difference (adds/removes) is applied. Requires a GitHub token with `admin:org` scope, via `--token` or `GITHUB_TOKEN`/`GH_TOKEN`.
+
 <a id="cli-reference"></a>
 
 ## 💻 CLI reference
@@ -466,6 +486,7 @@ After `npm install -g @jgalego/teamapi` (or `pnpm build` from a source checkout 
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
 | `teamapi generate crewai\|backstage <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config or a Backstage `catalog-info.yaml` |
 | `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
+| `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
 | `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |

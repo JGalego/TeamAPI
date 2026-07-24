@@ -18,3 +18,5 @@ export * from "./serialize/team-dto";
 export * from "./generators/crewai";
 export * from "./generators/backstage";
 export * from "./diff/diff-graph";
+export * from "./github/client";
+export * from "./apply/github-teams";

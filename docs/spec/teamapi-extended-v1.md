@@ -161,6 +161,7 @@ A reference to another team's role — same `$ref` convention as `Interaction`/`
 | `contact` | string | No | Email or other contact info. |
 | `roleIds` | slug[] | No | Zero or more `roles[].id` this member currently fills. |
 | `allocation` | number (0-100) | No | FTE % this member allocates to this team. |
+| `githubUsername` | string | No | GitHub login, used by `teamapi apply`/`teamapi import github-org` to resolve this member to a real account. |
 
 ## CognitiveLoadAssessment
 

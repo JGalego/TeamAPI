@@ -8,6 +8,7 @@ import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
+import { runApply } from "./commands/apply";
 import { runServeApi } from "./commands/serve-api";
 import { runServeMcp } from "./commands/serve-mcp";
 import { runChat } from "./commands/chat";
@@ -108,6 +109,17 @@ generateCommand
     .requiredOption("--against <ref>", "git revision to diff against, e.g. HEAD, main, a tag, or a commit sha")
     .action(async (patterns: string[], opts: { against: string }) => {
       process.exitCode = await runDiff(patterns, { against: opts.against });
+    });
+
+  program
+    .command("apply")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Reconcile GitHub teams/memberships with the resolved org graph (prints a plan; --yes to execute it)")
+    .requiredOption("--org <org>", "GitHub organization login to reconcile")
+    .option("--token <token>", "GitHub token (defaults to GITHUB_TOKEN/GH_TOKEN env var)")
+    .option("--yes", "execute the plan instead of just printing it")
+    .action(async (patterns: string[], opts: { org: string; token?: string; yes?: boolean }) => {
+      process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
     });
 
   program
