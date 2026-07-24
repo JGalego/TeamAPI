@@ -1,5 +1,16 @@
 # @jgalego/teamapi
 
+## 0.3.1
+
+### Patch Changes
+
+- Updated dependencies [b3c64e3]
+  - @jgalego/teamapi-schema@0.4.0
+  - @jgalego/teamapi-core@0.5.0
+  - @jgalego/teamapi-rest-api@0.3.0
+  - @jgalego/teamapi-mcp-server@0.3.0
+  - @jgalego/teamapi-chat@0.1.5
+
 ## 0.3.0
 
 ### Minor Changes

@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi-mcp-server",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "MCP server exposing a resolved Team API org graph as tools for LLM assistants",
   "license": "MIT",
   "homepage": "https://github.com/JGalego/TeamAPI#readme",
