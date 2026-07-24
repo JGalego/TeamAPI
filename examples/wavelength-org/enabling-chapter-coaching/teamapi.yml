@@ -1,0 +1,29 @@
+teamApiVersion: "1.0.0"
+id: enabling-chapter-coaching
+info:
+  name: Enabling Chapter Coaching
+  focus: Cross-squad engineering chapter coaching on craft, testing, and delivery practices
+  type: enabling
+channels:
+  - type: slack
+    name: enabling-chapter-coaching
+searchTerms:
+  - term: chapter
+  - term: guild
+  - term: coaching
+roles:
+  - id: coach
+    name: Chapter Lead
+    kind: DeliveryLead
+    responsibilities:
+      - Chapter craft coaching
+      - Guild facilitation
+members:
+  - id: ines-larsson
+    name: Ines Larsson
+    contact: ines.larsson@wavelength.example
+    roleIds: [coach]
+    allocation: 100
+work:
+  waysOfWorking:
+    - name: Guild session cadence

@@ -1,0 +1,71 @@
+teamApiVersion: "1.0.0"
+id: risk-scoring
+info:
+  name: Risk Scoring
+  focus: Fraud detection and real-time risk scoring, requiring specialist ML and adversarial-abuse expertise
+  type: complicated-subsystem
+channels:
+  - type: slack
+    name: risk-scoring
+searchTerms:
+  - term: fraud
+  - term: risk
+  - term: ml
+services:
+  - name: risk-scoring-api
+    repository: https://github.com/meridian-example/risk-scoring-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: RiskScore
+          definition: A 0-100 likelihood-of-fraud score computed for a PaymentIntent
+      aggregates:
+        - RiskScore
+      publishedEvents:
+        - RiskScoreComputed
+      subscribedEvents:
+        - PaymentIntentSucceeded
+roles:
+  - id: domain-expert
+    name: Risk Scoring Domain Expert
+    kind: DomainExpert
+    responsibilities:
+      - Fraud model tuning
+      - Adversarial-abuse research
+    reportsToRef:
+      teamName: Platform Ledger
+      roleId: head-of-platform-engineering
+      $ref: ../platform-ledger/teamapi.yml
+  - id: ml-engineer
+    name: Risk ML Engineer
+    kind: DataScientist
+    responsibilities:
+      - risk-scoring-api development
+    reportsTo: domain-expert
+members:
+  - id: naledi-dlamini
+    name: Naledi Dlamini
+    contact: naledi.dlamini@meridianpay.example
+    roleIds: [domain-expert]
+    allocation: 100
+  - id: yusuf-demir
+    name: Yusuf Demir
+    contact: yusuf.demir@meridianpay.example
+    roleIds: [ml-engineer]
+    allocation: 100
+cognitiveLoad:
+  intrinsic: 9
+  extraneous: 3
+  germane: 7
+  notes: >
+    Irreducible complexity from constantly-shifting adversarial fraud patterns; deliberately
+    isolated as a complicated-subsystem team so stream-aligned teams don't absorb it directly.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Thursday
+    timeOfDay: "09:15"
+    durationMinutes: 15
+work:
+  waysOfWorking:
+    - name: Model review board

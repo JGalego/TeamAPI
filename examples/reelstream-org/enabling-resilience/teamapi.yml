@@ -1,0 +1,29 @@
+teamApiVersion: "1.0.0"
+id: enabling-resilience
+info:
+  name: Enabling Resilience
+  focus: Coach stream-aligned teams on chaos engineering and on-call readiness
+  type: enabling
+channels:
+  - type: slack
+    name: enabling-resilience
+searchTerms:
+  - term: chaos engineering
+  - term: resilience
+  - term: on-call
+roles:
+  - id: coach
+    name: Resilience Coach
+    kind: DeliveryLead
+    responsibilities:
+      - Chaos-day facilitation
+      - Internal tooling for fault injection
+members:
+  - id: oscar-lindqvist
+    name: Oscar Lindqvist
+    contact: oscar.lindqvist@reelstream.example
+    roleIds: [coach]
+    allocation: 100
+work:
+  waysOfWorking:
+    - name: Chaos-day playbook

@@ -1,0 +1,106 @@
+teamApiVersion: "1.0.0"
+id: stream-search
+info:
+  name: Stream Search
+  focus: Product search, ranking, and catalog discovery
+  type: stream-aligned
+channels:
+  - type: slack
+    name: stream-search
+searchTerms:
+  - term: search
+  - term: ranking
+  - term: catalog
+platform:
+  $ref: ../platform-fulfillment/teamapi.yml
+services:
+  - name: search-api
+    repository: https://github.com/cartwell-example/search-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Query
+          definition: A shopper's free-text search request
+        - term: Listing
+          definition: A single sellable product listing surfaced in results
+      aggregates:
+        - Listing
+      publishedEvents:
+        - SearchServed
+      subscribedEvents:
+        - InventoryReserved
+roles:
+  - id: tech-lead
+    name: Search Tech Lead
+    kind: SingleThreadedOwner
+    responsibilities:
+      - Search architecture
+      - Incident response lead
+    reportsToRef:
+      teamName: Platform Fulfillment
+      roleId: director-of-engineering
+      $ref: ../platform-fulfillment/teamapi.yml
+    alignsWith:
+      - teamName: Enabling Seller Tools
+        roleId: coach
+        $ref: ../enabling-seller-tools/teamapi.yml
+  - id: search-engineer
+    name: Search Engineer
+    kind: Engineer
+    responsibilities:
+      - search-api development
+    reportsTo: tech-lead
+  - id: ranking-engineer
+    name: Ranking Engineer
+    kind: Engineer
+    responsibilities:
+      - Ranking model development
+    reportsTo: tech-lead
+members:
+  - id: isabela-rocha
+    name: Isabela Rocha
+    contact: isabela.rocha@cartwell.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: advika-iyer
+    name: Advika Iyer
+    contact: advika.iyer@cartwell.example
+    roleIds: [search-engineer]
+    allocation: 100
+  - id: connor-byrne
+    name: Connor Byrne
+    contact: connor.byrne@cartwell.example
+    roleIds: [ranking-engineer]
+    allocation: 80
+cognitiveLoad:
+  intrinsic: 6
+  extraneous: 7
+  germane: 5
+  notes: >
+    Ranking must react to real-time inventory changes across dozens of warehouses; the
+    single-threaded-owner model keeps decisions fast but concentrates bus-factor risk.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Wednesday
+    timeOfDay: "09:00"
+    durationMinutes: 15
+interactions:
+  - teamName: Platform Fulfillment
+    mode: x-as-a-service
+    purpose: Consume live inventory availability to avoid surfacing out-of-stock listings
+    contextMappingPattern: CustomerSupplier
+    startDate: "2026-02-10"
+    $ref: ../platform-fulfillment/teamapi.yml
+  - teamName: Enabling Seller Tools
+    mode: facilitating
+    purpose: Improve seller-facing listing-quality tooling that feeds search ranking
+    startDate: "2026-06-01"
+    expectedDuration: 3
+    expectedDurationUnit: weeks
+    $ref: ../enabling-seller-tools/teamapi.yml
+dependencies:
+  - teamName: Platform Fulfillment
+    description: Search relies on the inventory service's real-time reservation events
+    type: OK
+    $ref: ../platform-fulfillment/teamapi.yml

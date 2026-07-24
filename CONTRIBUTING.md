@@ -42,6 +42,7 @@ This is a pnpm/Turborepo monorepo:
 - `packages/mcp-server` — the MCP server exposing the org graph as tools for LLM assistants.
 - `packages/chat` — the Anthropic tool-use loop backing `teamapi chat`.
 - `examples/acme-org` — the sample org every README example and most tests run against. If you add a feature, prefer demonstrating it here over inventing new fixtures.
+- `examples/reelstream-org`, `examples/meridian-pay-org`, `examples/cartwell-org`, `examples/wavelength-org` — additional showcase orgs modeled after recognizable real-world team topologies (streaming, fintech, marketplace, and squad-based product orgs), for the README gallery and for exercising org-diff/multi-org scenarios. Not test fixtures — extend `acme-org` for those.
 - `docs/spec/teamapi-extended-v1.md` — the human-readable spec; keep it in sync with `packages/schema/src/v1` when you change a field's shape or add a new one.
 
 ## Making a change

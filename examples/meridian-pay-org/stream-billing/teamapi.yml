@@ -1,0 +1,114 @@
+teamApiVersion: "1.0.0"
+id: stream-billing
+info:
+  name: Stream Billing
+  focus: Subscription plans, invoicing, and dunning for recurring billing
+  type: stream-aligned
+channels:
+  - type: slack
+    name: stream-billing
+searchTerms:
+  - term: billing
+  - term: subscriptions
+  - term: invoicing
+platform:
+  $ref: ../platform-ledger/teamapi.yml
+services:
+  - name: billing-api
+    repository: https://github.com/meridian-example/billing-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Subscription
+          definition: A recurring commitment to be billed on a cadence
+        - term: Invoice
+          definition: A billed statement for one billing cycle
+      aggregates:
+        - Subscription
+        - Invoice
+      publishedEvents:
+        - InvoiceIssued
+      subscribedEvents:
+        - PaymentIntentSucceeded
+        - ChargeFailed
+        - RiskScoreComputed
+roles:
+  - id: tech-lead
+    name: Billing Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Billing architecture
+      - Incident response lead
+    reportsToRef:
+      teamName: Platform Ledger
+      roleId: head-of-platform-engineering
+      $ref: ../platform-ledger/teamapi.yml
+    alignsWith:
+      - teamName: Risk Scoring
+        roleId: domain-expert
+        $ref: ../risk-scoring/teamapi.yml
+  - id: billing-engineer
+    name: Billing Engineer
+    kind: Engineer
+    responsibilities:
+      - billing-api development
+    reportsTo: tech-lead
+  - id: invoicing-engineer
+    name: Invoicing Engineer
+    kind: Engineer
+    responsibilities:
+      - Invoice and dunning workflows
+    reportsTo: tech-lead
+members:
+  - id: sofia-kowalczyk
+    name: Sofia Kowalczyk
+    contact: sofia.kowalczyk@meridianpay.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: daniel-osei
+    name: Daniel Osei
+    contact: daniel.osei@meridianpay.example
+    roleIds: [billing-engineer]
+    allocation: 100
+  - id: priya-nair
+    name: Priya Nair
+    contact: priya.nair@meridianpay.example
+    roleIds: [invoicing-engineer]
+    allocation: 80
+cognitiveLoad:
+  intrinsic: 5
+  extraneous: 8
+  germane: 5
+  notes: >
+    Dunning logic is entangled with three different payment-failure taxonomies from
+    Platform Ledger and Risk Scoring; a strong candidate for a shared, canonical failure-reason enum.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Monday
+    timeOfDay: "09:45"
+    durationMinutes: 15
+interactions:
+  - teamName: Platform Ledger
+    mode: x-as-a-service
+    purpose: Consume payment processing and ledger primitives to reduce cognitive load
+    contextMappingPattern: CustomerSupplier
+    startDate: "2026-01-20"
+    $ref: ../platform-ledger/teamapi.yml
+  - teamName: Risk Scoring
+    mode: collaboration
+    purpose: Jointly define which risk signals gate invoice issuance
+    contextMappingPattern: Partnership
+    startDate: "2026-05-01"
+    expectedDuration: 6
+    expectedDurationUnit: weeks
+    $ref: ../risk-scoring/teamapi.yml
+dependencies:
+  - teamName: Platform Ledger
+    description: Billing waits on a dunning-friendly, canonical failure-reason taxonomy from payments-processing
+    type: Slowing
+    $ref: ../platform-ledger/teamapi.yml
+  - teamName: Risk Scoring
+    description: Billing cannot launch usage-based invoicing until Risk Scoring exposes a synchronous scoring endpoint
+    type: Blocking
+    $ref: ../risk-scoring/teamapi.yml

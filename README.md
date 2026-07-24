@@ -59,6 +59,17 @@ teamapi serve-mcp examples/acme-org     # point Claude Desktop/Code at this comm
 
 ACME Org is a small, fictional e-commerce company that ships payments and checkout software. Platform Payments runs the payments and ledger services that everyone else depends on; Stream Checkout owns the cart and checkout flow; Stream Onboarding handles sign-up and KYC; and Enabling DevEx coaches the other three on testing and delivery practices. Every example in this README runs against ACME Org, so you can try everything below right now — no setup beyond the two commands above.
 
+Want a bigger gallery, or a shape closer to your own org? Four more fictional-but-recognizable orgs ship alongside ACME, each modeled after a well-known real-world team topology:
+
+| Example | Modeled after | Shape |
+|---|---|---|
+| [`examples/reelstream-org`](examples/reelstream-org) | Netflix-style streaming platform | Full-cycle stream team (Recommendations) + a delivery platform team + a chaos-engineering enabling team |
+| [`examples/meridian-pay-org`](examples/meridian-pay-org) | Stripe-style payments infrastructure | A billing stream team, a ledger/payments platform team, and a `complicated-subsystem` fraud-scoring team it can't safely absorb |
+| [`examples/cartwell-org`](examples/cartwell-org) | Amazon-style marketplace | Two-pizza, single-threaded-owner teams (Search, Fulfillment) plus a seller-enablement team |
+| [`examples/wavelength-org`](examples/wavelength-org) | Spotify-style squads/chapters | A playlists squad, an audio-platform team, and a cross-squad chapter-coaching team |
+
+They work with every command in this README — just swap in the path, e.g. `teamapi render examples/meridian-pay-org --scope topology`.
+
 <a id="what-you-get"></a>
 
 ## 📦 What you get

@@ -1,0 +1,29 @@
+teamApiVersion: "1.0.0"
+id: enabling-seller-tools
+info:
+  name: Enabling Seller Tools
+  focus: Help third-party sellers integrate with marketplace APIs and improve listing quality
+  type: enabling
+channels:
+  - type: slack
+    name: enabling-seller-tools
+searchTerms:
+  - term: seller tools
+  - term: onboarding
+  - term: listing quality
+roles:
+  - id: coach
+    name: Seller Tools Coach
+    kind: DeliveryLead
+    responsibilities:
+      - Seller API onboarding
+      - Listing-quality tooling
+members:
+  - id: freya-johansson
+    name: Freya Johansson
+    contact: freya.johansson@cartwell.example
+    roleIds: [coach]
+    allocation: 100
+work:
+  waysOfWorking:
+    - name: Seller onboarding playbook

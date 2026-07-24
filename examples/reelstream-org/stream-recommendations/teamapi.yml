@@ -1,0 +1,107 @@
+teamApiVersion: "1.0.0"
+id: stream-recommendations
+info:
+  name: Stream Recommendations
+  focus: Personalized discovery, ranking, and "what to watch next" across the catalog
+  type: stream-aligned
+channels:
+  - type: slack
+    name: stream-recommendations
+searchTerms:
+  - term: recommendations
+  - term: personalization
+  - term: discovery
+platform:
+  $ref: ../platform-delivery/teamapi.yml
+services:
+  - name: recommendations-api
+    repository: https://github.com/reelstream-example/recommendations-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: WatchEvent
+          definition: A single instance of a member playing part or all of a Title
+        - term: Recommendation
+          definition: A ranked list of Titles suggested for a member
+      aggregates:
+        - Recommendation
+      publishedEvents:
+        - RecommendationServed
+      subscribedEvents:
+        - RenditionReady
+roles:
+  - id: tech-lead
+    name: Recommendations Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Recommendations architecture
+      - Incident response lead
+    reportsToRef:
+      teamName: Platform Delivery
+      roleId: vp-engineering
+      $ref: ../platform-delivery/teamapi.yml
+    alignsWith:
+      - teamName: Enabling Resilience
+        roleId: coach
+        $ref: ../enabling-resilience/teamapi.yml
+  - id: ml-engineer
+    name: Recommendations ML Engineer
+    kind: DataScientist
+    responsibilities:
+      - Ranking model development
+    reportsTo: tech-lead
+  - id: backend-engineer
+    name: Recommendations Backend Engineer
+    kind: Engineer
+    responsibilities:
+      - recommendations-api development
+    reportsTo: tech-lead
+members:
+  - id: camille-dubois
+    name: Camille Dubois
+    contact: camille.dubois@reelstream.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: rohan-mehta
+    name: Rohan Mehta
+    contact: rohan.mehta@reelstream.example
+    roleIds: [ml-engineer]
+    allocation: 100
+  - id: zara-ahmed
+    name: Zara Ahmed
+    contact: zara.ahmed@reelstream.example
+    roleIds: [backend-engineer]
+    allocation: 80
+cognitiveLoad:
+  intrinsic: 6
+  extraneous: 7
+  germane: 5
+  notes: >
+    Full-cycle ownership (build, run, and on-call) is deliberate, but the ranking model's
+    on-call load has crept up; a strong candidate for a paved-road deploy pipeline from
+    Platform Delivery.
+meetings:
+  - purpose: daily sync
+    dayOfWeek: Wednesday
+    timeOfDay: "10:00"
+    durationMinutes: 15
+interactions:
+  - teamName: Platform Delivery
+    mode: x-as-a-service
+    purpose: Consume encoding and CDN delivery telemetry to personalize by playback quality
+    contextMappingPattern: CustomerSupplier
+    startDate: "2026-02-01"
+    $ref: ../platform-delivery/teamapi.yml
+  - teamName: Enabling Resilience
+    mode: facilitating
+    purpose: Run quarterly chaos-day exercises against the recommendations service
+    startDate: "2026-06-15"
+    expectedDuration: 2
+    expectedDurationUnit: weeks
+    $ref: ../enabling-resilience/teamapi.yml
+dependencies:
+  - teamName: Platform Delivery
+    description: Recommendations waits on rendition-ready events before it can rank newly published titles
+    type: OK
+    $ref: ../platform-delivery/teamapi.yml
