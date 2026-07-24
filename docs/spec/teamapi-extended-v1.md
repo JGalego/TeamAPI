@@ -273,8 +273,8 @@ spec.
 
 ## AI-native domains
 
-Ten sections, all additive/optional/`.default([])`, so a document written before they existed
-still parses identically. Every resource in every array below requires a slug `id`, unique within
+Every section below is additive/optional (`.default([])`), so a document written before they
+existed still parses identically. Every resource in every array below requires a slug `id`, unique within
 that array (validated the same way `roles[].id`/`members[].id` are). Every array-of-objects field
 not called out below (`capabilities`, `tags`, `reviewers`, etc.) is a plain string array.
 
@@ -347,7 +347,7 @@ all valid `SearchResult.kind` values, matched the same way team/service/role/mem
 Every AI-native domain above follows the same rule as the rest of this API: **there is no write
 path**. A `POST` you might expect from a typical CRUD API (`POST /teams/:id/agents` to register a
 new agent, say) does not exist here — an agent, a policy, a prompt is added the same way a role or
-a service is: by editing `teamapi.yml` and committing it. The only genuinely new `POST` endpoints
+a service is: by editing `teamapi.yml` and committing it. The only new `POST` endpoints
 are `POST /context` (a stateless computation over the current graph, not a resource creation) and
 `POST /teams/:id/prompts/:promptId/render` (ditto). This preserves the existing architecture's
 central property — the YAML documents, versioned in git, are the single source of truth — rather

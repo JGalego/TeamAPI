@@ -69,7 +69,7 @@ const resourceNodeId = (kind: KnowledgeNodeKind, teamId: TeamId, resourceId: str
  *   team's `sourceUri` and matching it to another team's `sourceUri` — the same resolution logic
  *   `buildOrgGraph` uses for the `$ref` kinds it *does* traverse, applied here to the kinds it
  *   doesn't. A `$ref` that doesn't resolve to a known team (e.g. a wiki page, a non-team resource)
- *   is simply omitted rather than guessed at.
+ *   is omitted rather than guessed at.
  */
 export function deriveKnowledgeGraph(graph: OrgGraph): KnowledgeGraph {
   const nodes: KnowledgeNode[] = [];

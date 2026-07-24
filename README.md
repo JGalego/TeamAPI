@@ -83,7 +83,7 @@ Render [diagrams](#diagrams) from the spec — team-interaction organigrams, DDD
 
 ## 🧠 AI-native team knowledge
 
-A team isn't just people and services — it's also the AI agents working alongside them, and the specifications, standards, prompts, playbooks, policies, and history they all draw on. Ten new, fully optional, additive sections on the same `teamapi.yml` document model everything else already uses:
+A team also includes the AI agents working alongside its people, and the specifications, standards, prompts, playbooks, policies, and history they all draw on. These are modeled as new, optional sections on the same `teamapi.yml` document model everything else already uses:
 
 | Section | What it is |
 |---|---|
@@ -100,7 +100,7 @@ A team isn't just people and services — it's also the AI agents working alongs
 
 Since a document without any of these still parses identically to before they existed, adopting them is purely additive — no migration required for existing `teamapi.yml` files. Same read-only design as the rest of this API: these are edited in git, not `POST`ed — the YAML file stays the single source of truth.
 
-**Context bundles** are the flagship feature: `POST /context` (or the `get_context_bundle` MCP tool) takes a `goal` — e.g. `{ "goal": "Implement OAuth" }`, optionally `teamId`-scoped — and returns the minimum high-quality set of specifications, steering documents, policies, memory, knowledge base entries, prompts, and playbooks relevant to it (a transparent keyword-overlap ranking, with `matchedTerms` per result — not an opaque embedding score), plus the scoped team's related teams, members, and services. It's the one call an AI assistant needs to get oriented on a task instead of walking the whole graph by hand.
+**Context bundles**: `POST /context` (or the `get_context_bundle` MCP tool) takes a `goal` — e.g. `{ "goal": "Implement OAuth" }`, optionally `teamId`-scoped — and returns the minimum high-quality set of specifications, steering documents, policies, memory, knowledge base entries, prompts, and playbooks relevant to it (a transparent keyword-overlap ranking, with `matchedTerms` per result — not an opaque embedding score), plus the scoped team's related teams, members, and services. It's the one call an AI assistant needs to get oriented on a task instead of walking the whole graph by hand.
 
 **The knowledge graph** (`GET /knowledge-graph`, `GET /knowledge-graph/:nodeId/traverse`, or the `get_knowledge_graph`/`traverse_knowledge_graph` MCP tools) links every team, person, agent, and document by ownership, role, team-topology, and resolved cross-team `$ref` edges — for traversal or visualization tooling to walk.
 
