@@ -200,6 +200,19 @@ describe("createProgram — generate", () => {
     await program.parseAsync(["node", "teamapi", "generate", "backstage", "some/path", "--out", "out"]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], { target: "backstage", team: undefined, out: "out" });
   });
+
+  it("accepts the paperclip target and passes --company through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync([
+      "node", "teamapi", "generate", "paperclip", "some/path", "--out", "out", "--company", "ACME Org",
+    ]);
+    expect(runGenerate).toHaveBeenCalledWith(["some/path"], {
+      target: "paperclip",
+      team: undefined,
+      out: "out",
+      company: "ACME Org",
+    });
+  });
 });
 
 describe("createProgram — diff", () => {

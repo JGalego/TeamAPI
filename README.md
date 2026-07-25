@@ -44,6 +44,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [💻 CLI reference](#cli-reference)
 - [🕰️ Org history](#org-history)
 - [🔁 CI integration](#ci-integration)
+- [🔗 Paperclip](#paperclip)
 - [🤝 Contributing](#contributing)
 
 <a id="quick-start"></a>
@@ -523,10 +524,11 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi validate <patterns...>` | Resolve every `$ref` transitively and report unresolved refs |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]` | Render a diagram |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
-| `teamapi generate crewai\|backstage <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config or a Backstage `catalog-info.yaml` |
+| `teamapi generate crewai\|backstage\|paperclip <patterns...> [--team <id>] [--company <name>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, or an [Agent Companies](#paperclip) package |
 | `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
 | `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
+| `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]` | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only) |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
 | `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |
@@ -581,6 +583,24 @@ jobs:
 ```
 
 It installs `@jgalego/teamapi` and runs `teamapi validate`, then posts a single PR comment with the result — kept up to date on later pushes, and carrying a live-rendered Mermaid preview when validation passes. The job fails when validation fails, so it can gate a required check. This repo dogfoods it against [`examples/acme-org`](examples/acme-org); see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml) and the action's [inputs and outputs](.github/actions/validate/README.md).
+
+<a id="paperclip"></a>
+
+## 🔗 Paperclip
+
+[Paperclip](https://github.com/paperclipai/paperclip) orchestrates teams of AI agents — tasks, an org chart for agents, budgets, and a governed tool gateway. TeamAPI and Paperclip both model an organisation, so the division of labour is the important part: **TeamAPI declares, Paperclip enforces and executes.** `AgentSchema.permissions` is documented as enforced by external automation rather than by the schema; Paperclip is that automation.
+
+The flow runs one way, spec to runtime. Nothing writes back into `teamapi.yml` — runtime facts that should inform the spec belong in a pull request, so they stay reviewable.
+
+```bash
+teamapi serve-mcp examples/acme-org                    # register with Paperclip's tool gateway
+teamapi generate paperclip examples/acme-org --out ./company --company "ACME Org"
+teamapi paperclip-drift examples/acme-org --url http://localhost:3000 --company <id>
+```
+
+Registering the MCP server gives every agent `find_service_owner`, `get_team_cognitive_load`, and `get_context_bundle` as governed tools. `generate paperclip` emits an [`agentcompanies/v1`](https://github.com/paperclipai/paperclip/blob/main/docs/companies/companies-spec.md) package — a vendor-neutral, git-native markdown format. `paperclip-drift` reports agents running that nothing declares, declared agents that aren't running, and agents on teams whose policies forbid them; only that last one exits non-zero, so it can gate a required check.
+
+Full mapping, the deliberate gaps, and the suggested loop: [`docs/integrations/paperclip.md`](docs/integrations/paperclip.md).
 
 <a id="contributing"></a>
 
