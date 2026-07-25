@@ -106,6 +106,15 @@
   .cta .mark { display: block; width: 26px; height: 26px; margin: 0 auto .8rem; color: var(--teal); }
   .cta .q { font-size: clamp(1.3rem, 4vw, 1.7rem); font-weight: 600; margin: 0 0 .35rem; letter-spacing: -.02em; }
   .cta .a { color: var(--muted); margin: 0; }
+  .acts { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-top: 1.5rem; }
+  .acts a {
+    text-decoration: none; border: 1px solid var(--line); border-radius: 9px;
+    padding: .55rem 1.1rem; font-size: .9rem; color: var(--muted); background: var(--card);
+    transition: color .15s, border-color .15s;
+  }
+  .acts a:hover { color: var(--fg); border-color: var(--muted); }
+  .acts .go { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 500; }
+  .acts .go:hover { opacity: .88; color: var(--bg); }
   .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .8rem; justify-content: center; }
   .chips button {
     border: 1px solid var(--line); background: var(--card); color: var(--muted);
@@ -286,13 +295,12 @@
   </div>
 
   <section class="cta">
-    <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" /> <path d="M6 14H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2" /> <path d="M6 6h.01" /> <path d="M6 18h.01" /> <path d="m13 6-4 6h6l-4 6" /></svg>
-    <p class="q">Still returning 404?</p>
-    <p class="a">Start with one file.</p>
-    <div class="install">
-      <span class="dollar">$</span>
-      <code>npm install -g @jgalego/teamapi</code>
-      <button type="button">copy</button>
+    <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172" /> <path d="m18.586 13.414-5.172 5.172" /> <path d="M6 12h12" /> <circle cx="12" cy="20" r="2" /> <circle cx="12" cy="4" r="2" /> <circle cx="20" cy="12" r="2" /> <circle cx="4" cy="12" r="2" /></svg>
+    <p class="q">Make every team one call away.</p>
+    <p class="a">Start with yours.</p>
+    <div class="acts">
+      <a class="go" href="https://github.com/JGalego/TeamAPI/blob/main/docs/spec/teamapi-extended-v1.md">Read the spec</a>
+      <a href="https://github.com/JGalego/TeamAPI/tree/main/examples/acme-org">See a worked example</a>
     </div>
   </section>
 
