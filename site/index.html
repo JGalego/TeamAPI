@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en" data-theme="auto">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TeamAPI — Who owns this? Just curl your org.</title>
+<meta name="description" content="Every team has an API. Write it down as one teamapi.yml per team, reviewed in pull requests, and TeamAPI makes it executable.">
+<meta property="og:title" content="TeamAPI">
+<meta property="og:description" content="Who owns this? Just curl your org.">
+<meta property="og:url" content="https://teamapi.dev">
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<style>
+  :root {
+    --bg: #ffffff; --fg: #1e293b; --muted: #64748b; --card: #f8fafc;
+    --line: #e2e8f0; --term-bg: #0f172a; --term-fg: #e2e8f0; --shadow: 0 1px 3px #0f172a12;
+    --teal: #14b8a6; --purple: #8b5cf6; --rose: #f43f5e; --amber: #f59e0b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root[data-theme="auto"] {
+      --bg: #0b0f16; --fg: #e6edf3; --muted: #8b98a9; --card: #131922;
+      --line: #222b38; --term-bg: #060910; --shadow: none;
+      --teal: #2dd4bf; --purple: #a78bfa; --rose: #fb7185; --amber: #fbbf24;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0b0f16; --fg: #e6edf3; --muted: #8b98a9; --card: #131922;
+    --line: #222b38; --term-bg: #060910; --shadow: none;
+    --teal: #2dd4bf; --purple: #a78bfa; --rose: #fb7185; --amber: #fbbf24;
+  }
+
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font: 16px/1.6 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 54rem; margin: 0 auto; padding: 0 1.25rem 5rem; }
+  a { color: inherit; }
+  code, pre { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+
+  /* ── header ─────────────────────────────────────────────── */
+  header { display: flex; justify-content: flex-end; padding: 1rem 1.25rem; }
+  #theme {
+    background: none; border: 1px solid var(--line); color: var(--muted);
+    border-radius: 8px; padding: .4rem .7rem; cursor: pointer; font: inherit; font-size: .8rem;
+  }
+  #theme:hover { color: var(--fg); border-color: var(--muted); }
+
+  /* ── hero ───────────────────────────────────────────────── */
+  .hero { text-align: center; padding: 1rem 0 2.5rem; }
+  .hero svg { width: 84px; height: 84px; animation: settle .7s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes settle { from { opacity: 0; transform: scale(.9) } to { opacity: 1; transform: none } }
+  @media (prefers-reduced-motion: reduce) { .hero svg { animation: none } }
+  h1 { font-size: clamp(2.2rem, 7vw, 3.1rem); margin: .6rem 0 .3rem; letter-spacing: -.035em; }
+  .tag { font-size: clamp(1.05rem, 3.4vw, 1.3rem); margin: 0 0 .8rem; }
+  .tag code {
+    background: color-mix(in oklab, var(--teal) 16%, transparent);
+    color: var(--teal); padding: .1em .35em; border-radius: 5px; font-size: .95em;
+  }
+  .sub { color: var(--muted); max-width: 34rem; margin: 0 auto; }
+
+  /* ── install ────────────────────────────────────────────── */
+  .install {
+    display: flex; align-items: center; gap: .5rem; margin: 1.6rem auto 0; max-width: 25rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: .55rem .55rem .55rem .9rem; box-shadow: var(--shadow);
+  }
+  .install code { flex: 1; text-align: left; font-size: .88rem; overflow-x: auto; white-space: nowrap; }
+  .install .dollar { color: var(--muted); user-select: none; }
+  .install button {
+    border: 1px solid var(--line); background: var(--bg); color: var(--muted);
+    border-radius: 7px; padding: .3rem .6rem; cursor: pointer; font: inherit; font-size: .78rem;
+    flex-shrink: 0; transition: color .15s, border-color .15s;
+  }
+  .install button:hover { color: var(--fg); border-color: var(--muted); }
+  .install button.done { color: var(--teal); border-color: var(--teal); }
+
+  /* ── terminal ───────────────────────────────────────────── */
+  .demo { margin: 3rem 0 0; }
+  .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .8rem; justify-content: center; }
+  .chips button {
+    border: 1px solid var(--line); background: var(--card); color: var(--muted);
+    border-radius: 999px; padding: .35rem .85rem; cursor: pointer; font: inherit; font-size: .82rem;
+    transition: all .15s;
+  }
+  .chips button:hover { color: var(--fg); }
+  .chips button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .term {
+    background: var(--term-bg); border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--line); box-shadow: var(--shadow);
+  }
+  .bar { display: flex; gap: .4rem; padding: .7rem .9rem; border-bottom: 1px solid #ffffff10; }
+  .bar i { width: 11px; height: 11px; border-radius: 50%; background: #ffffff20; }
+  .term pre {
+    margin: 0; padding: 1rem 1.1rem 1.2rem; color: var(--term-fg); font-size: .84rem;
+    line-height: 1.65; overflow-x: auto; min-height: 15.5rem; white-space: pre;
+  }
+  .term .p { color: var(--teal); }
+  .term .c { color: #f1f5f9; }
+  .term .dim { color: #64748b; }
+  .term .ok { color: var(--teal); }
+  .term .warn { color: var(--amber); }
+  .caret {
+    display: inline-block; width: .55em; height: 1.05em; background: var(--teal);
+    vertical-align: text-bottom; animation: blink 1.05s steps(2) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0 } }
+  .dia { display: block; width: 100%; height: auto; margin: .9rem 0 .2rem; }
+  .note { color: var(--muted); font-size: .85rem; text-align: center; margin: .8rem 0 0; min-height: 1.4rem; }
+
+  /* ── integrations ───────────────────────────────────────── */
+  .ints { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .ints a {
+    display: block; text-decoration: none; padding: .8rem 1rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    transition: border-color .15s;
+  }
+  .ints a:hover { border-color: var(--muted); }
+  .ints .row { display: flex; align-items: center; gap: .5rem; }
+  .ints svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--muted); }
+  .ints a:hover svg { color: var(--fg); }
+  .ints b { font-size: .92rem; }
+  .ints span { display: block; color: var(--muted); font-size: .82rem; margin-top: .15rem; }
+
+  /* ── steps ──────────────────────────────────────────────── */
+  h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+       margin: 4rem 0 1.1rem; font-weight: 600; text-align: center; }
+  .steps { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  .step {
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.3rem;
+  }
+  .step .row { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+  .step .row svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--teal); }
+  .step p { margin: 0; color: var(--muted); font-size: .9rem; }
+  .step pre {
+    margin: .7rem 0 0; font-size: .78rem; overflow-x: auto; color: var(--fg);
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .55rem .7rem;
+  }
+
+  /* ── footer ─────────────────────────────────────────────── */
+  footer {
+    margin-top: 4rem; padding-top: 1.6rem; border-top: 1px solid var(--line);
+    display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center;
+    color: var(--muted); font-size: .87rem;
+  }
+  footer a { text-decoration: none; }
+  footer a:hover { color: var(--fg); }
+</style>
+</head>
+<body>
+
+<header>
+  <button id="theme" type="button" aria-label="Switch colour theme">◐ theme</button>
+</header>
+
+<main>
+  <section class="hero">
+    <!-- the woven mark: sixteen teams, each crossing over one neighbour and under the next -->
+    <svg viewBox="0 0 100 100" fill="none" role="img" aria-label="TeamAPI">
+      <path d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="round"/>
+      <path d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="round"/>
+      <path d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="round"/>
+      <path d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="round"/>
+      <path d="M26 14V86" stroke="#a78bfa" stroke-width="10" stroke-linecap="round"/>
+      <path d="M42 14V86" stroke="#fb7185" stroke-width="10" stroke-linecap="round"/>
+      <path d="M58 14V86" stroke="#a78bfa" stroke-width="10" stroke-linecap="round"/>
+      <path d="M74 14V86" stroke="#fb7185" stroke-width="10" stroke-linecap="round"/>
+      <g stroke-linecap="butt" stroke-width="10" pathLength="100" stroke-dasharray="13.89 200">
+        <path d="M14 26H86" stroke="#2dd4bf" stroke-dashoffset="-9.72"/>
+        <path d="M14 26H86" stroke="#2dd4bf" stroke-dashoffset="-53.47"/>
+        <path d="M14 42H86" stroke="#fbbf24" stroke-dashoffset="-31.6"/>
+        <path d="M14 42H86" stroke="#fbbf24" stroke-dashoffset="-75.35"/>
+        <path d="M14 58H86" stroke="#2dd4bf" stroke-dashoffset="-9.72"/>
+        <path d="M14 58H86" stroke="#2dd4bf" stroke-dashoffset="-53.47"/>
+        <path d="M14 74H86" stroke="#fbbf24" stroke-dashoffset="-31.6"/>
+        <path d="M14 74H86" stroke="#fbbf24" stroke-dashoffset="-75.35"/>
+      </g>
+    </svg>
+    <h1>TeamAPI</h1>
+    <p class="tag">Who owns this? Just <code>curl</code> your org.</p>
+    <p class="sub">
+      Every team has an API: what it owns, who's accountable for what, how much it can take on.
+      Usually it's scattered across wikis and people's heads, where it drifts out of date.
+      Write it down as one <code>teamapi.yml</code> per team and TeamAPI makes it executable.
+    </p>
+
+    <div class="install">
+      <span class="dollar">$</span>
+      <code id="cmd">npm install -g @jgalego/teamapi</code>
+      <button id="copy" type="button">copy</button>
+    </div>
+  </section>
+
+  <section class="demo">
+    <div class="chips" role="tablist" aria-label="Try a command"></div>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <pre id="out" role="log" aria-live="polite"></pre>
+    </div>
+    <p class="note" id="note"></p>
+  </section>
+
+  <h2>Quick start</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 12.5 8 15l2 2.5" /> <path d="m14 12.5 2 2.5-2 2.5" /></svg><b>Write it down</b></div>
+      <p>One file per team: what it owns, who's accountable, how much it can take on.</p>
+      <pre>teamapi scaffold my-team \
+  --type stream-aligned \
+  --out teamapi.yml</pre>
+    </div>
+    <div class="step">
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve the API</b></div>
+      <p>A read-only REST API and a dashboard, straight from the files. No database.</p>
+      <pre>teamapi serve-api ./org
+# → localhost:3000/dashboard</pre>
+    </div>
+    <div class="step">
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /> <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" /></svg><b>Ask your org</b></div>
+      <p>Point an assistant at the MCP server and ask in plain English.</p>
+      <pre>teamapi serve-mcp ./org
+# "which team is overloaded?"</pre>
+    </div>
+  </div>
+
+  <h2>Feeds</h2>
+  <div class="ints">
+    <a href="https://github.com/JGalego/TeamAPI#generators">
+      <div class="row"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.482.18C7.161 1.319 1.478 9.069 1.426 15.372c-.051 5.527 3.1 8.68 8.68 8.627 6.716-.05 14.259-6.87 12.09-10.9-.672-1.292-1.396-1.344-2.687-.207-1.602 1.395-1.654.31-.207-2.893 1.757-3.98 1.705-5.322-.31-7.544C17.03.388 14.962-.388 12.482.181Zm5.322 2.068c2.273 2.015 2.376 4.236.465 8.42-1.395 3.1-2.17 3.515-3.824 1.86-1.24-1.24-1.343-3.46-.258-6.044 1.137-2.635.982-3.1-.568-1.653-3.72 3.358-6.458 9.765-5.424 12.503.464 1.189.825 1.395 2.737 1.395 2.79 0 6.303-1.705 7.957-3.926 1.756-2.274 2.79-2.274 2.79-.052 0 3.875-6.459 8.627-11.625 8.627-6.251 0-9.351-4.752-7.491-11.47.878-2.995 4.443-7.904 7.077-9.66 3.255-2.17 5.684-2.17 8.164 0z"/></svg><b>CrewAI</b></div>
+      <span>roles become agents, responsibilities become tasks</span>
+    </a>
+    <a href="https://github.com/JGalego/TeamAPI#backstage-catalog">
+      <div class="row"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.5188 9.3003a4.5194 4.5194 0 0 0 .7533-.5808 7.0485 7.0485 0 0 0 .1289-.1288 4.6555 4.6555 0 0 0 .4441-.5254 3.5672 3.5672 0 0 0 .354-.6032 2.721 2.721 0 0 0 .2436-.9185c.0835-1.086-.56-2.166-1.995-3.0369L13.6692 0 6.9335 6.454 2.548 10.6558l6.0826 3.6916a6.25 6.25 0 0 0 3.2351.919c1.3958 0 2.7333-.4928 3.7201-1.4388 1.0732-1.0283 1.4294-2.3591.7674-3.4653a2.7568 2.7568 0 0 0-.3809-.4968 4.9944 4.9944 0 0 0 1.0821.1204h.0084a4.7653 4.7653 0 0 0 1.7363-.3243 4.53 4.53 0 0 0 .7197-.3613Zm-5.6317 3.35c-1.0821 1.0367-2.8229 1.189-4.24.3304l-4.2085-2.5546 3.7779-3.6204 4.2796 2.5977c1.542.9348 1.4574 2.2247.391 3.2469zm.5001-4.6051-3.957-2.4023 3.6075-3.4585 3.8854 2.358c1.4529.8804 1.6416 2.0723.591 3.0805a3.3992 3.3992 0 0 1-4.1269.4223Zm1.6725 10.6418c-1.0961 1.0501-2.586 1.6293-4.194 1.6293a6.93 6.93 0 0 1-3.5902-1.0194L2.548 15.8238v1.3817l6.0826 3.6916a6.2506 6.2506 0 0 0 3.2351.9197c1.3958 0 2.7333-.4935 3.7201-1.439.7214-.691 1.1202-1.5195 1.1023-2.3237v-.1003a4.888 4.888 0 0 1-.6284.7354zm0-2.1844c-1.0961 1.0502-2.586 1.6287-4.194 1.6287a6.9345 6.9345 0 0 1-3.5902-1.0188L2.548 13.64v1.3824l6.0826 3.6915a6.2506 6.2506 0 0 0 3.2351.9197c1.3958 0 2.7333-.4934 3.7201-1.4389.7214-.6911 1.1202-1.5195 1.1023-2.3244v-.0997a4.888 4.888 0 0 1-.6284.7354zm0-2.1844c-1.0961 1.0508-2.586 1.6293-4.194 1.6293a6.9345 6.9345 0 0 1-3.5902-1.0188l-5.7275-3.472v1.3823l6.0826 3.6916a6.25 6.25 0 0 0 3.2351.9191c1.3958 0 2.7333-.4929 3.7201-1.4383.7214-.6917 1.1202-1.5195 1.1023-2.3244v-.102a4.8218 4.8218 0 0 1-.6284.7371zm4.688 1.4417a5.2733 5.2733 0 0 1-3.3718 1.4484v1.4988a4.5704 4.5704 0 0 0 2.898-1.253c.784-.7493 1.184-1.5743 1.1761-2.3882v-.1226a5.3164 5.3164 0 0 1-.7023.8205zm-4.688 5.1086c-1.0961 1.0508-2.586 1.6293-4.194 1.6293a6.93 6.93 0 0 1-3.5902-1.0193L2.548 18.007v1.3823l6.0826 3.691A6.2506 6.2506 0 0 0 11.8657 24c1.3958 0 2.7333-.4929 3.7201-1.4389.7214-.6911 1.1202-1.5195 1.1023-2.3238v-.1003a4.833 4.833 0 0 1-.6284.7354zM20.863 9.0987c-.038.0386-.0756.0773-.1148.1154a5.2856 5.2856 0 0 1-.596.4845 5.1165 5.1165 0 0 1-.6496.392 5.2946 5.2946 0 0 1-1.4697.4879 5.4716 5.4716 0 0 1-.7931.088 3.07 3.07 0 0 1 .07.2744 2.9836 2.9836 0 0 1 .0638.672v.5411h.0032a4.7277 4.7277 0 0 0 1.4198-.3108 4.5368 4.5368 0 0 0 1.478-.9421c.0449-.043.084-.0874.1267-.131a4.5972 4.5972 0 0 0 .4441-.5254 3.5712 3.5712 0 0 0 .354-.6016 2.7193 2.7193 0 0 0 .242-.9213c.0046-.0689.0111-.1384.0106-.2073v-.1131q-.0605.0863-.126.173a5.4178 5.4178 0 0 1-.4627.5243zm0 4.3643c-.0386.0392-.0733.079-.112.1176a5.276 5.276 0 0 1-3.3717 1.4484v1.4938a4.5704 4.5704 0 0 0 2.8979-1.253 4.1172 4.1172 0 0 0 .9219-1.2602 2.7198 2.7198 0 0 0 .242-.9208c.0047-.0694.0111-.1383.0106-.2078v-.1226c-.0414.06-.0818.1204-.1272.1798a5.359 5.359 0 0 1-.4615.5248zm0-2.1844c-.0386.0392-.0733.079-.112.1176a5.219 5.219 0 0 1-.5954.4845 5.1321 5.1321 0 0 1-.6513.392 5.3472 5.3472 0 0 1-2.125.5702v1.4955a4.5732 4.5732 0 0 0 2.8979-1.253c.0448-.0431.084-.0873.1266-.131a4.5972 4.5972 0 0 0 .4441-.5254 3.5712 3.5712 0 0 0 .3512-.6026 2.7198 2.7198 0 0 0 .242-.9208c.0047-.0694.0111-.139.0106-.2078v-.1232c-.0414.0604-.0818.121-.1272.1803a5.359 5.359 0 0 1-.4615.5248z"/></svg><b>Backstage</b></div>
+      <span>a Group per team, a Component per service</span>
+    </a>
+    <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/paperclip.md">
+      <div class="row"><svg viewBox="-4 -4 32 32" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"/></svg><b>Paperclip</b></div>
+      <span>an agent company, plus drift detection against it</span>
+    </a>
+    <a href="https://github.com/JGalego/TeamAPI#apply">
+      <div class="row"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><b>GitHub</b></div>
+      <span>import existing teams, reconcile membership</span>
+    </a>
+  </div>
+
+  <footer>
+    <a href="https://github.com/JGalego/TeamAPI">GitHub</a>
+    <a href="https://www.npmjs.com/package/@jgalego/teamapi">npm</a>
+    <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/spec/teamapi-extended-v1.md">Spec</a>
+    <a href="https://teamtopologies.com/">Team Topologies</a>
+    <span>MIT</span>
+  </footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  /* ── theme: auto by default, click to pin light or dark ──────────────── */
+  const root = document.documentElement, btn = document.getElementById("theme");
+  const saved = localStorage.getItem("teamapi-theme");
+  if (saved) root.dataset.theme = saved;
+  btn.addEventListener("click", () => {
+    const dark = matchMedia("(prefers-color-scheme: dark)").matches;
+    const now = root.dataset.theme === "auto" ? (dark ? "light" : "dark")
+              : root.dataset.theme === "dark" ? "light" : "dark";
+    root.dataset.theme = now;
+    localStorage.setItem("teamapi-theme", now);
+  });
+
+  /* ── copy ────────────────────────────────────────────────────────────── */
+  const copy = document.getElementById("copy");
+  copy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(document.getElementById("cmd").textContent);
+      copy.textContent = "copied"; copy.classList.add("done");
+      setTimeout(() => { copy.textContent = "copy"; copy.classList.remove("done"); }, 1600);
+    } catch { copy.textContent = "⌘C"; }
+  });
+
+  /* ── the demo ─────────────────────────────────────────────────────────
+     Every line below is real output, captured from the CLI running against
+     examples/acme-org in the repo. Nothing here is mocked up.              */
+  const E = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  /* The four ACME teams, laid out once. Both diagram scopes draw the same boxes and differ
+     only in their edges, which is the point the context map is making. */
+  const NODES = [
+    [16, 30, 170, "Stream Checkout", "stream-aligned", "#a78bfa"],
+    [430, 30, 174, "Platform Payments", "platform", "#2dd4bf"],
+    [16, 158, 178, "Stream Onboarding", "stream-aligned", "#a78bfa"],
+    [430, 158, 166, "Enabling DevEx", "enabling", "#fbbf24"],
+  ];
+  const diagram = (edges, labels) => `
+    <svg viewBox="0 0 620 240" class="dia" role="img" aria-label="ACME Org, four teams and their interactions">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6"
+        orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#64748b"/></marker></defs>
+      <g stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#ar)">
+        ${edges.map(([d, dash]) => `<path d="${d}"${dash ? ' stroke-dasharray="6 5"' : ""}/>`).join("")}
+      </g>
+      <g font-size="11" fill="#8b98a9">
+        ${labels.map(([x, y, a, t]) => `<text x="${x}" y="${y}" text-anchor="${a}">${t}</text>`).join("")}
+      </g>
+      ${NODES.map(([x, y, w, name, type, fill]) => `
+        <rect x="${x}" y="${y}" width="${w}" height="52" rx="10" fill="${fill}"/>
+        <text x="${x + w / 2}" y="${y + 23}" text-anchor="middle" font-size="13" font-weight="600"
+          fill="#0b0f16">${name}</text>
+        <text x="${x + w / 2}" y="${y + 39}" text-anchor="middle" font-size="10" fill="#0b0f16"
+          opacity=".7">${type}</text>`).join("")}
+    </svg>`;
+  const DEMOS = [
+    {
+      label: "validate",
+      cmd: "teamapi validate examples/acme-org",
+      note: "Resolves every $ref across files and fails on a broken one.",
+      out: [
+        ["dim", "Resolved 4 team(s) from 4 seed file(s):"],
+        ["dim", "  - enabling-devex (enabling)          <- examples/acme-org/enabling-devex/teamapi.yml"],
+        ["dim", "  - platform-payments (platform)       <- examples/acme-org/platform-payments/teamapi.yml"],
+        ["dim", "  - stream-checkout (stream-aligned)   <- examples/acme-org/stream-checkout/teamapi.yml"],
+        ["dim", "  - stream-onboarding (stream-aligned) <- examples/acme-org/stream-onboarding/teamapi.yml"],
+        ["", ""],
+        ["ok", "No unresolved references. Validation passed."],
+      ],
+    },
+    {
+      label: "who owns it?",
+      cmd: "curl -s localhost:3000/services/checkout-api",
+      note: "Every service is declared once, on the team that owns it.",
+      out: [
+        ["c", '{'],
+        ["ok", '  "teamId": "stream-checkout",'],
+        ["c", '  "service": {'],
+        ["c", '    "name": "checkout-api",'],
+        ["c", '    "repository": "https://github.com/acme-example/checkout-api",'],
+        ["c", '    "boundedContext": {'],
+        ["c", '      "aggregates": ["Cart", "Order"],'],
+        ["c", '      "publishedEvents": ["OrderPlaced"]'],
+        ["c", '    }'],
+        ["c", '  }'],
+        ["c", '}'],
+      ],
+    },
+    {
+      label: "who's drowning?",
+      cmd: "curl -s localhost:3000/cognitive-load",
+      note: "Cognitive load is a first-class field, self-assessed by each team.",
+      out: [
+        ["c", '[ {'],
+        ["c", '    "teamId": "platform-payments",  "total": 18,'],
+        ["warn", '    "label": "elevated",'],
+        ["dim", '    "notes": "PCI compliance scope adds real intrinsic complexity..."'],
+        ["c", '  }, {'],
+        ["c", '    "teamId": "stream-checkout",    "total": 18,'],
+        ["warn", '    "label": "overloaded",'],
+        ["dim", '    "notes": "High extraneous load from juggling three upstream'],
+        ["dim", '              integrations with inconsistent contracts..."'],
+        ["c", '  }, {'],
+        ["c", '    "teamId": "stream-onboarding",  "total": 11,'],
+        ["ok", '    "label": "sustainable"'],
+        ["c", '} ]'],
+      ],
+    },
+    {
+      label: "topology",
+      cmd: "teamapi render examples/acme-org --scope topology",
+      note: "Who talks to whom, and how tightly. Mermaid or DOT — never hand-drawn.",
+      svg: diagram([
+        ["M186 56 H424", 0], ["M101 82 V152", 0],
+        ["M194 184 H424", 1], ["M194 168 L424 76", 1],
+      ], [
+        [305, 44, "middle", "x-as-a-service"], [112, 122, "start", "collaboration"],
+        [309, 174, "middle", "facilitating"], [340, 108, "middle", "depends"],
+      ]),
+    },
+    {
+      label: "context map",
+      cmd: "teamapi render examples/acme-org --scope context-map",
+      note: "The same interactions, reread as DDD relationships.",
+      svg: diagram([
+        ["M186 56 H424", 0], ["M101 82 V152", 0], ["M194 184 H424", 1],
+      ], [
+        [305, 44, "middle", "CustomerSupplier"], [112, 122, "start", "Partnership"],
+        [309, 174, "middle", "unclassified"],
+      ]),
+    },
+    {
+      label: "ship agents",
+      cmd: 'teamapi generate paperclip examples/acme-org --out ./company',
+      note: "Agents are declared per team — and one team declares none, on purpose.",
+      out: [
+        ["ok", "Wrote 12 file(s) to ./company/ (agentcompanies/v1)"],
+        ["warn", "  ! skipped 1 non-active agent(s): platform-payments/compliance-auditor"],
+        ["", ""],
+        ["dim", "  company/"],
+        ["dim", "  ├── COMPANY.md"],
+        ["dim", "  ├── agents/platform-payments-architecture-reviewer/AGENTS.md"],
+        ["dim", "  ├── skills/platform-payments-code-review/SKILL.md"],
+        ["dim", "  └── teams/stream-onboarding/TEAM.md   ← zero agents, by policy"],
+      ],
+    },
+  ];
+
+  const chips = document.querySelector(".chips");
+  const out = document.getElementById("out");
+  const note = document.getElementById("note");
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let run = 0;
+
+  DEMOS.forEach((d, i) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.textContent = d.label; b.setAttribute("role", "tab");
+    b.addEventListener("click", () => play(i));
+    chips.appendChild(b);
+  });
+
+  function select(i) {
+    [...chips.children].forEach((c, n) => c.setAttribute("aria-selected", String(n === i)));
+  }
+
+  /** Types the command, then reveals its output a line at a time. Each call
+   *  bumps `run` so a click mid-animation abandons the previous one. */
+  async function play(i) {
+    const me = ++run, d = DEMOS[i];
+    select(i);
+    note.textContent = "";
+    const prompt = '<span class="p">$</span> ';
+    const sleep = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
+
+    for (let n = 0; n <= d.cmd.length; n++) {
+      if (me !== run) return;
+      out.innerHTML = prompt + '<span class="c">' + E(d.cmd.slice(0, n)) + "</span><span class='caret'></span>";
+      await sleep(16);
+    }
+    await sleep(240);
+
+    // Diagram scopes render the picture rather than the Mermaid source — the source is what
+    // the CLI prints, but the picture is what you actually wanted to see.
+    if (d.svg) {
+      out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + d.svg;
+      note.textContent = d.note;
+      return;
+    }
+
+    let body = "";
+    for (const [cls, line] of d.out) {
+      if (me !== run) return;
+      body += `<span class="${cls}">${E(line)}</span>\n`;
+      out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + body;
+      await sleep(55);
+    }
+    if (me !== run) return;
+    out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + body +
+                    '<span class="p">$</span> <span class="caret"></span>';
+    note.textContent = d.note;
+  }
+
+  play(0);
+})();
+</script>
+</body>
+</html>
