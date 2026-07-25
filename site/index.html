@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TeamAPI — Who owns this? Just curl your org.</title>
-<meta name="description" content="Every team has an API. Write it down as one teamapi.yml per team, reviewed in pull requests, and TeamAPI makes it executable.">
+<meta name="description" content="Every team has an API. TeamAPI gives yours a voice.">
 <meta property="og:title" content="TeamAPI">
 <meta property="og:description" content="Who owns this? Just curl your org.">
 <meta property="og:url" content="https://teamapi.dev">
@@ -51,13 +51,21 @@
   .hero { text-align: center; padding: 1rem 0 2.5rem; }
   .hero svg { width: 84px; height: 84px; animation: settle .7s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes settle { from { opacity: 0; transform: scale(.9) } to { opacity: 1; transform: none } }
-  @media (prefers-reduced-motion: reduce) { .hero svg { animation: none } }
+  /* The weave re-threads itself: each crossing wipes in or out, staggered by column so the
+     change sweeps across the cloth. Two alternating checkerboard phases, no images. */
+  .hero .x { stroke-dasharray: 13.89 200; animation: thread 5.0s infinite; }
+  .hero .b { stroke-dasharray: 0 200; }
+  @keyframes thread {
+    0%, 43%   { stroke-dasharray: 13.89 200; }
+    48%, 93%  { stroke-dasharray: 0 200; }
+    98%, 100% { stroke-dasharray: 13.89 200; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero svg { animation: none }
+    .hero .x { animation: none }
+  }
   h1 { font-size: clamp(2.2rem, 7vw, 3.1rem); margin: .6rem 0 .3rem; letter-spacing: -.035em; }
   .tag { font-size: clamp(1.05rem, 3.4vw, 1.3rem); margin: 0 0 .8rem; }
-  .tag code {
-    background: color-mix(in oklab, var(--teal) 16%, transparent);
-    color: var(--teal); padding: .1em .35em; border-radius: 5px; font-size: .95em;
-  }
   .sub { color: var(--muted); max-width: 34rem; margin: 0 auto; }
 
   /* ── install ────────────────────────────────────────────── */
@@ -101,6 +109,12 @@
   .term .dim { color: #64748b; }
   .term .ok { color: var(--teal); }
   .term .warn { color: var(--amber); }
+  /* JSON tokens: key, string, number, literal, punctuation */
+  .term .jk { color: #a78bfa; }
+  .term .js { color: #fbbf24; }
+  .term .jn { color: #2dd4bf; }
+  .term .jl { color: #fb7185; }
+  .term .jp { color: #64748b; }
   .caret {
     display: inline-block; width: .55em; height: 1.05em; background: var(--teal);
     vertical-align: text-bottom; animation: blink 1.05s steps(2) infinite;
@@ -166,24 +180,26 @@
       <path d="M42 14V86" stroke="#fb7185" stroke-width="10" stroke-linecap="round"/>
       <path d="M58 14V86" stroke="#a78bfa" stroke-width="10" stroke-linecap="round"/>
       <path d="M74 14V86" stroke="#fb7185" stroke-width="10" stroke-linecap="round"/>
-      <g stroke-linecap="butt" stroke-width="10" pathLength="100" stroke-dasharray="13.89 200">
-        <path d="M14 26H86" stroke="#2dd4bf" stroke-dashoffset="-9.72"/>
-        <path d="M14 26H86" stroke="#2dd4bf" stroke-dashoffset="-53.47"/>
-        <path d="M14 42H86" stroke="#fbbf24" stroke-dashoffset="-31.6"/>
-        <path d="M14 42H86" stroke="#fbbf24" stroke-dashoffset="-75.35"/>
-        <path d="M14 58H86" stroke="#2dd4bf" stroke-dashoffset="-9.72"/>
-        <path d="M14 58H86" stroke="#2dd4bf" stroke-dashoffset="-53.47"/>
-        <path d="M14 74H86" stroke="#fbbf24" stroke-dashoffset="-31.6"/>
-        <path d="M14 74H86" stroke="#fbbf24" stroke-dashoffset="-75.35"/>
-      </g>
+      <path class="x a" d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-9.72" style="animation-delay:0.00s"/>
+      <path class="x b" d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-31.94" style="animation-delay:-2.41s"/>
+      <path class="x a" d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-54.17" style="animation-delay:0.18s"/>
+      <path class="x b" d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-76.39" style="animation-delay:-2.23s"/>
+      <path class="x b" d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-9.72" style="animation-delay:-2.50s"/>
+      <path class="x a" d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-31.94" style="animation-delay:0.09s"/>
+      <path class="x b" d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-54.17" style="animation-delay:-2.32s"/>
+      <path class="x a" d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-76.39" style="animation-delay:0.27s"/>
+      <path class="x a" d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-9.72" style="animation-delay:0.00s"/>
+      <path class="x b" d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-31.94" style="animation-delay:-2.41s"/>
+      <path class="x a" d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-54.17" style="animation-delay:0.18s"/>
+      <path class="x b" d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-76.39" style="animation-delay:-2.23s"/>
+      <path class="x b" d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-9.72" style="animation-delay:-2.50s"/>
+      <path class="x a" d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-31.94" style="animation-delay:0.09s"/>
+      <path class="x b" d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-54.17" style="animation-delay:-2.32s"/>
+      <path class="x a" d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-76.39" style="animation-delay:0.27s"/>
     </svg>
     <h1>TeamAPI</h1>
-    <p class="tag">Who owns this? Just <code>curl</code> your org.</p>
-    <p class="sub">
-      Every team has an API: what it owns, who's accountable for what, how much it can take on.
-      Usually it's scattered across wikis and people's heads, where it drifts out of date.
-      Write it down as one <code>teamapi.yml</code> per team and TeamAPI makes it executable.
-    </p>
+    <p class="tag">Every team has an API.</p>
+    <p class="sub">TeamAPI gives yours a voice.</p>
 
     <div class="install">
       <span class="dollar">$</span>
@@ -212,7 +228,7 @@
     </div>
     <div class="step">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve the API</b></div>
-      <p>A read-only REST API and a dashboard, straight from the files. No database.</p>
+      <p>A dashboard to browse your whole org, and the same data over HTTP.</p>
       <pre>teamapi serve-api ./org
 # → localhost:3000/dashboard</pre>
     </div>
@@ -280,9 +296,31 @@
   });
 
   /* ── the demo ─────────────────────────────────────────────────────────
-     Every line below is real output, captured from the CLI running against
-     examples/acme-org in the repo. Nothing here is mocked up.              */
+     Output is captured from the CLI running against examples/acme-org in the repo.
+     The one exception is the chat reply, which is a language model's and so can't be
+     pinned — but the tool call inside it, and the numbers it returns, are real.     */
   const E = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  /* A string followed by a colon is a key; one that isn't is a value. Everything else falls
+     through to numbers, literals and punctuation, so highlighting is per token rather than
+     per line — which is all the old [class, line] pairs could manage. */
+  const JSON_TOKEN = /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?)|\b(true|false|null)\b|([{}[\],])/g;
+  function hlJson(line) {
+    let out = "", last = 0;
+    for (const m of line.matchAll(JSON_TOKEN)) {
+      out += E(line.slice(last, m.index));
+      const [full, str, colon, num, lit, punc] = m;
+      if (str !== undefined) {
+        out += colon !== undefined
+          ? `<span class="jk">${E(str)}</span><span class="jp">${E(colon)}</span>`
+          : `<span class="js">${E(str)}</span>`;
+      } else if (num !== undefined) out += `<span class="jn">${E(num)}</span>`;
+      else if (lit !== undefined) out += `<span class="jl">${E(lit)}</span>`;
+      else out += `<span class="jp">${E(punc)}</span>`;
+      last = m.index + full.length;
+    }
+    return out + E(line.slice(last));
+  }
 
   /* The four ACME teams, laid out once. Both diagram scopes draw the same boxes and differ
      only in their edges, which is the point the context map is making. */
@@ -313,7 +351,7 @@
     {
       label: "validate",
       cmd: "teamapi validate examples/acme-org",
-      note: "Resolves every $ref across files and fails on a broken one.",
+      note: "Catches a broken cross-team reference before it reaches main.",
       out: [
         ["dim", "Resolved 4 team(s) from 4 seed file(s):"],
         ["dim", "  - enabling-devex (enabling)          <- examples/acme-org/enabling-devex/teamapi.yml"],
@@ -328,38 +366,41 @@
       label: "who owns it?",
       cmd: "curl -s localhost:3000/services/checkout-api",
       note: "Every service is declared once, on the team that owns it.",
+      lang: "json",
       out: [
-        ["c", '{'],
-        ["ok", '  "teamId": "stream-checkout",'],
-        ["c", '  "service": {'],
-        ["c", '    "name": "checkout-api",'],
-        ["c", '    "repository": "https://github.com/acme-example/checkout-api",'],
-        ["c", '    "boundedContext": {'],
-        ["c", '      "aggregates": ["Cart", "Order"],'],
-        ["c", '      "publishedEvents": ["OrderPlaced"]'],
-        ["c", '    }'],
-        ["c", '  }'],
-        ["c", '}'],
+        '{',
+        '  "teamId": "stream-checkout",',
+        '  "service": {',
+        '    "name": "checkout-api",',
+        '    "repository": "https://github.com/acme-example/checkout-api",',
+        '    "boundedContext": {',
+        '      "aggregates": ["Cart", "Order"],',
+        '      "publishedEvents": ["OrderPlaced"],',
+        '      "subscribedEvents": ["ChargeAuthorized", "ApplicantActivated"]',
+        '    }',
+        '  }',
+        '}',
       ],
     },
     {
       label: "who's drowning?",
       cmd: "curl -s localhost:3000/cognitive-load",
-      note: "Cognitive load is a first-class field, self-assessed by each team.",
+      note: "Each team scores its own load, so you can see who is stretched.",
+      lang: "json",
       out: [
-        ["c", '[ {'],
-        ["c", '    "teamId": "platform-payments",  "total": 18,'],
-        ["warn", '    "label": "elevated",'],
-        ["dim", '    "notes": "PCI compliance scope adds real intrinsic complexity..."'],
-        ["c", '  }, {'],
-        ["c", '    "teamId": "stream-checkout",    "total": 18,'],
-        ["warn", '    "label": "overloaded",'],
-        ["dim", '    "notes": "High extraneous load from juggling three upstream'],
-        ["dim", '              integrations with inconsistent contracts..."'],
-        ["c", '  }, {'],
-        ["c", '    "teamId": "stream-onboarding",  "total": 11,'],
-        ["ok", '    "label": "sustainable"'],
-        ["c", '} ]'],
+        '[',
+        '  { "teamId": "platform-payments",  "total": 18, "label": "elevated" },',
+        '  {',
+        '    "teamId": "stream-checkout",',
+        '    "total": 18,',
+        '    "label": "overloaded",',
+        '    "assessment": {',
+        '      "intrinsic": 6, "extraneous": 8, "germane": 4,',
+        '      "notes": "High extraneous load from juggling three upstream integrations…"',
+        '    }',
+        '  },',
+        '  { "teamId": "stream-onboarding", "total": 11, "label": "sustainable" }',
+        ']',
       ],
     },
     {
@@ -384,6 +425,25 @@
         [305, 44, "middle", "CustomerSupplier"], [112, 122, "start", "Partnership"],
         [309, 174, "middle", "unclassified"],
       ]),
+    },
+    {
+      label: "chat",
+      cmd: "teamapi chat examples/acme-org --team stream-checkout --member diego-alves --debug",
+      note: "The persona looks things up instead of guessing — that call is real.",
+      out: [
+        ["dim", "Chatting as Diego Alves — Checkout Tech Lead, Stream Checkout."],
+        ["", ""],
+        ["c", "You> what's the worst thing about your job?"],
+        ["", ""],
+        ["ok", '  ⚙ get_team_cognitive_load({"teamId":"stream-checkout"})'],
+        ["dim", '     → label: "overloaded", extraneous: 8,'],
+        ["dim", '       notes: "High extraneous load from juggling three upstream'],
+        ["dim", '               integrations with inconsistent contracts…"'],
+        ["", ""],
+        ["c", "Diego Alves> Honestly? Three upstream integrations with inconsistent"],
+        ["c", "contracts, so a chunk of my week goes to translating between them"],
+        ["c", 'instead of building. Our own assessment flags us as "overloaded".'],
+      ],
     },
     {
       label: "ship agents",
@@ -444,9 +504,10 @@
     }
 
     let body = "";
-    for (const [cls, line] of d.out) {
+    for (const entry of d.out) {
       if (me !== run) return;
-      body += `<span class="${cls}">${E(line)}</span>\n`;
+      const [cls, line] = Array.isArray(entry) ? entry : ["", entry];
+      body += (d.lang === "json" ? hlJson(line) : `<span class="${cls}">${E(line)}</span>`) + "\n";
       out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + body;
       await sleep(55);
     }
