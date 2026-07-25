@@ -1,14 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none" role="img" aria-labelledby="title desc">
   <title id="title">TeamAPI</title>
-  <desc id="desc">A team topology: an enabling team above two stream-aligned teams, resting on a platform</desc>
+  <desc id="desc">Three teams working in parallel, bending around each other</desc>
 
-  <!-- enabling team -->
-  <rect x="34" y="19.5" width="32" height="15" rx="7.5" fill="#fb7185"/>
+  <defs>
+    <linearGradient id="tapi-a" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#a78bfa"/>
+    </linearGradient>
+    <linearGradient id="tapi-b" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a78bfa"/><stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+    <linearGradient id="tapi-c" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fbbf24"/><stop offset="1" stop-color="#fb7185"/>
+    </linearGradient>
+  </defs>
 
-  <!-- stream-aligned teams -->
-  <rect x="14" y="42.5" width="32" height="15" rx="7.5" fill="#a78bfa"/>
-  <rect x="54" y="42.5" width="32" height="15" rx="7.5" fill="#fbbf24"/>
-
-  <!-- platform team -->
-  <rect x="14" y="65.5" width="72" height="15" rx="7.5" fill="#2dd4bf"/>
+  <path d="M17 36C37 36 43 22 62 22C72 22 78 27 83 32" stroke="url(#tapi-a)" stroke-width="13" stroke-linecap="round"/>
+  <path d="M17 52C37 52 43 42 62 42C73 42 79 50 83 56" stroke="url(#tapi-b)" stroke-width="13" stroke-linecap="round"/>
+  <path d="M17 70C35 70 41 63 58 63C72 63 78 74 83 78" stroke="url(#tapi-c)" stroke-width="13" stroke-linecap="round"/>
 </svg>
