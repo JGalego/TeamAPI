@@ -1,5 +1,8 @@
 <div align="center">
-  <img src="docs/assets/logo.svg" alt="TeamAPI" width="112"><br>
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="docs/assets/logo.svg">
+    <img src="docs/assets/logo-animated.gif" alt="TeamAPI" width="112">
+  </picture><br>
   <h1>TeamAPI</h1>
   <p>Who owns this? Just <code>curl</code> your org.</p>
 
