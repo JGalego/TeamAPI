@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TeamAPI — Who owns this? Just curl your org.</title>
-<meta name="description" content="Write your org as one teamapi.yml per team. Get diagrams, a REST API, and an MCP server for LLM assistants.">
+<meta name="description" content="Every team has an API. Write it down as one teamapi.yml per team, reviewed in pull requests, and TeamAPI makes it executable.">
 <meta property="og:title" content="TeamAPI">
 <meta property="og:description" content="Who owns this? Just curl your org.">
 <meta property="og:url" content="https://teamapi.dev">
@@ -116,7 +116,6 @@
     background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.3rem;
   }
   .step b { display: block; margin-bottom: .35rem; }
-  .step .n { color: var(--muted); font-size: .72rem; letter-spacing: .08em; }
   .step p { margin: 0; color: var(--muted); font-size: .9rem; }
   .step pre {
     margin: .7rem 0 0; font-size: .78rem; overflow-x: auto; color: var(--fg);
@@ -165,8 +164,9 @@
     <h1>TeamAPI</h1>
     <p class="tag">Who owns this? Just <code>curl</code> your org.</p>
     <p class="sub">
-      One <code>teamapi.yml</code> per team, reviewed in pull requests.
-      Out comes a REST API, diagrams, and an MCP server your assistant can query.
+      Every team has an API: what it owns, who's accountable for what, how much it can take on.
+      Usually it's scattered across wikis and people's heads, where it drifts out of date.
+      Write it down as one <code>teamapi.yml</code> per team and TeamAPI makes it executable.
     </p>
 
     <div class="install">
@@ -185,10 +185,9 @@
     <p class="note" id="note"></p>
   </section>
 
-  <h2>Three steps</h2>
+  <h2>Quick start</h2>
   <div class="steps">
     <div class="step">
-      <span class="n">01</span>
       <b>Write it down</b>
       <p>One file per team: what it owns, who's accountable, how much it can take on.</p>
       <pre>teamapi scaffold my-team \
@@ -196,16 +195,14 @@
   --out teamapi.yml</pre>
     </div>
     <div class="step">
-      <span class="n">02</span>
       <b>Serve it</b>
-      <p>A read-only REST API plus a dashboard, straight from the files. No database.</p>
+      <p>A read-only REST API and a dashboard, straight from the files. No database.</p>
       <pre>teamapi serve-api ./org
 # → localhost:3000/dashboard</pre>
     </div>
     <div class="step">
-      <span class="n">03</span>
-      <b>Ask it anything</b>
-      <p>Point Claude at the MCP server and ask in plain English.</p>
+      <b>Ask it</b>
+      <p>Point an assistant at the MCP server and ask in plain English.</p>
       <pre>teamapi serve-mcp ./org
 # "which team is overloaded?"</pre>
     </div>
@@ -268,7 +265,7 @@
     {
       label: "who owns it?",
       cmd: "curl -s localhost:3000/services/checkout-api",
-      note: "The question that started all this.",
+      note: "Every service is declared once, on the team that owns it.",
       out: [
         ["c", '{'],
         ["ok", '  "teamId": "stream-checkout",'],
