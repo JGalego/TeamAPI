@@ -1,14 +1,22 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" role="img" aria-labelledby="title desc">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100" fill="none" role="img" aria-labelledby="title desc">
   <title id="title">TeamAPI</title>
-  <desc id="desc">A team topology: an enabling team above two stream-aligned teams, resting on a platform</desc>
+  <desc id="desc">Sixteen teams woven together, each crossing over one neighbour and under the next</desc>
 
-  <!-- enabling team -->
-  <rect x="34" y="19.5" width="32" height="15" rx="7.5" fill="#fb7185"/>
+  <path d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="round"/>
+  <path d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="round"/>
+  <path d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="round"/>
+  <path d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="round"/>
+  <path d="M26 14V86" stroke="#a78bfa" stroke-width="10" stroke-linecap="round"/>
+  <path d="M42 14V86" stroke="#fb7185" stroke-width="10" stroke-linecap="round"/>
+  <path d="M58 14V86" stroke="#a78bfa" stroke-width="10" stroke-linecap="round"/>
+  <path d="M74 14V86" stroke="#fb7185" stroke-width="10" stroke-linecap="round"/>
 
-  <!-- stream-aligned teams -->
-  <rect x="14" y="42.5" width="32" height="15" rx="7.5" fill="#a78bfa"/>
-  <rect x="54" y="42.5" width="32" height="15" rx="7.5" fill="#fbbf24"/>
-
-  <!-- platform team -->
-  <rect x="14" y="65.5" width="72" height="15" rx="7.5" fill="#2dd4bf"/>
+  <path d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dasharray="13.89 200" stroke-dashoffset="-9.72"/>
+  <path d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dasharray="13.89 200" stroke-dashoffset="-54.17"/>
+  <path d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dasharray="13.89 200" stroke-dashoffset="-31.94"/>
+  <path d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dasharray="13.89 200" stroke-dashoffset="-76.39"/>
+  <path d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dasharray="13.89 200" stroke-dashoffset="-9.72"/>
+  <path d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dasharray="13.89 200" stroke-dashoffset="-54.17"/>
+  <path d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dasharray="13.89 200" stroke-dashoffset="-31.94"/>
+  <path d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dasharray="13.89 200" stroke-dashoffset="-76.39"/>
 </svg>
