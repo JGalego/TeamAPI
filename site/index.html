@@ -83,9 +83,23 @@
   }
   .install button:hover { color: var(--fg); border-color: var(--muted); }
   .install button.done { color: var(--teal); border-color: var(--teal); }
+  /* the command is 31 characters; at .88rem it clips on a narrow phone */
+  @media (max-width: 26rem) {
+    .install { padding-left: .7rem; gap: .35rem; }
+    .install code { font-size: .76rem; }
+  }
+  /* below ~336px even .76rem clips, so let the button drop to its own row */
+  @media (max-width: 21rem) {
+    .install { flex-wrap: wrap; }
+    .install code { flex-basis: 100%; }
+    .install button { margin-left: auto; }
+  }
 
   /* ── terminal ───────────────────────────────────────────── */
-  .demo { margin: 3rem 0 0; }
+  .demo { margin: 1.5rem 0 0; }
+  .demo h2 { margin: 0 0 .5rem; }
+  .lead { text-align: center; color: var(--muted); font-size: .92rem; margin: 0 auto 1.4rem; max-width: 32rem; }
+  .lead code { font-size: .88em; color: var(--fg); }
   .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .8rem; justify-content: center; }
   .chips button {
     border: 1px solid var(--line); background: var(--card); color: var(--muted);
@@ -211,6 +225,10 @@
   </section>
 
   <section class="demo">
+    <h2>Ask it something</h2>
+    <p class="lead">Every command below runs against
+      <a href="https://github.com/JGalego/TeamAPI/tree/main/examples/acme-org"><code>examples/acme-org</code></a>,
+      four teams written down in the repo.</p>
     <div class="chips" role="tablist" aria-label="Try a command"></div>
     <div class="term">
       <div class="bar"><i></i><i></i><i></i></div>
