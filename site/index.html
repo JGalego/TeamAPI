@@ -109,6 +109,12 @@
   .term .dim { color: #64748b; }
   .term .ok { color: var(--teal); }
   .term .warn { color: var(--amber); }
+  /* JSON tokens: key, string, number, literal, punctuation */
+  .term .jk { color: #a78bfa; }
+  .term .js { color: #fbbf24; }
+  .term .jn { color: #2dd4bf; }
+  .term .jl { color: #fb7185; }
+  .term .jp { color: #64748b; }
   .caret {
     display: inline-block; width: .55em; height: 1.05em; background: var(--teal);
     vertical-align: text-bottom; animation: blink 1.05s steps(2) infinite;
@@ -295,6 +301,27 @@
      pinned — but the tool call inside it, and the numbers it returns, are real.     */
   const E = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
+  /* A string followed by a colon is a key; one that isn't is a value. Everything else falls
+     through to numbers, literals and punctuation, so highlighting is per token rather than
+     per line — which is all the old [class, line] pairs could manage. */
+  const JSON_TOKEN = /("(?:[^"\\]|\\.)*")(\s*:)?|(-?\d+(?:\.\d+)?)|\b(true|false|null)\b|([{}[\],])/g;
+  function hlJson(line) {
+    let out = "", last = 0;
+    for (const m of line.matchAll(JSON_TOKEN)) {
+      out += E(line.slice(last, m.index));
+      const [full, str, colon, num, lit, punc] = m;
+      if (str !== undefined) {
+        out += colon !== undefined
+          ? `<span class="jk">${E(str)}</span><span class="jp">${E(colon)}</span>`
+          : `<span class="js">${E(str)}</span>`;
+      } else if (num !== undefined) out += `<span class="jn">${E(num)}</span>`;
+      else if (lit !== undefined) out += `<span class="jl">${E(lit)}</span>`;
+      else out += `<span class="jp">${E(punc)}</span>`;
+      last = m.index + full.length;
+    }
+    return out + E(line.slice(last));
+  }
+
   /* The four ACME teams, laid out once. Both diagram scopes draw the same boxes and differ
      only in their edges, which is the point the context map is making. */
   const NODES = [
@@ -339,38 +366,41 @@
       label: "who owns it?",
       cmd: "curl -s localhost:3000/services/checkout-api",
       note: "Every service is declared once, on the team that owns it.",
+      lang: "json",
       out: [
-        ["c", '{'],
-        ["ok", '  "teamId": "stream-checkout",'],
-        ["c", '  "service": {'],
-        ["c", '    "name": "checkout-api",'],
-        ["c", '    "repository": "https://github.com/acme-example/checkout-api",'],
-        ["c", '    "boundedContext": {'],
-        ["c", '      "aggregates": ["Cart", "Order"],'],
-        ["c", '      "publishedEvents": ["OrderPlaced"]'],
-        ["c", '    }'],
-        ["c", '  }'],
-        ["c", '}'],
+        '{',
+        '  "teamId": "stream-checkout",',
+        '  "service": {',
+        '    "name": "checkout-api",',
+        '    "repository": "https://github.com/acme-example/checkout-api",',
+        '    "boundedContext": {',
+        '      "aggregates": ["Cart", "Order"],',
+        '      "publishedEvents": ["OrderPlaced"],',
+        '      "subscribedEvents": ["ChargeAuthorized", "ApplicantActivated"]',
+        '    }',
+        '  }',
+        '}',
       ],
     },
     {
       label: "who's drowning?",
       cmd: "curl -s localhost:3000/cognitive-load",
       note: "Each team scores its own load, so you can see who is stretched.",
+      lang: "json",
       out: [
-        ["c", '[ {'],
-        ["c", '    "teamId": "platform-payments",  "total": 18,'],
-        ["warn", '    "label": "elevated",'],
-        ["dim", '    "notes": "PCI compliance scope adds real intrinsic complexity..."'],
-        ["c", '  }, {'],
-        ["c", '    "teamId": "stream-checkout",    "total": 18,'],
-        ["warn", '    "label": "overloaded",'],
-        ["dim", '    "notes": "High extraneous load from juggling three upstream'],
-        ["dim", '              integrations with inconsistent contracts..."'],
-        ["c", '  }, {'],
-        ["c", '    "teamId": "stream-onboarding",  "total": 11,'],
-        ["ok", '    "label": "sustainable"'],
-        ["c", '} ]'],
+        '[',
+        '  { "teamId": "platform-payments",  "total": 18, "label": "elevated" },',
+        '  {',
+        '    "teamId": "stream-checkout",',
+        '    "total": 18,',
+        '    "label": "overloaded",',
+        '    "assessment": {',
+        '      "intrinsic": 6, "extraneous": 8, "germane": 4,',
+        '      "notes": "High extraneous load from juggling three upstream integrations…"',
+        '    }',
+        '  },',
+        '  { "teamId": "stream-onboarding", "total": 11, "label": "sustainable" }',
+        ']',
       ],
     },
     {
@@ -474,9 +504,10 @@
     }
 
     let body = "";
-    for (const [cls, line] of d.out) {
+    for (const entry of d.out) {
       if (me !== run) return;
-      body += `<span class="${cls}">${E(line)}</span>\n`;
+      const [cls, line] = Array.isArray(entry) ? entry : ["", entry];
+      body += (d.lang === "json" ? hlJson(line) : `<span class="${cls}">${E(line)}</span>`) + "\n";
       out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + body;
       await sleep(55);
     }
