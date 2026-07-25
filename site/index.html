@@ -100,6 +100,12 @@
   .demo h2 { margin: 0 0 .5rem; }
   /* section mark sits above its heading — icons from Lucide (ISC) */
   h2 .mark { display: block; width: 22px; height: 22px; margin: 0 auto .45rem; color: var(--teal); }
+
+  /* ── closing call to action ─────────────────────────────── */
+  .cta { text-align: center; margin: 5.5rem 0 1rem; }
+  .cta .mark { display: block; width: 26px; height: 26px; margin: 0 auto .8rem; color: var(--teal); }
+  .cta .q { font-size: clamp(1.3rem, 4vw, 1.7rem); font-weight: 600; margin: 0 0 .35rem; letter-spacing: -.02em; }
+  .cta .a { color: var(--muted); margin: 0; }
   .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .8rem; justify-content: center; }
   .chips button {
     border: 1px solid var(--line); background: var(--card); color: var(--muted);
@@ -279,6 +285,17 @@
     </a>
   </div>
 
+  <section class="cta">
+    <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 10H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2" /> <path d="M6 14H4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-4a2 2 0 0 0-2-2h-2" /> <path d="M6 6h.01" /> <path d="M6 18h.01" /> <path d="m13 6-4 6h6l-4 6" /></svg>
+    <p class="q">Still returning 404?</p>
+    <p class="a">Start with one file.</p>
+    <div class="install">
+      <span class="dollar">$</span>
+      <code>npm install -g @jgalego/teamapi</code>
+      <button type="button">copy</button>
+    </div>
+  </section>
+
   <footer>
     <a href="https://github.com/JGalego/TeamAPI">GitHub</a>
     <a href="https://www.npmjs.com/package/@jgalego/teamapi">npm</a>
@@ -305,14 +322,16 @@
   });
 
   /* ── copy ────────────────────────────────────────────────────────────── */
-  const copy = document.getElementById("copy");
-  copy.addEventListener("click", async () => {
-    try {
-      await navigator.clipboard.writeText(document.getElementById("cmd").textContent);
-      copy.textContent = "copied"; copy.classList.add("done");
-      setTimeout(() => { copy.textContent = "copy"; copy.classList.remove("done"); }, 1600);
-    } catch { copy.textContent = "⌘C"; }
-  });
+  for (const box of document.querySelectorAll(".install")) {
+    const btn = box.querySelector("button"), code = box.querySelector("code");
+    btn.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(code.textContent);
+        btn.textContent = "copied"; btn.classList.add("done");
+        setTimeout(() => { btn.textContent = "copy"; btn.classList.remove("done"); }, 1600);
+      } catch { btn.textContent = "⌘C"; }
+    });
+  }
 
   /* ── the demo ─────────────────────────────────────────────────────────
      Output is captured from the CLI running against examples/acme-org in the repo.
