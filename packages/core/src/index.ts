@@ -20,6 +20,8 @@ export * from "./context-bundle/derive";
 export * from "./knowledge-graph/derive";
 export * from "./generators/crewai";
 export * from "./generators/backstage";
+export * from "./generators/paperclip";
+export * from "./apply/paperclip-drift";
 export * from "./diff/diff-graph";
 export * from "./github/client";
 export * from "./apply/github-teams";

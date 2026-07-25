@@ -9,6 +9,7 @@ import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
 import { runApply } from "./commands/apply";
+import { runPaperclipDrift } from "./commands/paperclip-drift";
 import { runImport, type ImportSource } from "./commands/import";
 import { runServeApi } from "./commands/serve-api";
 import { runServeMcp } from "./commands/serve-mcp";
@@ -89,7 +90,7 @@ export function createProgram(): Command {
       process.exitCode = await runScaffold({ id, type: opts.type, name: opts.name, out: opts.out });
     });
 
-const GENERATE_TARGETS = ["crewai", "backstage"] as const;
+const GENERATE_TARGETS = ["crewai", "backstage", "paperclip"] as const;
 
 const generateCommand = program
   .command("generate")
@@ -97,10 +98,11 @@ const generateCommand = program
   .option("--team <id>", "scope to one team id (single-crew/single-catalog output instead of the whole org)")
   .requiredOption("--out <dir>", "output directory");
 generateCommand
-  .addArgument(generateCommand.createArgument("<target>", "crewai | backstage").choices(GENERATE_TARGETS))
+  .addArgument(generateCommand.createArgument("<target>", "crewai | backstage | paperclip").choices(GENERATE_TARGETS))
   .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
-  .action(async (target: "crewai" | "backstage", patterns: string[], opts: { team?: string; out: string }) => {
-    process.exitCode = await runGenerate(patterns, { target, team: opts.team, out: opts.out });
+  .option("--company <name>", "company name for the paperclip target (default: \"Agent Company\")")
+    .action(async (target: "crewai" | "backstage" | "paperclip", patterns: string[], opts: { team?: string; out: string; company?: string }) => {
+    process.exitCode = await runGenerate(patterns, { target, team: opts.team, out: opts.out, company: opts.company });
   });
 
   program
@@ -121,6 +123,17 @@ generateCommand
     .option("--yes", "execute the plan instead of just printing it")
     .action(async (patterns: string[], opts: { org: string; token?: string; yes?: boolean }) => {
       process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
+    });
+
+  program
+    .command("paperclip-drift")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Report drift between the org graph and a running Paperclip company (read-only)")
+    .requiredOption("--url <url>", "Paperclip base URL, e.g. http://localhost:3000")
+    .requiredOption("--company <id>", "Paperclip company id to check")
+    .option("--token <token>", "Paperclip token (defaults to PAPERCLIP_API_KEY env var)")
+    .action(async (patterns: string[], opts: { url: string; company: string; token?: string }) => {
+      process.exitCode = await runPaperclipDrift(patterns, opts);
     });
 
   const IMPORT_SOURCES = ["github-org"] as const;
