@@ -130,7 +130,8 @@
   .step {
     background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.3rem;
   }
-  .step b { display: block; margin-bottom: .35rem; }
+  .step .row { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
+  .step .row svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--teal); }
   .step p { margin: 0; color: var(--muted); font-size: .9rem; }
   .step pre {
     margin: .7rem 0 0; font-size: .78rem; overflow-x: auto; color: var(--fg);
@@ -203,20 +204,20 @@
   <h2>Quick start</h2>
   <div class="steps">
     <div class="step">
-      <b>Write it down</b>
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 12.5 8 15l2 2.5" /> <path d="m14 12.5 2 2.5-2 2.5" /></svg><b>Write it down</b></div>
       <p>One file per team: what it owns, who's accountable, how much it can take on.</p>
       <pre>teamapi scaffold my-team \
   --type stream-aligned \
   --out teamapi.yml</pre>
     </div>
     <div class="step">
-      <b>Serve it</b>
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve it</b></div>
       <p>A read-only REST API and a dashboard, straight from the files. No database.</p>
       <pre>teamapi serve-api ./org
 # → localhost:3000/dashboard</pre>
     </div>
     <div class="step">
-      <b>Ask it</b>
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /> <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" /></svg><b>Ask your org</b></div>
       <p>Point an assistant at the MCP server and ask in plain English.</p>
       <pre>teamapi serve-mcp ./org
 # "which team is overloaded?"</pre>
