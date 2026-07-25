@@ -9,6 +9,7 @@ import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
 import { runApply } from "./commands/apply";
+import { runPaperclipDrift } from "./commands/paperclip-drift";
 import { runImport, type ImportSource } from "./commands/import";
 import { runServeApi } from "./commands/serve-api";
 import { runServeMcp } from "./commands/serve-mcp";
@@ -122,6 +123,17 @@ generateCommand
     .option("--yes", "execute the plan instead of just printing it")
     .action(async (patterns: string[], opts: { org: string; token?: string; yes?: boolean }) => {
       process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
+    });
+
+  program
+    .command("paperclip-drift")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Report drift between the org graph and a running Paperclip company (read-only)")
+    .requiredOption("--url <url>", "Paperclip base URL, e.g. http://localhost:3000")
+    .requiredOption("--company <id>", "Paperclip company id to check")
+    .option("--token <token>", "Paperclip token (defaults to PAPERCLIP_API_KEY env var)")
+    .action(async (patterns: string[], opts: { url: string; company: string; token?: string }) => {
+      process.exitCode = await runPaperclipDrift(patterns, opts);
     });
 
   const IMPORT_SOURCES = ["github-org"] as const;
