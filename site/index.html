@@ -96,7 +96,9 @@
   }
 
   /* ── terminal ───────────────────────────────────────────── */
-  .demo { margin: 1.5rem 0 0; }
+  .demo { margin: 4rem 0 0; }
+  /* whichever section leads sits closer to the hero */
+  .hero + h2 { margin-top: 2.2rem; }
   .demo h2 { margin: 0 0 .5rem; }
   /* section mark sits above its heading — icons from Lucide (ISC) */
   h2 .mark { display: block; width: 22px; height: 22px; margin: 0 auto .45rem; color: var(--teal); }
@@ -115,7 +117,9 @@
   .acts a:hover { color: var(--fg); border-color: var(--muted); }
   .acts .go { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 500; }
   .acts .go:hover { opacity: .88; color: var(--bg); }
-  .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .8rem; justify-content: center; }
+  /* capped so six chips break 3 + 3 rather than stranding one on its own row */
+  .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0 auto .8rem; justify-content: center;
+           max-width: 32rem; }
   .chips button {
     border: 1px solid var(--line); background: var(--card); color: var(--muted);
     border-radius: 999px; padding: .35rem .85rem; cursor: pointer; font: inherit; font-size: .82rem;
@@ -153,6 +157,19 @@
   }
   @keyframes blink { 50% { opacity: 0 } }
   .dia { display: block; width: 100%; height: auto; margin: .9rem 0 .2rem; }
+
+  /* Wide enough for the chips to sit beside the terminal. The demo breaks out past main's
+     54rem so the column doesn't eat the width the widest demo (788px) needs. */
+  @media (min-width: 68rem) {
+    .demo {
+      display: grid; grid-template-columns: 13rem 1fr; gap: 1.1rem; align-items: start;
+      width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%);
+    }
+    .demo h2 { grid-column: 1 / -1; }
+    .chips { flex-direction: column; align-items: stretch; justify-content: flex-start;
+             max-width: none; margin: 0; }
+    .chips button { text-align: left; }
+  }
 
   /* ── integrations ───────────────────────────────────────── */
   .ints { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
@@ -244,19 +261,10 @@
     </div>
   </section>
 
-  <section class="demo">
-    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19h8" /> <path d="m4 17 6-6-6-6" /></svg>Ask it something</h2>
-    <div class="chips" role="tablist" aria-label="Try a command"></div>
-    <div class="term">
-      <div class="bar"><i></i><i></i><i></i></div>
-      <pre id="out" role="log" aria-live="polite"></pre>
-    </div>
-  </section>
-
   <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /> <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" /> <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" /> <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" /></svg>Quick start</h2>
   <div class="steps">
     <div class="step">
-      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 12.5 8 15l2 2.5" /> <path d="m14 12.5 2 2.5-2 2.5" /></svg><b>Write it down</b></div>
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 12.5 8 15l2 2.5" /> <path d="m14 12.5 2 2.5-2 2.5" /></svg><b>Write a team spec</b></div>
       <p>One file per team: what it owns, who's accountable, how much it can take on.</p>
       <pre><span class="pr">$</span> teamapi scaffold cart \
   --type stream-aligned \
@@ -275,6 +283,15 @@
 <span class="cm"># "who owns checkout-api?"</span></pre>
     </div>
   </div>
+
+  <section class="demo">
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19h8" /> <path d="m4 17 6-6-6-6" /></svg>Ask it something</h2>
+    <div class="chips" role="tablist" aria-label="Try a command"></div>
+    <div class="term">
+      <div class="bar"><i></i><i></i><i></i></div>
+      <pre id="out" role="log" aria-live="polite"></pre>
+    </div>
+  </section>
 
   <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5" /> <path d="M15 8V2" /> <path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z" /> <path d="M9 8V2" /></svg>Plugs into</h2>
   <div class="ints">
