@@ -101,13 +101,20 @@
   .hero + h2 { margin-top: 2.2rem; }
   .demo h2 { margin: 0 0 .5rem; }
   /* section mark sits above its heading — icons from Lucide (ISC) */
-  h2 .mark { display: block; width: 22px; height: 22px; margin: 0 auto .45rem; color: var(--teal); }
+  h2 .mark { display: block; width: 30px; height: 30px; margin: 0 auto .6rem; color: var(--teal); }
 
   /* ── closing call to action ─────────────────────────────── */
-  .cta { text-align: center; margin: 5.5rem 0 1rem; }
-  .cta .mark { display: block; width: 26px; height: 26px; margin: 0 auto .8rem; color: var(--teal); }
-  .cta .q { font-size: clamp(1.3rem, 4vw, 1.7rem); font-weight: 600; margin: 0 0 .35rem; letter-spacing: -.02em; }
-  .cta .a { color: var(--muted); margin: 0; }
+  .cta {
+    text-align: center; margin: 5.5rem 0 1rem; padding: 3.2rem 1.6rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+  }
+  .cta .mark { display: block; width: 34px; height: 34px; margin: 0 auto .8rem; color: var(--teal); }
+  /* the floor has to let 'Make every team' fit a 280px screen, since it can't break */
+  .cta .q { font-size: clamp(1.15rem, 6vw, 2.1rem); font-weight: 600; margin: 0 0 .6rem; letter-spacing: -.025em; }
+  .cta .a { color: var(--muted); margin: 0 auto; max-width: 33rem; text-wrap: pretty; }
+  @media (min-width: 65rem) {
+    .cta { width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%); }
+  }
   .acts { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-top: 1.5rem; }
   .acts a {
     text-decoration: none; border: 1px solid var(--line); border-radius: 9px;
@@ -186,10 +193,14 @@
   .ints span { display: block; color: var(--muted); font-size: .82rem; margin-top: .15rem; }
 
   /* ── steps ──────────────────────────────────────────────── */
-  h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
+  h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .11em; color: var(--muted);
        margin: 4rem 0 1.1rem; font-weight: 600; text-align: center; }
   .steps { display: grid; gap: 1rem; grid-template-columns: 1fr; }
-  @media (min-width: 58rem) { .steps { grid-template-columns: repeat(3, 1fr); } }
+  /* 65rem, not 64: at exactly 1024px the first card's copy tips to a third line */
+  @media (min-width: 65rem) {
+    .steps { grid-template-columns: repeat(3, 1fr);
+             width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%); }
+  }
   .step {
     background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.1rem;
     display: flex; flex-direction: column;
@@ -274,13 +285,15 @@
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve the API</b></div>
       <p>Your whole org over HTTP, and a dashboard to browse it.</p>
       <pre><span class="pr">$</span> teamapi serve-api ./org
-<span class="cm"># localhost:3000/dashboard</span></pre>
+<span class="cm"># 📊 :3000/dashboard</span>
+<span class="cm"># 📖 :3000/docs (Swagger)</span></pre>
     </div>
     <div class="step">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /> <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" /></svg><b>Let agents in</b></div>
-      <p>Point an assistant at the MCP server and ask in plain English.</p>
+      <p>Turn your org into an MCP server and point AI assistants at it.</p>
       <pre><span class="pr">$</span> teamapi serve-mcp ./org
-<span class="cm"># "who owns checkout-api?"</span></pre>
+<span class="cm"># 🔌 MCP over stdio</span>
+<span class="cm"># 🤖 "who owns checkout-api?"</span></pre>
     </div>
   </div>
 
@@ -315,8 +328,9 @@
 
   <section class="cta">
     <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172" /> <path d="m18.586 13.414-5.172 5.172" /> <path d="M6 12h12" /> <circle cx="12" cy="20" r="2" /> <circle cx="12" cy="4" r="2" /> <circle cx="20" cy="12" r="2" /> <circle cx="4" cy="12" r="2" /></svg>
-    <p class="q">Make every team one call away.</p>
-    <p class="a">Start with yours.</p>
+    <p class="q">Make&nbsp;every&nbsp;team one&nbsp;call&nbsp;away.</p>
+    <p class="a">Someone has to go first. One file, and the teams around you can look you up
+      instead of asking around.</p>
     <div class="acts">
       <a class="go" href="https://github.com/JGalego/TeamAPI/blob/main/docs/spec/teamapi-extended-v1.md">Read the spec</a>
       <a href="https://github.com/JGalego/TeamAPI/tree/main/examples/acme-org">See a worked example</a>
