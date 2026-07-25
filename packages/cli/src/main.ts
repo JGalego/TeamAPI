@@ -100,7 +100,7 @@ const generateCommand = program
 generateCommand
   .addArgument(generateCommand.createArgument("<target>", "crewai | backstage | paperclip").choices(GENERATE_TARGETS))
   .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
-  .option("--company <name>", "company name for the paperclip target", "Agent Company")
+  .option("--company <name>", "company name for the paperclip target (default: \"Agent Company\")")
     .action(async (target: "crewai" | "backstage" | "paperclip", patterns: string[], opts: { team?: string; out: string; company?: string }) => {
     process.exitCode = await runGenerate(patterns, { target, team: opts.team, out: opts.out, company: opts.company });
   });
