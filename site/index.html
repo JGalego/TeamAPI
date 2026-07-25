@@ -290,8 +290,9 @@
   });
 
   /* ── the demo ─────────────────────────────────────────────────────────
-     Every line below is real output, captured from the CLI running against
-     examples/acme-org in the repo. Nothing here is mocked up.              */
+     Output is captured from the CLI running against examples/acme-org in the repo.
+     The one exception is the chat reply, which is a language model's and so can't be
+     pinned — but the tool call inside it, and the numbers it returns, are real.     */
   const E = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
   /* The four ACME teams, laid out once. Both diagram scopes draw the same boxes and differ
@@ -394,6 +395,25 @@
         [305, 44, "middle", "CustomerSupplier"], [112, 122, "start", "Partnership"],
         [309, 174, "middle", "unclassified"],
       ]),
+    },
+    {
+      label: "chat",
+      cmd: "teamapi chat examples/acme-org --team stream-checkout --member diego-alves --debug",
+      note: "The persona looks things up instead of guessing — that call is real.",
+      out: [
+        ["dim", "Chatting as Diego Alves — Checkout Tech Lead, Stream Checkout."],
+        ["", ""],
+        ["c", "You> what's the worst thing about your job?"],
+        ["", ""],
+        ["ok", '  ⚙ get_team_cognitive_load({"teamId":"stream-checkout"})'],
+        ["dim", '     → label: "overloaded", extraneous: 8,'],
+        ["dim", '       notes: "High extraneous load from juggling three upstream'],
+        ["dim", '               integrations with inconsistent contracts…"'],
+        ["", ""],
+        ["c", "Diego Alves> Honestly? Three upstream integrations with inconsistent"],
+        ["c", "contracts, so a chunk of my week goes to translating between them"],
+        ["c", 'instead of building. Our own assessment flags us as "overloaded".'],
+      ],
     },
     {
       label: "ship agents",
