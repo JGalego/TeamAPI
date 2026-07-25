@@ -222,7 +222,7 @@
     </div>
     <div class="step">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve the API</b></div>
-      <p>A read-only REST API and a dashboard, straight from the files. No database.</p>
+      <p>A dashboard to browse your whole org, and the same data over HTTP.</p>
       <pre>teamapi serve-api ./org
 # → localhost:3000/dashboard</pre>
     </div>
@@ -323,7 +323,7 @@
     {
       label: "validate",
       cmd: "teamapi validate examples/acme-org",
-      note: "Resolves every $ref across files and fails on a broken one.",
+      note: "Catches a broken cross-team reference before it reaches main.",
       out: [
         ["dim", "Resolved 4 team(s) from 4 seed file(s):"],
         ["dim", "  - enabling-devex (enabling)          <- examples/acme-org/enabling-devex/teamapi.yml"],
@@ -355,7 +355,7 @@
     {
       label: "who's drowning?",
       cmd: "curl -s localhost:3000/cognitive-load",
-      note: "Cognitive load is a first-class field, self-assessed by each team.",
+      note: "Each team scores its own load, so you can see who is stretched.",
       out: [
         ["c", '[ {'],
         ["c", '    "teamId": "platform-payments",  "total": 18,'],
