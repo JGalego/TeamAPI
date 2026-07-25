@@ -3,7 +3,13 @@
   <h1>TeamAPI</h1>
   <p>Who owns this? Just <code>curl</code> your org.</p>
 
-  [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE) ![Node](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white) ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
+  [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml)
+  [![npm](https://img.shields.io/npm/v/%40jgalego%2Fteamapi?logo=npm&logoColor=white&color=cb3837)](https://www.npmjs.com/package/@jgalego/teamapi)
+  [![downloads](https://img.shields.io/npm/dm/%40jgalego%2Fteamapi?logo=npm&logoColor=white&color=cb3837)](https://www.npmjs.com/package/@jgalego/teamapi)
+  [![Socket](https://socket.dev/api/badge/npm/package/@jgalego/teamapi)](https://socket.dev/npm/package/@jgalego/teamapi)
+  [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE)
+  [![Node](https://img.shields.io/node/v/%40jgalego%2Fteamapi?logo=node.js&logoColor=white&color=339933)](https://nodejs.org)
+  [![TypeScript](https://img.shields.io/github/package-json/dependency-version/JGalego/TeamAPI/dev/typescript?logo=typescript&logoColor=white&color=3178C6&label=TypeScript)](https://www.typescriptlang.org)
 </div>
 
 Every team has an API: what it owns, who's accountable for what, how to ask it for things, how much it can take on. Usually this information is scattered across wikis, onboarding docs, and people's heads, where it drifts out of date.
