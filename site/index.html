@@ -98,8 +98,10 @@
   /* ── terminal ───────────────────────────────────────────── */
   .demo { margin: 1.5rem 0 0; }
   .demo h2 { margin: 0 0 .5rem; }
-  .lead { text-align: center; color: var(--muted); font-size: .92rem; margin: 0 auto 1.4rem; max-width: 32rem; }
-  .lead code { font-size: .88em; color: var(--fg); }
+  .lead { text-align: center; color: var(--muted); font-size: .92rem; margin: 0 auto 1.4rem;
+          max-width: 32rem; text-wrap: pretty; }
+  /* keep the path whole — browsers will happily break it at the slash */
+  .lead code { font-size: .88em; color: var(--fg); white-space: nowrap; }
   .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .8rem; justify-content: center; }
   .chips button {
     border: 1px solid var(--line); background: var(--card); color: var(--muted);
