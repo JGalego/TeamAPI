@@ -6,6 +6,7 @@ import {
   buildCrewAiCrewConfig,
   buildCrewAiOrgConfig,
   buildOrgGraph,
+  buildPaperclipPackage,
   toBackstageYaml,
   toCrewAiCrewYaml,
   toCrewAiOrgYaml,
@@ -15,9 +16,10 @@ import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
 export interface GenerateOptions {
-  target: "crewai" | "backstage";
+  target: "crewai" | "backstage" | "paperclip";
   team?: string;
   out: string;
+  company?: string;
 }
 
 export async function runGenerate(patterns: string[], options: GenerateOptions): Promise<number> {
@@ -35,6 +37,9 @@ export async function runGenerate(patterns: string[], options: GenerateOptions):
     return 1;
   }
 
+  if (options.target === "paperclip") {
+    return generatePaperclip(graph, options);
+  }
   if (options.target === "backstage") {
     return generateBackstage(graph, options);
   }
@@ -75,5 +80,23 @@ async function generateBackstage(graph: OrgGraph, options: GenerateOptions): Pro
   const file = path.join(options.out, "catalog-info.yaml");
   await fs.writeFile(file, toBackstageYaml(entities), "utf-8");
   console.log(`Wrote ${file} (${entities.length} entities)`);
+  return 0;
+}
+
+/** Writes an Agent Companies (`agentcompanies/v1`) package — a tree of markdown files, so each
+ * one is created relative to `--out` with its parent directories. */
+async function generatePaperclip(graph: OrgGraph, options: GenerateOptions): Promise<number> {
+  const pkg = buildPaperclipPackage(graph, { name: options.company ?? "Agent Company" });
+  for (const file of pkg.files) {
+    const target = path.join(options.out, file.path);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, file.content, "utf8");
+  }
+  console.log(`Wrote ${pkg.files.length} file(s) to ${options.out}/ (agentcompanies/v1)`);
+  if (pkg.skippedAgents.length > 0) {
+    console.log(
+      `  ! skipped ${pkg.skippedAgents.length} non-active agent(s): ${pkg.skippedAgents.join(", ")}`,
+    );
+  }
   return 0;
 }
