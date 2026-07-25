@@ -51,7 +51,19 @@
   .hero { text-align: center; padding: 1rem 0 2.5rem; }
   .hero svg { width: 84px; height: 84px; animation: settle .7s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes settle { from { opacity: 0; transform: scale(.9) } to { opacity: 1; transform: none } }
-  @media (prefers-reduced-motion: reduce) { .hero svg { animation: none } }
+  /* The weave re-threads itself: each crossing wipes in or out, staggered by column so the
+     change sweeps across the cloth. Two alternating checkerboard phases, no images. */
+  .hero .x { stroke-dasharray: 13.89 200; animation: thread 5.0s infinite; }
+  .hero .b { stroke-dasharray: 0 200; }
+  @keyframes thread {
+    0%, 43%   { stroke-dasharray: 13.89 200; }
+    48%, 93%  { stroke-dasharray: 0 200; }
+    98%, 100% { stroke-dasharray: 13.89 200; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .hero svg { animation: none }
+    .hero .x { animation: none }
+  }
   h1 { font-size: clamp(2.2rem, 7vw, 3.1rem); margin: .6rem 0 .3rem; letter-spacing: -.035em; }
   .tag { font-size: clamp(1.05rem, 3.4vw, 1.3rem); margin: 0 0 .8rem; }
   .tag code {
@@ -166,16 +178,22 @@
       <path d="M42 14V86" stroke="#fb7185" stroke-width="10" stroke-linecap="round"/>
       <path d="M58 14V86" stroke="#a78bfa" stroke-width="10" stroke-linecap="round"/>
       <path d="M74 14V86" stroke="#fb7185" stroke-width="10" stroke-linecap="round"/>
-      <g stroke-linecap="butt" stroke-width="10" pathLength="100" stroke-dasharray="13.89 200">
-        <path d="M14 26H86" stroke="#2dd4bf" stroke-dashoffset="-9.72"/>
-        <path d="M14 26H86" stroke="#2dd4bf" stroke-dashoffset="-53.47"/>
-        <path d="M14 42H86" stroke="#fbbf24" stroke-dashoffset="-31.6"/>
-        <path d="M14 42H86" stroke="#fbbf24" stroke-dashoffset="-75.35"/>
-        <path d="M14 58H86" stroke="#2dd4bf" stroke-dashoffset="-9.72"/>
-        <path d="M14 58H86" stroke="#2dd4bf" stroke-dashoffset="-53.47"/>
-        <path d="M14 74H86" stroke="#fbbf24" stroke-dashoffset="-31.6"/>
-        <path d="M14 74H86" stroke="#fbbf24" stroke-dashoffset="-75.35"/>
-      </g>
+      <path class="x a" d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-9.72" style="animation-delay:0.00s"/>
+      <path class="x b" d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-31.94" style="animation-delay:-2.41s"/>
+      <path class="x a" d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-54.17" style="animation-delay:0.18s"/>
+      <path class="x b" d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-76.39" style="animation-delay:-2.23s"/>
+      <path class="x b" d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-9.72" style="animation-delay:-2.50s"/>
+      <path class="x a" d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-31.94" style="animation-delay:0.09s"/>
+      <path class="x b" d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-54.17" style="animation-delay:-2.32s"/>
+      <path class="x a" d="M14 42H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-76.39" style="animation-delay:0.27s"/>
+      <path class="x a" d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-9.72" style="animation-delay:0.00s"/>
+      <path class="x b" d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-31.94" style="animation-delay:-2.41s"/>
+      <path class="x a" d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-54.17" style="animation-delay:0.18s"/>
+      <path class="x b" d="M14 58H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-76.39" style="animation-delay:-2.23s"/>
+      <path class="x b" d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-9.72" style="animation-delay:-2.50s"/>
+      <path class="x a" d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-31.94" style="animation-delay:0.09s"/>
+      <path class="x b" d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-54.17" style="animation-delay:-2.32s"/>
+      <path class="x a" d="M14 74H86" stroke="#fbbf24" stroke-width="10" stroke-linecap="butt" pathLength="100" stroke-dashoffset="-76.39" style="animation-delay:0.27s"/>
     </svg>
     <h1>TeamAPI</h1>
     <p class="tag">Who owns this? Just <code>curl</code> your org.</p>
