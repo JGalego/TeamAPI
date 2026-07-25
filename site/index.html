@@ -106,7 +106,19 @@
     vertical-align: text-bottom; animation: blink 1.05s steps(2) infinite;
   }
   @keyframes blink { 50% { opacity: 0 } }
+  .dia { display: block; width: 100%; height: auto; margin: .9rem 0 .2rem; }
   .note { color: var(--muted); font-size: .85rem; text-align: center; margin: .8rem 0 0; min-height: 1.4rem; }
+
+  /* ── integrations ───────────────────────────────────────── */
+  .ints { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .ints a {
+    display: block; text-decoration: none; padding: .8rem 1rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    transition: border-color .15s;
+  }
+  .ints a:hover { border-color: var(--muted); }
+  .ints b { display: block; font-size: .92rem; }
+  .ints span { color: var(--muted); font-size: .82rem; }
 
   /* ── steps ──────────────────────────────────────────────── */
   h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
@@ -208,6 +220,22 @@
     </div>
   </div>
 
+  <h2>Feeds</h2>
+  <div class="ints">
+    <a href="https://github.com/JGalego/TeamAPI#generators">
+      <b>CrewAI</b><span>roles become agents, responsibilities become tasks</span>
+    </a>
+    <a href="https://github.com/JGalego/TeamAPI#backstage-catalog">
+      <b>Backstage</b><span>a Group per team, a Component per service</span>
+    </a>
+    <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/paperclip.md">
+      <b>Paperclip</b><span>an agent company, plus drift detection against it</span>
+    </a>
+    <a href="https://github.com/JGalego/TeamAPI#apply">
+      <b>GitHub</b><span>import existing teams, reconcile membership</span>
+    </a>
+  </div>
+
   <footer>
     <a href="https://github.com/JGalego/TeamAPI">GitHub</a>
     <a href="https://www.npmjs.com/package/@jgalego/teamapi">npm</a>
@@ -247,6 +275,32 @@
      Every line below is real output, captured from the CLI running against
      examples/acme-org in the repo. Nothing here is mocked up.              */
   const E = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  /* The four ACME teams, laid out once. Both diagram scopes draw the same boxes and differ
+     only in their edges, which is the point the context map is making. */
+  const NODES = [
+    [16, 30, 170, "Stream Checkout", "stream-aligned", "#a78bfa"],
+    [430, 30, 174, "Platform Payments", "platform", "#2dd4bf"],
+    [16, 158, 178, "Stream Onboarding", "stream-aligned", "#a78bfa"],
+    [430, 158, 166, "Enabling DevEx", "enabling", "#fbbf24"],
+  ];
+  const diagram = (edges, labels) => `
+    <svg viewBox="0 0 620 240" class="dia" role="img" aria-label="ACME Org, four teams and their interactions">
+      <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6"
+        orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#64748b"/></marker></defs>
+      <g stroke="#64748b" stroke-width="2" fill="none" marker-end="url(#ar)">
+        ${edges.map(([d, dash]) => `<path d="${d}"${dash ? ' stroke-dasharray="6 5"' : ""}/>`).join("")}
+      </g>
+      <g font-size="11" fill="#8b98a9">
+        ${labels.map(([x, y, a, t]) => `<text x="${x}" y="${y}" text-anchor="${a}">${t}</text>`).join("")}
+      </g>
+      ${NODES.map(([x, y, w, name, type, fill]) => `
+        <rect x="${x}" y="${y}" width="${w}" height="52" rx="10" fill="${fill}"/>
+        <text x="${x + w / 2}" y="${y + 23}" text-anchor="middle" font-size="13" font-weight="600"
+          fill="#0b0f16">${name}</text>
+        <text x="${x + w / 2}" y="${y + 39}" text-anchor="middle" font-size="10" fill="#0b0f16"
+          opacity=".7">${type}</text>`).join("")}
+    </svg>`;
   const DEMOS = [
     {
       label: "validate",
@@ -301,20 +355,27 @@
       ],
     },
     {
-      label: "draw it",
+      label: "topology",
       cmd: "teamapi render examples/acme-org --scope topology",
-      note: "Mermaid or DOT, rendered from the resolved graph — never hand-drawn.",
-      out: [
-        ["c", "flowchart LR"],
-        ["dim", '  enabling_devex["Enabling DevEx"]'],
-        ["dim", '  platform_payments["Platform Payments"]'],
-        ["dim", '  stream_checkout["Stream Checkout"]'],
-        ["dim", '  stream_onboarding["Stream Onboarding"]'],
-        ["c", '  stream_checkout -->|"platform / x-as-a-service"| platform_payments'],
-        ["c", '  stream_checkout -->|"collaboration / depends (Slowing)"| stream_onboarding'],
-        ["c", '  stream_onboarding -.->|"facilitating"| enabling_devex'],
-        ["c", '  stream_onboarding -.->|"depends (OK)"| platform_payments'],
-      ],
+      note: "Who talks to whom, and how tightly. Mermaid or DOT — never hand-drawn.",
+      svg: diagram([
+        ["M186 56 H424", 0], ["M101 82 V152", 0],
+        ["M194 184 H424", 1], ["M194 168 L424 76", 1],
+      ], [
+        [305, 44, "middle", "x-as-a-service"], [112, 122, "start", "collaboration"],
+        [309, 174, "middle", "facilitating"], [340, 108, "middle", "depends"],
+      ]),
+    },
+    {
+      label: "context map",
+      cmd: "teamapi render examples/acme-org --scope context-map",
+      note: "The same interactions, reread as DDD relationships.",
+      svg: diagram([
+        ["M186 56 H424", 0], ["M101 82 V152", 0], ["M194 184 H424", 1],
+      ], [
+        [305, 44, "middle", "CustomerSupplier"], [112, 122, "start", "Partnership"],
+        [309, 174, "middle", "unclassified"],
+      ]),
     },
     {
       label: "ship agents",
@@ -365,6 +426,14 @@
       await sleep(16);
     }
     await sleep(240);
+
+    // Diagram scopes render the picture rather than the Mermaid source — the source is what
+    // the CLI prints, but the picture is what you actually wanted to see.
+    if (d.svg) {
+      out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + d.svg;
+      note.textContent = d.note;
+      return;
+    }
 
     let body = "";
     for (const [cls, line] of d.out) {
