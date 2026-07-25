@@ -109,6 +109,9 @@
   .term .dim { color: #64748b; }
   .term .ok { color: var(--teal); }
   .term .warn { color: var(--amber); }
+  /* Speakers, matching the cyan/magenta bold the chat CLI itself prints */
+  .term .you { color: #38bdf8; font-weight: 600; }
+  .term .who { color: #e879f9; font-weight: 600; }
   /* JSON tokens: key, string, number, literal, punctuation */
   .term .jk { color: #a78bfa; }
   .term .js { color: #fbbf24; }
@@ -320,6 +323,14 @@
     return out + E(line.slice(last));
   }
 
+  /* The chat CLI colours the "Name>" prompt and leaves the message itself alone, so a turn
+     is told apart by its prefix rather than by the whole line changing colour. */
+  function hlSpeaker(cls, line) {
+    const i = line.indexOf(">");
+    if (i < 0) return `<span class="${cls}">${E(line)}</span>`;
+    return `<span class="${cls}">${E(line.slice(0, i + 1))}</span>${E(line.slice(i + 1))}`;
+  }
+
   /* The four ACME teams, laid out once. Both diagram scopes draw the same boxes and differ
      only in their edges, which is the point the context map is making. */
   const NODES = [
@@ -453,18 +464,18 @@
       label: "chat",
       cmd: "teamapi chat examples/acme-org --team stream-checkout --member diego-alves --debug",
       out: [
-        ["dim", "Chatting as Diego Alves — Checkout Tech Lead, Stream Checkout."],
+        ["dim", "Chatting as Diego Alves (model: claude-opus-4-8)."],
         ["", ""],
-        ["c", "You> what's the worst thing about your job?"],
+        ["you", "You> what's the worst thing about your job?"],
         ["", ""],
-        ["ok", '  ⚙ get_team_cognitive_load({"teamId":"stream-checkout"})'],
+        ["dim", '  ⚙  get_team_cognitive_load({"teamId":"stream-checkout"})'],
         ["dim", '     → label: "overloaded", extraneous: 8,'],
         ["dim", '       notes: "High extraneous load from juggling three upstream'],
         ["dim", '               integrations with inconsistent contracts…"'],
         ["", ""],
-        ["c", "Diego Alves> Honestly? Three upstream integrations with inconsistent"],
-        ["c", "contracts, so a chunk of my week goes to translating between them"],
-        ["c", 'instead of building. Our own assessment flags us as "overloaded".'],
+        ["who", "Diego Alves> Honestly? Three upstream integrations with inconsistent"],
+        ["", "contracts, so a chunk of my week goes to translating between them"],
+        ["", 'instead of building. Our own assessment flags us as "overloaded".'],
       ],
     },
     {
@@ -525,7 +536,9 @@
     for (const entry of d.out) {
       if (me !== run) return;
       const [cls, line] = Array.isArray(entry) ? entry : ["", entry];
-      body += (d.lang === "json" ? hlJson(line) : `<span class="${cls}">${E(line)}</span>`) + "\n";
+      body += (d.lang === "json" ? hlJson(line)
+             : cls === "you" || cls === "who" ? hlSpeaker(cls, line)
+             : `<span class="${cls}">${E(line)}</span>`) + "\n";
       out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + body;
       await sleep(55);
     }
