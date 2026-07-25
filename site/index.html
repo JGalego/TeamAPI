@@ -358,19 +358,6 @@
     </svg>`;
   const DEMOS = [
     {
-      label: "validate",
-      cmd: "teamapi validate examples/acme-org",
-      out: [
-        ["dim", "Resolved 4 team(s) from 4 seed file(s):"],
-        ["dim", "  - enabling-devex (enabling)          <- examples/acme-org/enabling-devex/teamapi.yml"],
-        ["dim", "  - platform-payments (platform)       <- examples/acme-org/platform-payments/teamapi.yml"],
-        ["dim", "  - stream-checkout (stream-aligned)   <- examples/acme-org/stream-checkout/teamapi.yml"],
-        ["dim", "  - stream-onboarding (stream-aligned) <- examples/acme-org/stream-onboarding/teamapi.yml"],
-        ["", ""],
-        ["ok", "No unresolved references. Validation passed."],
-      ],
-    },
-    {
       label: "who owns it?",
       cmd: "curl -s localhost:3000/services/checkout-api | jq 'del(.. | .ubiquitousLanguage?)'",
       lang: "json",
@@ -440,7 +427,7 @@
       ],
     },
     {
-      label: "topology",
+      label: "who talks to whom?",
       cmd: "teamapi render examples/acme-org --scope topology",
       svg: diagram([
         ["M186 56 H424", 0], ["M101 82 V152", 0],
@@ -451,7 +438,7 @@
       ]),
     },
     {
-      label: "context map",
+      label: "where are the seams?",
       cmd: "teamapi render examples/acme-org --scope context-map",
       svg: diagram([
         ["M186 56 H424", 0], ["M101 82 V152", 0], ["M194 184 H424", 1],
@@ -461,7 +448,7 @@
       ]),
     },
     {
-      label: "chat",
+      label: "ask a teammate",
       cmd: "teamapi chat examples/acme-org --team stream-checkout --member diego-alves --debug",
       out: [
         ["dim", "Chatting as Diego Alves (model: claude-opus-4-8). Type 'exit' or Ctrl+D to quit."],
@@ -489,17 +476,23 @@
       ],
     },
     {
-      label: "ship agents",
-      cmd: 'teamapi generate paperclip examples/acme-org --out ./company',
+      label: "ship it to my agents",
+      cmd: 'teamapi generate paperclip examples/acme-org --out ./company && find company -type f | sort',
       out: [
         ["ok", "Wrote 12 file(s) to ./company/ (agentcompanies/v1)"],
         ["warn", "  ! skipped 1 non-active agent(s): platform-payments/compliance-auditor"],
-        ["", ""],
-        ["dim", "  company/"],
-        ["dim", "  ├── COMPANY.md"],
-        ["dim", "  ├── agents/platform-payments-architecture-reviewer/AGENTS.md"],
-        ["dim", "  ├── skills/platform-payments-code-review/SKILL.md"],
-        ["dim", "  └── teams/stream-onboarding/TEAM.md   ← zero agents, by policy"],
+        ["dim", "company/COMPANY.md"],
+        ["dim", "company/agents/platform-payments-architecture-reviewer/AGENTS.md"],
+        ["dim", "company/agents/platform-payments-docs-writer/AGENTS.md"],
+        ["dim", "company/agents/platform-payments-security-scanner/AGENTS.md"],
+        ["dim", "company/agents/platform-payments-test-generator/AGENTS.md"],
+        ["dim", "company/skills/platform-payments-code-review/SKILL.md"],
+        ["dim", "company/skills/platform-payments-generate-tests/SKILL.md"],
+        ["dim", "company/skills/platform-payments-security-scan/SKILL.md"],
+        ["dim", "company/teams/enabling-devex/TEAM.md"],
+        ["dim", "company/teams/platform-payments/TEAM.md"],
+        ["dim", "company/teams/stream-checkout/TEAM.md"],
+        ["dim", "company/teams/stream-onboarding/TEAM.md"],
       ],
     },
   ];
