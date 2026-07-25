@@ -121,7 +121,6 @@
   }
   @keyframes blink { 50% { opacity: 0 } }
   .dia { display: block; width: 100%; height: auto; margin: .9rem 0 .2rem; }
-  .note { color: var(--muted); font-size: .85rem; text-align: center; margin: .8rem 0 0; min-height: 1.4rem; }
 
   /* ── integrations ───────────────────────────────────────── */
   .ints { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
@@ -214,7 +213,6 @@
       <div class="bar"><i></i><i></i><i></i></div>
       <pre id="out" role="log" aria-live="polite"></pre>
     </div>
-    <p class="note" id="note"></p>
   </section>
 
   <h2>Quick start</h2>
@@ -351,7 +349,6 @@
     {
       label: "validate",
       cmd: "teamapi validate examples/acme-org",
-      note: "Catches a broken cross-team reference before it reaches main.",
       out: [
         ["dim", "Resolved 4 team(s) from 4 seed file(s):"],
         ["dim", "  - enabling-devex (enabling)          <- examples/acme-org/enabling-devex/teamapi.yml"],
@@ -365,7 +362,6 @@
     {
       label: "who owns it?",
       cmd: "curl -s localhost:3000/services/checkout-api",
-      note: "Every service is declared once, on the team that owns it.",
       lang: "json",
       out: [
         '{',
@@ -385,7 +381,6 @@
     {
       label: "who's drowning?",
       cmd: "curl -s localhost:3000/cognitive-load",
-      note: "Each team scores its own load, so you can see who is stretched.",
       lang: "json",
       out: [
         '[',
@@ -406,7 +401,6 @@
     {
       label: "topology",
       cmd: "teamapi render examples/acme-org --scope topology",
-      note: "Who talks to whom, and how tightly. Mermaid or DOT — never hand-drawn.",
       svg: diagram([
         ["M186 56 H424", 0], ["M101 82 V152", 0],
         ["M194 184 H424", 1], ["M194 168 L424 76", 1],
@@ -418,7 +412,6 @@
     {
       label: "context map",
       cmd: "teamapi render examples/acme-org --scope context-map",
-      note: "The same interactions, reread as DDD relationships.",
       svg: diagram([
         ["M186 56 H424", 0], ["M101 82 V152", 0], ["M194 184 H424", 1],
       ], [
@@ -429,7 +422,6 @@
     {
       label: "chat",
       cmd: "teamapi chat examples/acme-org --team stream-checkout --member diego-alves --debug",
-      note: "The persona looks things up instead of guessing — that call is real.",
       out: [
         ["dim", "Chatting as Diego Alves — Checkout Tech Lead, Stream Checkout."],
         ["", ""],
@@ -448,7 +440,6 @@
     {
       label: "ship agents",
       cmd: 'teamapi generate paperclip examples/acme-org --out ./company',
-      note: "Agents are declared per team — and one team declares none, on purpose.",
       out: [
         ["ok", "Wrote 12 file(s) to ./company/ (agentcompanies/v1)"],
         ["warn", "  ! skipped 1 non-active agent(s): platform-payments/compliance-auditor"],
@@ -464,7 +455,6 @@
 
   const chips = document.querySelector(".chips");
   const out = document.getElementById("out");
-  const note = document.getElementById("note");
   const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
   let run = 0;
 
@@ -484,7 +474,6 @@
   async function play(i) {
     const me = ++run, d = DEMOS[i];
     select(i);
-    note.textContent = "";
     const prompt = '<span class="p">$</span> ';
     const sleep = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
 
@@ -499,7 +488,6 @@
     // the CLI prints, but the picture is what you actually wanted to see.
     if (d.svg) {
       out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + d.svg;
-      note.textContent = d.note;
       return;
     }
 
@@ -514,7 +502,6 @@
     if (me !== run) return;
     out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + body +
                     '<span class="p">$</span> <span class="caret"></span>';
-    note.textContent = d.note;
   }
 
   play(0);
