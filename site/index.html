@@ -171,9 +171,10 @@
   /* ── steps ──────────────────────────────────────────────── */
   h2 { font-size: .75rem; text-transform: uppercase; letter-spacing: .1em; color: var(--muted);
        margin: 4rem 0 1.1rem; font-weight: 600; text-align: center; }
-  .steps { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  .steps { display: grid; gap: 1rem; grid-template-columns: 1fr; }
+  @media (min-width: 58rem) { .steps { grid-template-columns: repeat(3, 1fr); } }
   .step {
-    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.3rem;
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.1rem;
     display: flex; flex-direction: column;
   }
   .step .row { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
@@ -181,7 +182,8 @@
   .step p { margin: 0 0 .7rem; color: var(--muted); font-size: .9rem; }
   .step pre {
     margin: auto 0 0; font-size: .74rem; overflow-x: auto; color: var(--fg);
-    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .55rem .7rem;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .55rem .6rem;
+    white-space: pre-wrap; overflow-wrap: break-word;
   }
   .step pre .pr { color: var(--teal); user-select: none; }
   .step pre .cm { color: var(--muted); }
@@ -257,8 +259,8 @@
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 12.5 8 15l2 2.5" /> <path d="m14 12.5 2 2.5-2 2.5" /></svg><b>Write it down</b></div>
       <p>One file per team: what it owns, who's accountable, how much it can take on.</p>
       <pre><span class="pr">$</span> teamapi scaffold cart \
-    --type stream-aligned \
-    --out teams/cart.yml</pre>
+  --type stream-aligned \
+  --out teams/cart.yml</pre>
     </div>
     <div class="step">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve the API</b></div>
@@ -560,11 +562,29 @@
 
   /** Types the command, then reveals its output a line at a time. Each call
    *  bumps `run` so a click mid-animation abandons the previous one. */
+  /** One output line, coloured per the demo's own convention. */
+  function lineHtml(d, entry) {
+    const [cls, line] = Array.isArray(entry) ? entry : ["", entry];
+    return d.lang === "json" ? hlJson(line)
+         : cls === "you" || cls === "who" ? hlSpeaker(cls, line)
+         : `<span class="${cls}">${E(line)}</span>`;
+  }
+
   async function play(i) {
     const me = ++run, d = DEMOS[i];
     select(i);
     const prompt = '<span class="p">$</span> ';
+    const cmd = prompt + '<span class="c">' + E(d.cmd) + "</span>\n";
+    const tail = '<span class="p">$</span> <span class="caret"></span>';
     const sleep = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
+
+    // Lay the finished frame out once and pin that height, so the terminal doesn't creep
+    // downwards line by line while the output arrives. Measured rather than counted, which
+    // keeps it right for the diagrams and for any line that wraps.
+    out.style.minHeight = "";
+    out.innerHTML = d.svg ? cmd + d.svg
+                          : cmd + d.out.map((e) => lineHtml(d, e)).join("\n") + "\n" + tail;
+    out.style.minHeight = out.getBoundingClientRect().height + "px";
 
     for (let n = 0; n <= d.cmd.length; n++) {
       if (me !== run) return;
@@ -576,23 +596,19 @@
     // Diagram scopes render the picture rather than the Mermaid source — the source is what
     // the CLI prints, but the picture is what you actually wanted to see.
     if (d.svg) {
-      out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + d.svg;
+      out.innerHTML = cmd + d.svg;
       return;
     }
 
     let body = "";
     for (const entry of d.out) {
       if (me !== run) return;
-      const [cls, line] = Array.isArray(entry) ? entry : ["", entry];
-      body += (d.lang === "json" ? hlJson(line)
-             : cls === "you" || cls === "who" ? hlSpeaker(cls, line)
-             : `<span class="${cls}">${E(line)}</span>`) + "\n";
-      out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + body;
+      body += lineHtml(d, entry) + "\n";
+      out.innerHTML = cmd + body;
       await sleep(55);
     }
     if (me !== run) return;
-    out.innerHTML = prompt + '<span class="c">' + E(d.cmd) + "</span>\n" + body +
-                    '<span class="p">$</span> <span class="caret"></span>';
+    out.innerHTML = cmd + body + tail;
   }
 
   play(0);
