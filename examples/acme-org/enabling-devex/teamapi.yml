@@ -22,6 +22,7 @@ members:
   - id: marta-kowalski
     name: Marta Kowalski
     contact: marta.kowalski@acme.example
+    githubUsername: marta-kowalski
     roleIds: [coach]
     allocation: 100
 work:
