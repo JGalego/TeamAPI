@@ -11,6 +11,7 @@ import { runDiff } from "./commands/diff";
 import { runApply } from "./commands/apply";
 import { runSlackSync } from "./commands/slack-sync";
 import { runPagerDutyDrift } from "./commands/pagerduty-drift";
+import { runOktaDrift } from "./commands/okta-drift";
 import { runPaperclipDrift } from "./commands/paperclip-drift";
 import { runImport, type ImportSource } from "./commands/import";
 import { runServeApi } from "./commands/serve-api";
@@ -136,6 +137,21 @@ generateCommand
     .option("--yes", "apply the plan instead of only printing it")
     .action(async (patterns: string[], opts: { token?: string; yes?: boolean }) => {
       process.exitCode = await runSlackSync(patterns, { token: opts.token, yes: opts.yes });
+    });
+
+  program
+    .command("okta-drift")
+    .description("Report where declared members and an Okta directory group disagree (read-only)")
+    .argument("<patterns...>", "teamapi.yml paths or globs")
+    .requiredOption("--url <url>", "Okta org URL, e.g. https://acme.okta.com")
+    .option("--token <token>", "Okta API token (defaults to OKTA_TOKEN)")
+    .option("--group-prefix <prefix>", "strip this prefix from group names before matching team ids")
+    .action(async (patterns: string[], opts: { url: string; token?: string; groupPrefix?: string }) => {
+      process.exitCode = await runOktaDrift(patterns, {
+        url: opts.url,
+        token: opts.token,
+        groupPrefix: opts.groupPrefix,
+      });
     });
 
   program
