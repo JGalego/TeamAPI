@@ -24,6 +24,7 @@ export * from "./generators/paperclip";
 export * from "./generators/codeowners";
 export * from "./generators/agents-md";
 export * from "./generators/port";
+export * from "./generators/otel";
 export * from "./apply/slack";
 export * from "./slack/client";
 export * from "./apply/pagerduty-drift";

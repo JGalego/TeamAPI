@@ -189,7 +189,7 @@ describe("createProgram — generate", () => {
     await expect(
       program.parseAsync(["node", "teamapi", "generate", "not-a-target", "some/path", "--out", "out"]),
     ).rejects.toThrow();
-    expect(stderr.join("")).toContain("Allowed choices are crewai, backstage, paperclip, codeowners, agents-md, port");
+    expect(stderr.join("")).toContain("Allowed choices are crewai, backstage, paperclip, codeowners, agents-md, port, otel");
     expect(runGenerate).not.toHaveBeenCalled();
   });
 
@@ -203,6 +203,14 @@ describe("createProgram — generate", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "generate", "backstage", "some/path", "--out", "out"]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], { target: "backstage", team: undefined, out: "out" });
+  });
+
+  it("accepts the otel target", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "generate", "otel", "some/path", "--out", "out"]);
+    expect(runGenerate).toHaveBeenCalledWith(["some/path"], {
+      target: "otel", team: undefined, out: "out", company: undefined, org: undefined,
+    });
   });
 
   it("accepts the port target", async () => {

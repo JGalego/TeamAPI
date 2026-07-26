@@ -42,6 +42,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
   - [👥 CODEOWNERS](#codeowners)
   - [🤖 AGENTS.md](#agents-md)
   - [🚢 Port](#port)
+  - [📡 OpenTelemetry](#opentelemetry)
 - [📥 Import from GitHub](#import)
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
@@ -533,6 +534,16 @@ Of every AI integration here this one has the widest reach, precisely because it
 
 It overlaps almost entirely with the Backstage target, with one exception that matters — **cognitive load**. Port scores and colours numeric properties, so a team's self-assessed load becomes something you can sort by, threshold and alert on. Backstage's entity model has nowhere to put it, so that target drops the most actionable number in the document. Details in [`docs/integrations/port.md`](docs/integrations/port.md).
 
+<a id="opentelemetry"></a>
+
+### 📡 OpenTelemetry
+
+`teamapi generate otel examples/acme-org --out ./otel` turns ownership into telemetry resource attributes, so a trace, a metric and an alert all know which team to attribute themselves to. `service.name` and `service.namespace` are the semantic-convention names; everything org-specific sits under a `teamapi.` prefix rather than squatting in the reserved namespace.
+
+Two artifacts, because two different people own the levers: one `.env` per service holding a single `OTEL_RESOURCE_ATTRIBUTES` line an SDK reads directly, and a `collector.yaml` `transform` processor that stamps the same attributes centrally with no deployments touched.
+
+Values are percent-encoded — `OTEL_RESOURCE_ATTRIBUTES` is W3C Baggage, so a comma in a team name would otherwise truncate the list and silently drop every attribute after it. Details in [`docs/integrations/opentelemetry.md`](docs/integrations/opentelemetry.md).
+
 <a id="import"></a>
 
 ## 📥 Import from GitHub
@@ -576,7 +587,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi validate <patterns...>` | Resolve every `$ref` transitively and report unresolved refs |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]` | Render a diagram |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
-| `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), or a [Port](#port) catalog |
+| `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
 | `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
 | `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
