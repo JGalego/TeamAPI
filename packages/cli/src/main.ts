@@ -10,6 +10,7 @@ import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
 import { runApply } from "./commands/apply";
 import { runSlackSync } from "./commands/slack-sync";
+import { runPagerDutyDrift } from "./commands/pagerduty-drift";
 import { runPaperclipDrift } from "./commands/paperclip-drift";
 import { runImport, type ImportSource } from "./commands/import";
 import { runServeApi } from "./commands/serve-api";
@@ -135,6 +136,16 @@ generateCommand
     .option("--yes", "apply the plan instead of only printing it")
     .action(async (patterns: string[], opts: { token?: string; yes?: boolean }) => {
       process.exitCode = await runSlackSync(patterns, { token: opts.token, yes: opts.yes });
+    });
+
+  program
+    .command("pagerduty-drift")
+    .description("Report where PagerDuty and the org graph disagree about who gets paged (read-only)")
+    .argument("<patterns...>", "teamapi.yml paths or globs")
+    .option("--token <token>", "PagerDuty REST API token (defaults to PAGERDUTY_TOKEN)")
+    .option("--url <url>", "API base URL (defaults to https://api.pagerduty.com)")
+    .action(async (patterns: string[], opts: { token?: string; url?: string }) => {
+      process.exitCode = await runPagerDutyDrift(patterns, { token: opts.token, url: opts.url });
     });
 
   program

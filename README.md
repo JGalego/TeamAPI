@@ -47,6 +47,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🔁 CI integration](#ci-integration)
 - [🔗 Paperclip](#paperclip)
 - [💬 Slack](#slack)
+- [📟 PagerDuty](#pagerduty)
 - [🤝 Contributing](#contributing)
 
 <a id="quick-start"></a>
@@ -553,6 +554,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
 | `teamapi slack-sync <patterns...> [--token <token>] [--yes]` | Set each declared [Slack](#slack) channel's topic to name the team that owns it |
+| `teamapi pagerduty-drift <patterns...> [--token <token>] [--url <url>]` | Report where [PagerDuty](#pagerduty) and the org graph disagree about who gets paged |
 | `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]` | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only) |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
@@ -654,6 +656,28 @@ The route is only registered when the signing secret is set — not "401s when u
 ```
 
 Only topics — not channel creation, invites or archiving. Channels no team declares are counted and left alone, and a channel two teams claim gets nothing, the same call [CODEOWNERS](#codeowners) makes. Details in [`docs/integrations/slack.md`](docs/integrations/slack.md).
+
+<a id="pagerduty"></a>
+
+## 📟 PagerDuty
+
+Ownership without escalation is half an answer. "Who owns `checkout-api`" at three in the morning doesn't mean the org chart, it means the rotation — and those two drift apart quietly, because PagerDuty gets edited *during* an incident and `teamapi.yml` gets edited in review.
+
+```bash
+export PAGERDUTY_TOKEN=...
+teamapi pagerduty-drift examples/acme-org
+```
+
+```text
+! unresponsive: 'checkout-api' escalates to 'stream-checkout on-call', which has nobody on it
+- unmonitored: 'ledger' is declared by platform-payments but has no PagerDuty service
++ undeclared: 'legacy-batch' is in PagerDuty but no teamapi.yml declares it
+~ misattributed: 'payments-api' escalates to 'Default Escalation Policy', which doesn't name platform-payments
+
+4 finding(s), 1 blocking; 2 service(s) matched.
+```
+
+Only `unresponsive` exits non-zero, so this can gate a required check without ordinary drift failing the build — a monitored service that pages nobody is worse than an unmonitored one, because the alert fires and everyone assumes it was handled. Service names match loosely (`Checkout API` = `checkout-api`), and read-only in both directions. Details, and why there is deliberately no `generate pagerduty`, in [`docs/integrations/pagerduty.md`](docs/integrations/pagerduty.md).
 
 <a id="contributing"></a>
 

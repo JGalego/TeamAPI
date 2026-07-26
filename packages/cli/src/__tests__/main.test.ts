@@ -6,7 +6,7 @@ import type { Command } from "commander";
 // `vi.mock` factories are hoisted above every other statement in this file (including `const`
 // declarations), so the mocked fns they close over must themselves be created inside
 // `vi.hoisted` — a plain top-level `const` here would be used before initialization.
-const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runImport, runServeApi, runServeMcp, runChat, runSlackSync } =
+const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runImport, runServeApi, runServeMcp, runChat, runSlackSync, runPagerDutyDrift } =
   vi.hoisted(() => ({
     runValidate: vi.fn(async () => 0),
     runRender: vi.fn(async () => 0),
@@ -19,6 +19,7 @@ const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, run
     runServeMcp: vi.fn(async () => {}),
     runChat: vi.fn(async () => 0),
     runSlackSync: vi.fn(async () => 0),
+    runPagerDutyDrift: vi.fn(async () => 0),
   }));
 
 vi.mock("../commands/validate", () => ({ runValidate }));
@@ -32,6 +33,7 @@ vi.mock("../commands/serve-api", () => ({ runServeApi }));
 vi.mock("../commands/serve-mcp", () => ({ runServeMcp }));
 vi.mock("../commands/chat", () => ({ runChat }));
 vi.mock("../commands/slack-sync", () => ({ runSlackSync }));
+vi.mock("../commands/pagerduty-drift", () => ({ runPagerDutyDrift }));
 
 // vitest hoists `vi.mock(...)` calls above every import in this file (including this one), so
 // `createProgram()`'s command actions call the mocked `run*` functions above instead of touching
@@ -312,6 +314,19 @@ describe("createProgram — slack-sync", () => {
 
     await program.parseAsync(["node", "teamapi", "slack-sync", "some/path", "--token", "t", "--yes"]);
     expect(runSlackSync).toHaveBeenCalledWith(["some/path"], { token: "t", yes: true });
+  });
+});
+
+describe("createProgram — pagerduty-drift", () => {
+  it("passes --token and --url through, defaulting both to undefined", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "pagerduty-drift", "some/path"]);
+    expect(runPagerDutyDrift).toHaveBeenCalledWith(["some/path"], { token: undefined, url: undefined });
+
+    await program.parseAsync([
+      "node", "teamapi", "pagerduty-drift", "some/path", "--token", "t", "--url", "https://eu.pagerduty.com",
+    ]);
+    expect(runPagerDutyDrift).toHaveBeenCalledWith(["some/path"], { token: "t", url: "https://eu.pagerduty.com" });
   });
 });
 
