@@ -92,7 +92,7 @@ export function createProgram(): Command {
       process.exitCode = await runScaffold({ id, type: opts.type, name: opts.name, out: opts.out });
     });
 
-const GENERATE_TARGETS = ["crewai", "backstage", "paperclip", "codeowners", "agents-md"] as const;
+const GENERATE_TARGETS = ["crewai", "backstage", "paperclip", "codeowners", "agents-md", "port"] as const;
 
 const generateCommand = program
   .command("generate")
@@ -100,11 +100,11 @@ const generateCommand = program
   .option("--team <id>", "scope to one team id (single-crew/single-catalog output instead of the whole org)")
   .requiredOption("--out <dir>", "output directory");
 generateCommand
-  .addArgument(generateCommand.createArgument("<target>", "crewai | backstage | paperclip | codeowners | agents-md").choices(GENERATE_TARGETS))
+  .addArgument(generateCommand.createArgument("<target>", "crewai | backstage | paperclip | codeowners | agents-md | port").choices(GENERATE_TARGETS))
   .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
   .option("--company <name>", "company name for the paperclip target (default: \"Agent Company\")")
     .option("--org <org>", "GitHub org for the codeowners target, so owners read @org/team-id")
-    .action(async (target: "crewai" | "backstage" | "paperclip" | "codeowners" | "agents-md", patterns: string[], opts: { team?: string; out: string; company?: string; org?: string }) => {
+    .action(async (target: "crewai" | "backstage" | "paperclip" | "codeowners" | "agents-md" | "port", patterns: string[], opts: { team?: string; out: string; company?: string; org?: string }) => {
     process.exitCode = await runGenerate(patterns, { target, team: opts.team, out: opts.out, company: opts.company, org: opts.org });
   });
 

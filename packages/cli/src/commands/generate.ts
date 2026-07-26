@@ -8,6 +8,7 @@ import {
   buildCodeowners,
   buildCrewAiOrgConfig,
   buildOrgGraph,
+  buildPortCatalog,
   buildPaperclipPackage,
   toBackstageYaml,
   toCrewAiCrewYaml,
@@ -18,7 +19,7 @@ import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
 export interface GenerateOptions {
-  target: "crewai" | "backstage" | "paperclip" | "codeowners" | "agents-md";
+  target: "crewai" | "backstage" | "paperclip" | "codeowners" | "agents-md" | "port";
   team?: string;
   out: string;
   company?: string;
@@ -40,6 +41,9 @@ export async function runGenerate(patterns: string[], options: GenerateOptions):
     return 1;
   }
 
+  if (options.target === "port") {
+    return generatePort(graph, options);
+  }
   if (options.target === "agents-md") {
     return generateAgentsMd(graph, options);
   }
@@ -148,4 +152,25 @@ async function generateAgentsMd(graph: OrgGraph, options: GenerateOptions): Prom
     console.error(`  ! ${conflict.repo} is claimed by ${conflict.teamIds.join(" and ")} — no AGENTS.md written`);
   }
   return pkg.conflicts.length > 0 ? 1 : 0;
+}
+
+/** Writes Port's two halves separately: `blueprints.json` is applied once, `entities.json` on
+ * every change, and the two go to different API endpoints. */
+async function generatePort(graph: OrgGraph, options: GenerateOptions): Promise<number> {
+  const catalog = buildPortCatalog(graph, options.team);
+  await fs.mkdir(options.out, { recursive: true });
+  await fs.writeFile(
+    path.join(options.out, "blueprints.json"),
+    `${JSON.stringify(catalog.blueprints, null, 2)}\n`,
+    "utf8",
+  );
+  await fs.writeFile(
+    path.join(options.out, "entities.json"),
+    `${JSON.stringify(catalog.entities, null, 2)}\n`,
+    "utf8",
+  );
+  console.log(
+    `Wrote ${catalog.blueprints.length} blueprint(s) and ${catalog.entities.length} entity(ies) to ${options.out}/`,
+  );
+  return 0;
 }

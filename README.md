@@ -41,6 +41,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
   - [🗂️ Backstage catalog](#backstage-catalog)
   - [👥 CODEOWNERS](#codeowners)
   - [🤖 AGENTS.md](#agents-md)
+  - [🚢 Port](#port)
 - [📥 Import from GitHub](#import)
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
@@ -524,6 +525,14 @@ Only the root `*` rule is emitted: Team API models which team owns a service, no
 
 Of every AI integration here this one has the widest reach, precisely because it needs no runtime — no gateway, no server, no adoption decision. Any coding agent that opens the repository reads the file, because that is already the convention. Policies and steering documents are reproduced verbatim, not summarised: an agent reading them is reading what a reviewer would quote back. Details in [`docs/integrations/agents-md.md`](docs/integrations/agents-md.md).
 
+<a id="port"></a>
+
+### 🚢 Port
+
+`teamapi generate port examples/acme-org --out ./port` emits a [Port](https://www.getport.io/) catalog as `blueprints.json` (apply once) and `entities.json` (apply on every change): a `teamapi_team` per team, a `teamapi_service` per service related to its owner, and a `teamapi_person` per member.
+
+It overlaps almost entirely with the Backstage target, with one exception that matters — **cognitive load**. Port scores and colours numeric properties, so a team's self-assessed load becomes something you can sort by, threshold and alert on. Backstage's entity model has nowhere to put it, so that target drops the most actionable number in the document. Details in [`docs/integrations/port.md`](docs/integrations/port.md).
+
 <a id="import"></a>
 
 ## 📥 Import from GitHub
@@ -567,7 +576,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi validate <patterns...>` | Resolve every `$ref` transitively and report unresolved refs |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]` | Render a diagram |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
-| `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), or [AGENTS.md](#agents-md) files |
+| `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), or a [Port](#port) catalog |
 | `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
 | `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
