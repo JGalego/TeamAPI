@@ -1,5 +1,30 @@
 # @jgalego/teamapi-rest-api
 
+## 0.4.0
+
+### Minor Changes
+
+- e96acc8: Add a Slack integration: a `/whoowns` slash-command endpoint on the REST API,
+  mounted only when `SLACK_SIGNING_SECRET` is set and verifying Slack's request
+  signature in constant time with a five-minute replay window; and a `slack-sync`
+  command that sets each declared channel's topic to name the owning team, with the
+  same plan/apply split as `teamapi apply`.
+
+### Patch Changes
+
+- Updated dependencies [ca583e4]
+- Updated dependencies [6c77ac6]
+- Updated dependencies [ee64909]
+- Updated dependencies [c411166]
+- Updated dependencies [42d5982]
+- Updated dependencies [551234a]
+- Updated dependencies [6eff7a3]
+- Updated dependencies [9c426a5]
+- Updated dependencies [1f8b769]
+- Updated dependencies [fe754b3]
+- Updated dependencies [e96acc8]
+  - @jgalego/teamapi-core@0.6.0
+
 ## 0.3.1
 
 ### Patch Changes
