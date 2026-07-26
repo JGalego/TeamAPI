@@ -67,15 +67,30 @@ export class OktaClient {
     return out;
   }
 
-  /** Every group, with its active and inactive members resolved to addresses. */
-  async listGroups(): Promise<DirectoryGroup[]> {
-    const groups = await this.page<RawGroup>(`${this.baseUrl}/api/v1/groups?limit=200`);
+  /** The org this token belongs to. */
+  async verify(): Promise<string> {
+    const res = await fetch(`${this.baseUrl}/api/v1/org`, {
+      headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error(`Okta returned ${res.status} ${res.statusText} for /api/v1/org`);
+    const org = (await res.json()) as { subdomain?: string; companyName?: string };
+    return org.companyName ?? org.subdomain ?? "org reachable";
+  }
+
+  /**
+   * Every group, with its active and inactive members resolved to addresses.
+   *
+   * `pageSize` exists so `teamapi doctor` can force the Link-header walk with a couple of groups
+   * rather than needing two hundred.
+   */
+  async listGroups(pageSize = 200): Promise<DirectoryGroup[]> {
+    const groups = await this.page<RawGroup>(`${this.baseUrl}/api/v1/groups?limit=${pageSize}`);
     const out: DirectoryGroup[] = [];
 
     for (const group of groups) {
       const name = group.profile?.name;
       if (!name) continue;
-      const users = await this.page<RawUser>(`${this.baseUrl}/api/v1/groups/${group.id}/users?limit=200`);
+      const users = await this.page<RawUser>(`${this.baseUrl}/api/v1/groups/${group.id}/users?limit=${pageSize}`);
       out.push({
         name,
         members: users.map(toDirectoryUser).filter((u): u is DirectoryUser => u !== null),

@@ -52,6 +52,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [💬 Slack](#slack)
 - [📟 PagerDuty](#pagerduty)
 - [🪪 Okta](#okta)
+- [🩺 Checking an integration](#doctor)
 - [🤝 Contributing](#contributing)
 
 <a id="quick-start"></a>
@@ -593,6 +594,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
 | `teamapi slack-sync <patterns...> [--token <token>] [--yes]` | Set each declared [Slack](#slack) channel's topic to name the team that owns it |
+| `teamapi doctor github\|slack\|pagerduty\|okta [--token <token>] [--url <url>] [--org <org>]` | [Check a live integration](#doctor): auth, the read, field shapes, pagination |
 | `teamapi okta-drift <patterns...> --url <url> [--token <token>] [--group-prefix <prefix>]` | Report where declared members and an [Okta](#okta) directory group disagree |
 | `teamapi pagerduty-drift <patterns...> [--token <token>] [--url <url>]` | Report where [PagerDuty](#pagerduty) and the org graph disagree about who gets paged |
 | `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]` | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only) |
@@ -739,6 +741,29 @@ teamapi okta-drift examples/acme-org --url https://acme.okta.com
 ```
 
 Only `deactivated` exits non-zero. The dangerous finding isn't the missing name, it's the one that's still there — a deactivated account listed as accountable reads to everything downstream, from CODEOWNERS to an agent answering "who owns this", as an owner. Groups match team ids by name (`--group-prefix` strips a prefix first) and people match by `contact` email. Read-only: a joiner belongs in a pull request. Details in [`docs/integrations/okta.md`](docs/integrations/okta.md).
+
+<a id="doctor"></a>
+
+## 🩺 Checking an integration
+
+Every network integration here degrades silently rather than loudly. A rejected Slack token reads as an empty workspace, so every declared channel comes back `missing`. An Okta client that stops at page one makes everyone past the first batch look like a leaver — a *blocking* finding about people who never left.
+
+```bash
+teamapi doctor slack --token xoxb-…
+teamapi doctor okta --url https://acme.okta.com
+```
+
+```text
+slack
+  ✓ authenticate   workspace Acme as teamapi
+  ✓ list channels  4 channel(s) visible
+  ✓ channel shape  every channel has an id and a name
+  ✓ pagination     followed to 4 item(s) at one per page
+
+All checks passed.
+```
+
+The pagination check asks for one item per page and counts what comes back: getting more than one can only happen if the next page was fetched. With nothing to page through it reports `skip`, not a pass it hasn't earned. Read-only against every provider, exits 1 on any failure. Details in [`docs/integrations/doctor.md`](docs/integrations/doctor.md).
 
 <a id="contributing"></a>
 

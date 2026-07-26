@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Command, InvalidArgumentError } from "commander";
+import { Argument, Command, InvalidArgumentError } from "commander";
 import { DEFAULT_CHAT_MODEL } from "@jgalego/teamapi-chat";
 import { runValidate } from "./commands/validate";
 import { runRender } from "./commands/render";
@@ -12,6 +12,7 @@ import { runApply } from "./commands/apply";
 import { runSlackSync } from "./commands/slack-sync";
 import { runPagerDutyDrift } from "./commands/pagerduty-drift";
 import { runOktaDrift } from "./commands/okta-drift";
+import { runDoctor, type DoctorIntegration } from "./commands/doctor";
 import { runPaperclipDrift } from "./commands/paperclip-drift";
 import { runImport, type ImportSource } from "./commands/import";
 import { runServeApi } from "./commands/serve-api";
@@ -129,6 +130,19 @@ generateCommand
       process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
     });
 
+  const DOCTOR_INTEGRATIONS = ["github", "slack", "pagerduty", "okta"] as const;
+  program
+    .command("doctor")
+    .description("Check a live integration: authentication, the read, field shapes, and pagination")
+    .addArgument(
+      new Argument("<integration>", "github | slack | pagerduty | okta").choices(DOCTOR_INTEGRATIONS),
+    )
+    .option("--token <token>", "API token (defaults to the provider's usual environment variable)")
+    .option("--url <url>", "API base URL; required for okta (your org URL)")
+    .option("--org <org>", "organization login; required for github")
+    .action(async (integration: DoctorIntegration, opts: { token?: string; url?: string; org?: string }) => {
+      process.exitCode = await runDoctor(integration, { token: opts.token, url: opts.url, org: opts.org });
+    });
   program
     .command("slack-sync")
     .description("Set each declared Slack channel's topic to name the team that owns it")

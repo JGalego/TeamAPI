@@ -44,8 +44,20 @@ export class SlackClient {
     return payload;
   }
 
-  /** Public and private channels the token can see, following `next_cursor` to the end. */
-  async listChannels(): Promise<SlackChannel[]> {
+  /** Who the token belongs to. A distinct call from `listChannels` on purpose: without it, an
+   * invalid token and an empty workspace are indistinguishable downstream. */
+  async verify(): Promise<string> {
+    const who = await this.call<{ team?: string; user?: string }>("auth.test", {});
+    return `workspace ${who.team ?? "?"} as ${who.user ?? "?"}`;
+  }
+
+  /**
+   * Public and private channels the token can see, following `next_cursor` to the end.
+   *
+   * `pageSize` exists so `teamapi doctor` can force pagination with a single channel rather than
+   * needing 200 of them.
+   */
+  async listChannels(pageSize = 200): Promise<SlackChannel[]> {
     const channels: SlackChannel[] = [];
     let cursor = "";
     do {
@@ -55,7 +67,7 @@ export class SlackClient {
       }>("conversations.list", {
         types: "public_channel,private_channel",
         exclude_archived: "true",
-        limit: "200",
+        limit: String(pageSize),
         ...(cursor ? { cursor } : {}),
       });
       for (const c of page.channels) channels.push({ id: c.id, name: c.name, topic: c.topic?.value || undefined });
