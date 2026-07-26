@@ -46,6 +46,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🕰️ Org history](#org-history)
 - [🔁 CI integration](#ci-integration)
 - [🔗 Paperclip](#paperclip)
+- [💬 Slack](#slack)
 - [🤝 Contributing](#contributing)
 
 <a id="quick-start"></a>
@@ -551,6 +552,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
 | `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
+| `teamapi slack-sync <patterns...> [--token <token>] [--yes]` | Set each declared [Slack](#slack) channel's topic to name the team that owns it |
 | `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]` | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only) |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
 | `teamapi serve-mcp <patterns...>` | Start the MCP server |
@@ -624,6 +626,34 @@ teamapi paperclip-drift examples/acme-org --url http://localhost:3000 --company 
 Registering the MCP server gives every agent `find_service_owner`, `get_team_cognitive_load`, and `get_context_bundle` as governed tools. `generate paperclip` emits an [`agentcompanies/v1`](https://github.com/paperclipai/paperclip/blob/main/docs/companies/companies-spec.md) package — a vendor-neutral, git-native markdown format. `paperclip-drift` reports agents running that nothing declares, declared agents that aren't running, and agents on teams whose policies forbid them; only that last one exits non-zero, so it can gate a required check.
 
 Full mapping, the deliberate gaps, and the suggested loop: [`docs/integrations/paperclip.md`](docs/integrations/paperclip.md).
+
+<a id="slack"></a>
+
+## 💬 Slack
+
+Every other surface here assumes someone already decided to go and look something up. Slack is where the question actually gets asked. Two halves:
+
+**`/whoowns` as a slash command.** Serve the REST API with `SLACK_SIGNING_SECRET` set and point a Slack command at `POST /slack/whoowns`:
+
+```text
+/whoowns checkout-api
+
+  `checkout-api` is owned by *Stream Checkout* (`stream-checkout`).
+  _Shopping cart, checkout flow, and order placement_
+  Ask in #stream-checkout.
+```
+
+The route is only registered when the signing secret is set — not "401s when unset", it doesn't exist — so a misconfigured deployment can't expose an unauthenticated endpoint. Signatures are checked in constant time against Slack's `v0:<timestamp>:<body>` HMAC, and anything older than five minutes is rejected.
+
+**Channel topics that name their owner.** `teamapi slack-sync examples/acme-org` prints a plan; `--yes` applies it:
+
+```text
+~ #stream-checkout (stream-checkout)
+    - (no topic)
+    + Stream Checkout — Shopping cart, checkout flow, and order placement · Owns: checkout-api
+```
+
+Only topics — not channel creation, invites or archiving. Channels no team declares are counted and left alone, and a channel two teams claim gets nothing, the same call [CODEOWNERS](#codeowners) makes. Details in [`docs/integrations/slack.md`](docs/integrations/slack.md).
 
 <a id="contributing"></a>
 
