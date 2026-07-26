@@ -49,11 +49,13 @@ members:
   - id: noah-fischer
     name: Noah Fischer
     contact: noah.fischer@acme.example
+    githubUsername: noah-fischer
     roleIds: [tech-lead]
     allocation: 100
   - id: aisha-bello
     name: Aisha Bello
     contact: aisha.bello@acme.example
+    githubUsername: aisha-bello
     roleIds: [engineer]
     allocation: 100
 cognitiveLoad:

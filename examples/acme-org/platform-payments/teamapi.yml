@@ -79,16 +79,19 @@ members:
   - id: priya-raman
     name: Priya Raman
     contact: priya.raman@acme.example
+    githubUsername: priya-raman
     roleIds: [tech-lead]
     allocation: 100
   - id: sam-okafor
     name: Sam Okafor
     contact: sam.okafor@acme.example
+    githubUsername: sam-okafor
     roleIds: [payments-engineer]
     allocation: 100
   - id: lin-zhao
     name: Lin Zhao
     contact: lin.zhao@acme.example
+    githubUsername: lin-zhao
     roleIds: [ledger-engineer]
     allocation: 100
 cognitiveLoad:

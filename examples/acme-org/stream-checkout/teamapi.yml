@@ -63,16 +63,19 @@ members:
   - id: diego-alves
     name: Diego Alves
     contact: diego.alves@acme.example
+    githubUsername: diego-alves
     roleIds: [tech-lead]
     allocation: 100
   - id: yuki-tanaka
     name: Yuki Tanaka
     contact: yuki.tanaka@acme.example
+    githubUsername: yuki-tanaka
     roleIds: [backend-engineer]
     allocation: 100
   - id: fatima-al-sayed
     name: Fatima Al-Sayed
     contact: fatima.al-sayed@acme.example
+    githubUsername: fatima-al-sayed
     roleIds: [frontend-engineer]
     allocation: 80
 cognitiveLoad:

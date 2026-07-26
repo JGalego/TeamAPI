@@ -4,6 +4,7 @@ import {
   buildBackstageCatalog,
   buildBackstageOrgCatalog,
   buildCrewAiCrewConfig,
+  buildCodeowners,
   buildCrewAiOrgConfig,
   buildOrgGraph,
   buildPaperclipPackage,
@@ -16,10 +17,11 @@ import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
 export interface GenerateOptions {
-  target: "crewai" | "backstage" | "paperclip";
+  target: "crewai" | "backstage" | "paperclip" | "codeowners";
   team?: string;
   out: string;
   company?: string;
+  org?: string;
 }
 
 export async function runGenerate(patterns: string[], options: GenerateOptions): Promise<number> {
@@ -37,6 +39,9 @@ export async function runGenerate(patterns: string[], options: GenerateOptions):
     return 1;
   }
 
+  if (options.target === "codeowners") {
+    return generateCodeowners(graph, options);
+  }
   if (options.target === "paperclip") {
     return generatePaperclip(graph, options);
   }
@@ -99,4 +104,24 @@ async function generatePaperclip(graph: OrgGraph, options: GenerateOptions): Pro
     );
   }
   return 0;
+}
+
+/** Writes one CODEOWNERS per repository, under `--out/<owner>/<repo>/CODEOWNERS` so the output
+ * mirrors where each file belongs. Exits non-zero on a conflict: a repository claimed by two
+ * teams has no correct CODEOWNERS, and silently picking one would paper over a real question. */
+async function generateCodeowners(graph: OrgGraph, options: GenerateOptions): Promise<number> {
+  const pkg = buildCodeowners(graph, { org: options.org });
+  for (const file of pkg.files) {
+    const target = path.join(options.out, file.path);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, file.content, "utf8");
+  }
+  console.log(`Wrote ${pkg.files.length} CODEOWNERS file(s) to ${options.out}/`);
+  for (const skip of pkg.skipped) {
+    console.log(`  - skipped ${skip.teamId}/${skip.service}: ${skip.reason}`);
+  }
+  for (const conflict of pkg.conflicts) {
+    console.error(`  ! ${conflict.repo} is claimed by ${conflict.teamIds.join(" and ")} — no CODEOWNERS written`);
+  }
+  return pkg.conflicts.length > 0 ? 1 : 0;
 }
