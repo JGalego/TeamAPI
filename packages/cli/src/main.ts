@@ -130,19 +130,28 @@ generateCommand
       process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
     });
 
-  const DOCTOR_INTEGRATIONS = ["github", "slack", "pagerduty", "okta"] as const;
+  const DOCTOR_INTEGRATIONS = ["github", "slack", "pagerduty", "okta", "paperclip"] as const;
   program
     .command("doctor")
     .description("Check a live integration: authentication, the read, field shapes, and pagination")
     .addArgument(
-      new Argument("<integration>", "github | slack | pagerduty | okta").choices(DOCTOR_INTEGRATIONS),
+      new Argument("<integration>", "github | slack | pagerduty | okta | paperclip").choices(DOCTOR_INTEGRATIONS),
     )
     .option("--token <token>", "API token (defaults to the provider's usual environment variable)")
     .option("--url <url>", "API base URL; required for okta (your org URL)")
     .option("--org <org>", "organization login; required for github")
-    .action(async (integration: DoctorIntegration, opts: { token?: string; url?: string; org?: string }) => {
-      process.exitCode = await runDoctor(integration, { token: opts.token, url: opts.url, org: opts.org });
-    });
+    .option("--company <id>", "company id; required for paperclip")
+    .action(
+      async (integration: DoctorIntegration, opts: { token?: string; url?: string; org?: string; company?: string }) => {
+        process.exitCode = await runDoctor(integration, {
+          token: opts.token,
+          url: opts.url,
+          org: opts.org,
+          company: opts.company,
+        });
+      },
+    );
+
   program
     .command("slack-sync")
     .description("Set each declared Slack channel's topic to name the team that owns it")

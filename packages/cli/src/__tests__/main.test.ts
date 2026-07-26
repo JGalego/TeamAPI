@@ -381,7 +381,7 @@ describe("createProgram — doctor", () => {
   it("rejects an unknown integration before ever calling runDoctor", async () => {
     const { program, stderr } = freshProgram();
     await expect(program.parseAsync(["node", "teamapi", "doctor", "jira"])).rejects.toThrow();
-    expect(stderr.join("")).toContain("Allowed choices are github, slack, pagerduty, okta");
+    expect(stderr.join("")).toContain("Allowed choices are github, slack, pagerduty, okta, paperclip");
     expect(runDoctor).not.toHaveBeenCalled();
   });
 

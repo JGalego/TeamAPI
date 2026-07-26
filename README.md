@@ -594,7 +594,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
 | `teamapi slack-sync <patterns...> [--token <token>] [--yes]` | Set each declared [Slack](#slack) channel's topic to name the team that owns it |
-| `teamapi doctor github\|slack\|pagerduty\|okta [--token <token>] [--url <url>] [--org <org>]` | [Check a live integration](#doctor): auth, the read, field shapes, pagination |
+| `teamapi doctor github\|slack\|pagerduty\|okta\|paperclip [--token <token>] [--url <url>] [--org <org>] [--company <id>]` | [Check a live integration](#doctor): auth, the read, field shapes, pagination |
 | `teamapi okta-drift <patterns...> --url <url> [--token <token>] [--group-prefix <prefix>]` | Report where declared members and an [Okta](#okta) directory group disagree |
 | `teamapi pagerduty-drift <patterns...> [--token <token>] [--url <url>]` | Report where [PagerDuty](#pagerduty) and the org graph disagree about who gets paged |
 | `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]` | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only) |
@@ -751,6 +751,7 @@ Every network integration here degrades silently rather than loudly. A rejected 
 ```bash
 teamapi doctor slack --token xoxb-…
 teamapi doctor okta --url https://acme.okta.com
+teamapi doctor paperclip --url http://localhost:3000 --company acme
 ```
 
 ```text

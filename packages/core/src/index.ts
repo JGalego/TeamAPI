@@ -29,6 +29,7 @@ export * from "./apply/slack";
 export * from "./slack/client";
 export * from "./pagerduty/client";
 export * from "./okta/client";
+export * from "./paperclip/client";
 export * from "./doctor";
 export * from "./apply/pagerduty-drift";
 export * from "./apply/okta-drift";

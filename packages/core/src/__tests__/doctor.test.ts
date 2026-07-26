@@ -1,10 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { OktaClient } from "../okta/client";
 import { PagerDutyClient } from "../pagerduty/client";
+import { PaperclipClient } from "../paperclip/client";
 import { SlackClient } from "../slack/client";
 import {
   doctorOkta,
   doctorPagerDuty,
+  doctorPaperclip,
   doctorSlack,
   formatDoctorReport,
   reportFailed,
@@ -195,6 +197,55 @@ describe("doctorOkta", () => {
     const report = await doctorOkta(new OktaClient({ token: "bad", url: "https://acme.okta.com" }));
     expect(status(report, "authenticate")).toMatchObject({ status: "fail" });
     expect(status(report, "list groups").status).toBe("skip");
+  });
+});
+
+describe("doctorPaperclip", () => {
+  function company(status: number, body: unknown) {
+    serve(() => ({ status, body }));
+  }
+
+  it("passes and reports how many agents the generator created", async () => {
+    company(200, {
+      agents: [
+        { id: "a1", name: "Docs Writer", metadata: { teamapi: { team: "platform-payments" } } },
+        { id: "a2", name: "Hand Made" },
+      ],
+    });
+    const report = await doctorPaperclip(new PaperclipClient({ token: "t", url: "http://pc.test" }), "c1");
+    expect(status(report, "authenticate")).toMatchObject({ status: "pass", detail: "company c1 reachable" });
+    expect(status(report, "team attribution").detail).toBe(
+      "1/2 carry metadata.teamapi; the rest fall back to slug matching",
+    );
+  });
+
+  it("accepts a bare array as well as a wrapped one, since both appear in the docs", async () => {
+    company(200, [{ id: "a1", name: "Docs Writer", metadata: { teamapi: { team: "t" } } }]);
+    const report = await doctorPaperclip(new PaperclipClient({ token: "t", url: "http://pc.test" }), "c1");
+    expect(status(report, "list agents").detail).toBe("1 agent(s) running");
+    expect(status(report, "team attribution").detail).toBe("all 1 agent(s) carry metadata.teamapi");
+  });
+
+  // a refused token and a mistyped company id need completely different fixes, and both would
+  // otherwise arrive as an indistinguishable thrown error
+  it("tells a refused token apart from a company that isn't there", async () => {
+    company(401, {});
+    let report = await doctorPaperclip(new PaperclipClient({ token: "bad", url: "http://pc.test" }), "c1");
+    expect(status(report, "authenticate").detail).toContain("token refused");
+
+    company(404, {});
+    report = await doctorPaperclip(new PaperclipClient({ token: "t", url: "http://pc.test" }), "nope");
+    expect(status(report, "authenticate").detail).toBe("no company 'nope' at this URL");
+    expect(status(report, "list agents").status).toBe("skip");
+  });
+
+  it("is honest that there is no pagination it can verify", async () => {
+    company(200, []);
+    const report = await doctorPaperclip(new PaperclipClient({ token: "t", url: "http://pc.test" }), "c1");
+    expect(status(report, "pagination")).toMatchObject({
+      status: "skip",
+      detail: "the agents route is read in one request; Paperclip documents no cursor",
+    });
   });
 });
 
