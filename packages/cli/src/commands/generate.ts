@@ -4,6 +4,7 @@ import {
   buildBackstageCatalog,
   buildBackstageOrgCatalog,
   buildCrewAiCrewConfig,
+  buildAgentsMd,
   buildCodeowners,
   buildCrewAiOrgConfig,
   buildOrgGraph,
@@ -17,7 +18,7 @@ import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
 export interface GenerateOptions {
-  target: "crewai" | "backstage" | "paperclip" | "codeowners";
+  target: "crewai" | "backstage" | "paperclip" | "codeowners" | "agents-md";
   team?: string;
   out: string;
   company?: string;
@@ -39,6 +40,9 @@ export async function runGenerate(patterns: string[], options: GenerateOptions):
     return 1;
   }
 
+  if (options.target === "agents-md") {
+    return generateAgentsMd(graph, options);
+  }
   if (options.target === "codeowners") {
     return generateCodeowners(graph, options);
   }
@@ -122,6 +126,26 @@ async function generateCodeowners(graph: OrgGraph, options: GenerateOptions): Pr
   }
   for (const conflict of pkg.conflicts) {
     console.error(`  ! ${conflict.repo} is claimed by ${conflict.teamIds.join(" and ")} — no CODEOWNERS written`);
+  }
+  return pkg.conflicts.length > 0 ? 1 : 0;
+}
+
+/** Writes one AGENTS.md per repository, under `--out/<owner>/<repo>/AGENTS.md`. Same conflict
+ * rule as the codeowners target: two teams' policies rendered into one file would read as one
+ * team's, so a shared repo gets nothing and the command exits non-zero. */
+async function generateAgentsMd(graph: OrgGraph, options: GenerateOptions): Promise<number> {
+  const pkg = buildAgentsMd(graph);
+  for (const file of pkg.files) {
+    const target = path.join(options.out, file.path);
+    await fs.mkdir(path.dirname(target), { recursive: true });
+    await fs.writeFile(target, file.content, "utf8");
+  }
+  console.log(`Wrote ${pkg.files.length} AGENTS.md file(s) to ${options.out}/`);
+  for (const skip of pkg.skipped) {
+    console.log(`  - skipped ${skip.teamId}/${skip.service}: ${skip.reason}`);
+  }
+  for (const conflict of pkg.conflicts) {
+    console.error(`  ! ${conflict.repo} is claimed by ${conflict.teamIds.join(" and ")} — no AGENTS.md written`);
   }
   return pkg.conflicts.length > 0 ? 1 : 0;
 }
