@@ -36,11 +36,11 @@ export class PagerDutyClient {
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
   }
 
-  private async page<T>(path: string, key: string): Promise<T[]> {
+  private async page<T>(path: string, key: string, pageSize = 100): Promise<T[]> {
     const out: T[] = [];
     let offset = 0;
     for (;;) {
-      const url = `${this.baseUrl}${path}?limit=100&offset=${offset}`;
+      const url = `${this.baseUrl}${path}?limit=${pageSize}&offset=${offset}`;
       const res = await fetch(url, {
         headers: {
           Authorization: `Token token=${this.token}`,
@@ -59,6 +59,13 @@ export class PagerDutyClient {
     }
   }
 
+  /** Probes the token. PagerDuty API keys are account-scoped, so there is no identity to
+   * report — `/abilities` is the documented way to ask whether a key is accepted at all. */
+  async verify(): Promise<string> {
+    const abilities = await this.page<string>("/abilities", "abilities", 100);
+    return `${abilities.length} account ability(ies) visible`;
+  }
+
   /**
    * Services, each resolved to its escalation policy's responder count.
    *
@@ -66,10 +73,10 @@ export class PagerDutyClient {
    * and the count of people on that policy is the whole point of the check, since a policy with
    * no targets pages nobody.
    */
-  async listServices(): Promise<PagerDutyService[]> {
+  async listServices(pageSize = 100): Promise<PagerDutyService[]> {
     const [services, policies] = await Promise.all([
-      this.page<RawService>("/services", "services"),
-      this.page<RawPolicy>("/escalation_policies", "escalation_policies"),
+      this.page<RawService>("/services", "services", pageSize),
+      this.page<RawPolicy>("/escalation_policies", "escalation_policies", pageSize),
     ]);
 
     const responders = new Map<string, { name: string; count: number }>();

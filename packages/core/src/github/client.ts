@@ -76,6 +76,12 @@ export class GithubClient {
     return (await res.json()) as T;
   }
 
+  /** The authenticated login. Distinguishes a rejected token from an org with no teams. */
+  async verify(): Promise<string> {
+    const me = await this.request<{ login: string }>("GET", "/user");
+    return `authenticated as ${me.login}`;
+  }
+
   private async paginate<T>(path: string): Promise<T[]> {
     const results: T[] = [];
     let next: string | undefined = `${this.baseUrl}${path}${path.includes("?") ? "&" : "?"}per_page=100`;
