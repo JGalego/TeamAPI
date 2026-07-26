@@ -1,7 +1,9 @@
 import { GithubClient } from "../github/client";
 import { OktaClient } from "../okta/client";
+import { PaperclipClient } from "../paperclip/client";
 import { PagerDutyClient } from "../pagerduty/client";
 import { SlackClient } from "../slack/client";
+import type { PaperclipAgent } from "../apply/paperclip-drift";
 
 /**
  * Checks a live integration end to end: can we authenticate, does the read work, are the fields
@@ -178,6 +180,56 @@ export async function doctorOkta(client: OktaClient): Promise<DoctorReport> {
 
   checks.push(await paginationCheck(groups.length, () => client.listGroups(1)));
   return { integration: "okta", checks };
+}
+
+export async function doctorPaperclip(client: PaperclipClient, companyId: string): Promise<DoctorReport> {
+  const checks: DoctorCheck[] = [];
+
+  const reachable = await attempt("authenticate", async () => {
+    const state = await client.verify(companyId);
+    if (state === "unauthorized") throw new Error("token refused — check --token or PAPERCLIP_API_KEY");
+    if (state === "no-such-company") throw new Error(`no company '${companyId}' at this URL`);
+    return `company ${companyId} reachable`;
+  });
+  checks.push(reachable);
+
+  if (reachable.status === "fail") {
+    return { integration: "paperclip", checks: [...checks, blocked("list agents", "authentication failed")] };
+  }
+
+  let agents: PaperclipAgent[] = [];
+  checks.push(
+    await attempt("list agents", async () => {
+      agents = await client.listAgents(companyId);
+      return `${agents.length} agent(s) running`;
+    }),
+  );
+
+  // attribution is what maps a running agent back to a team; without it every agent falls back to
+  // slug matching, and anything created by hand reads as undeclared
+  const attributed = agents.filter((a) => a.metadata?.teamapi?.team);
+  checks.push(
+    agents.length === 0
+      ? { name: "team attribution", status: "skip", detail: "no agents to inspect" }
+      : {
+          name: "team attribution",
+          status: "pass",
+          detail:
+            attributed.length === agents.length
+              ? `all ${agents.length} agent(s) carry metadata.teamapi`
+              : `${attributed.length}/${agents.length} carry metadata.teamapi; the rest fall back to slug matching`,
+        },
+  );
+
+  // Paperclip's agents route returns the whole list in one response, so there is no cursor to
+  // follow — and no way from here to tell a complete list from a silently truncated one
+  checks.push({
+    name: "pagination",
+    status: "skip",
+    detail: "the agents route is read in one request; Paperclip documents no cursor",
+  });
+
+  return { integration: "paperclip", checks };
 }
 
 export async function doctorGithub(client: GithubClient, org: string): Promise<DoctorReport> {

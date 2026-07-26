@@ -17,6 +17,7 @@ teamapi doctor slack --token xoxb-…
 teamapi doctor pagerduty                    # reads PAGERDUTY_TOKEN
 teamapi doctor okta --url https://acme.okta.com
 teamapi doctor github --org acme
+teamapi doctor paperclip --url http://localhost:3000 --company acme
 ```
 
 ```text
@@ -45,6 +46,17 @@ Provider-specific shape checks earn their place by naming the consequence:
 - **PagerDuty** — if no service resolves an escalation policy, every responder count is zero and
   the blocking finding fires for everything.
 - **Okta** — if no group has a member with an address, every declared member reads as a leaver.
+- **Paperclip** — reports how many running agents carry `metadata.teamapi`; the rest fall back to
+  slug matching, so anything created by hand in the UI reads as undeclared.
+
+Paperclip also separates the two outcomes a user can act on. A refused token and a mistyped
+company id both arrive as an error otherwise, and they need completely different fixes:
+
+```text
+paperclip
+  ✗ authenticate  no company 'typo' at this URL
+  – list agents   not run: authentication failed
+```
 
 ## How the pagination check works
 
@@ -60,7 +72,9 @@ like one that did.
 Read-only against every provider. It lists; it never writes. A failed prerequisite marks the
 checks after it as `not run` rather than letting them fail for the wrong reason.
 
-## Not covered
+## A known unknown
 
-**Paperclip.** Its HTTP is still inline in `paperclip-drift` rather than in a client, so there's
-nothing for `doctor` to probe yet. Extracting it is the obvious next step.
+Paperclip's `pagination` check reports `skip`, not `pass`. Its agents route returns the whole list
+in one response and documents no cursor, so there is nothing to follow — but that also means
+nothing here can distinguish a complete list from a silently truncated one. If Paperclip ever
+paginates that route, `paperclip-drift` will under-report and no check will catch it.

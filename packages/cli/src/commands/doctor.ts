@@ -1,23 +1,26 @@
 import {
   doctorGithub,
   doctorOkta,
+  doctorPaperclip,
   doctorPagerDuty,
   doctorSlack,
   formatDoctorReport,
   GithubClient,
   OktaClient,
+  PaperclipClient,
   PagerDutyClient,
   reportFailed,
   SlackClient,
   type DoctorReport,
 } from "@jgalego/teamapi-core";
 
-export type DoctorIntegration = "github" | "slack" | "pagerduty" | "okta";
+export type DoctorIntegration = "github" | "slack" | "pagerduty" | "okta" | "paperclip";
 
 export interface DoctorOptions {
   token?: string;
   url?: string;
   org?: string;
+  company?: string;
 }
 
 /** Each integration's token variable, so the error names the one the user needs. */
@@ -26,6 +29,7 @@ const TOKEN_ENV: Record<DoctorIntegration, string[]> = {
   slack: ["SLACK_BOT_TOKEN"],
   pagerduty: ["PAGERDUTY_TOKEN"],
   okta: ["OKTA_TOKEN"],
+  paperclip: ["PAPERCLIP_API_KEY"],
 };
 
 function resolveToken(integration: DoctorIntegration, flag?: string): string | undefined {
@@ -64,6 +68,13 @@ export async function runDoctor(integration: DoctorIntegration, options: DoctorO
         return 1;
       }
       report = await doctorOkta(new OktaClient({ token, url: options.url }));
+      break;
+    case "paperclip":
+      if (!options.url || !options.company) {
+        console.error("Paperclip needs both --url and --company <id>");
+        return 1;
+      }
+      report = await doctorPaperclip(new PaperclipClient({ token, url: options.url }), options.company);
       break;
     case "github":
       if (!options.org) {

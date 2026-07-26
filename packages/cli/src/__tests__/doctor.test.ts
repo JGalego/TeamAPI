@@ -62,6 +62,14 @@ describe("runDoctor", () => {
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
+  it("refuses paperclip without both a url and a company", async () => {
+    const fetchSpy = vi.fn();
+    vi.stubGlobal("fetch", fetchSpy);
+    expect(await runDoctor("paperclip", { token: "t", url: "http://pc.test" })).toBe(1);
+    expect(logs.join("\n")).toContain("needs both --url and --company");
+    expect(fetchSpy).not.toHaveBeenCalled();
+  });
+
   it("exits 0 and prints the report when the checks pass", async () => {
     ok({ ok: true, team: "Acme", user: "teamapi", channels: [] });
     expect(await runDoctor("slack", { token: "t", url: "https://slack.test/api" })).toBe(0);

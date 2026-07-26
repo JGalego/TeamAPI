@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { SlackClient } from "../slack/client";
 import { PagerDutyClient } from "../pagerduty/client";
 import { nextLink, OktaClient, toDirectoryUser } from "../okta/client";
+import { PaperclipClient } from "../paperclip/client";
 
 /**
  * These cover the half of each integration that talks to a vendor. The planners are tested
@@ -288,6 +289,51 @@ describe("OktaClient", () => {
     fakeFetch([{ status: 401, body: {} }]);
     await expect(new OktaClient({ token: "bad", url: "https://acme.okta.com" }).listGroups()).rejects.toThrow(
       /Okta returned 401/,
+    );
+  });
+});
+
+describe("PaperclipClient", () => {
+  it("sends a bearer token to the documented company route, url-encoding the id", async () => {
+    const calls = fakeFetch([{ body: [] }]);
+    await new PaperclipClient({ token: "pc-1", url: "http://pc.test/" }).listAgents("acme co");
+
+    expect(calls[0]!.url).toBe("http://pc.test/api/companies/acme%20co/agents");
+    expect(calls[0]!.headers.Authorization).toBe("Bearer pc-1");
+  });
+
+  // both shapes appear in Paperclip's docs; reading the wrong one looks like a company with no
+  // agents, which reports every declared agent as missing
+  it("accepts a bare array and a wrapped one alike", async () => {
+    fakeFetch([{ body: [{ id: "a1", name: "One" }] }]);
+    expect(await new PaperclipClient({ token: "t", url: "http://pc.test" }).listAgents("c1")).toHaveLength(1);
+
+    fakeFetch([{ body: { agents: [{ id: "a1", name: "One" }, { id: "a2", name: "Two" }] } }]);
+    expect(await new PaperclipClient({ token: "t", url: "http://pc.test" }).listAgents("c1")).toHaveLength(2);
+  });
+
+  it("throws rather than reporting an empty company when the payload is neither", async () => {
+    fakeFetch([{ body: { data: "nope" } }]);
+    await expect(new PaperclipClient({ token: "t", url: "http://pc.test" }).listAgents("c1")).rejects.toThrow(
+      /expected an array of agents/,
+    );
+  });
+
+  it("classifies the two outcomes a user can act on, instead of throwing both", async () => {
+    fakeFetch([{ status: 401, body: {} }]);
+    expect(await new PaperclipClient({ token: "bad", url: "http://pc.test" }).verify("c1")).toBe("unauthorized");
+
+    fakeFetch([{ status: 404, body: {} }]);
+    expect(await new PaperclipClient({ token: "t", url: "http://pc.test" }).verify("nope")).toBe("no-such-company");
+
+    fakeFetch([{ body: [] }]);
+    expect(await new PaperclipClient({ token: "t", url: "http://pc.test" }).verify("c1")).toBe("ok");
+  });
+
+  it("still throws on a status it can't interpret", async () => {
+    fakeFetch([{ status: 500, body: {} }]);
+    await expect(new PaperclipClient({ token: "t", url: "http://pc.test" }).verify("c1")).rejects.toThrow(
+      /Paperclip returned 500/,
     );
   });
 });
