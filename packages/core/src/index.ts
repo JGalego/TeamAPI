@@ -27,6 +27,8 @@ export * from "./generators/port";
 export * from "./generators/otel";
 export * from "./apply/slack";
 export * from "./slack/client";
+export * from "./pagerduty/client";
+export * from "./okta/client";
 export * from "./apply/pagerduty-drift";
 export * from "./apply/okta-drift";
 export * from "./apply/paperclip-drift";
