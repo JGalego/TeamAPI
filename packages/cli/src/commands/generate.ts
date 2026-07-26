@@ -8,6 +8,7 @@ import {
   buildCodeowners,
   buildCrewAiOrgConfig,
   buildOrgGraph,
+  buildOtelPackage,
   buildPortCatalog,
   buildPaperclipPackage,
   toBackstageYaml,
@@ -19,7 +20,7 @@ import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
 export interface GenerateOptions {
-  target: "crewai" | "backstage" | "paperclip" | "codeowners" | "agents-md" | "port";
+  target: "crewai" | "backstage" | "paperclip" | "codeowners" | "agents-md" | "port" | "otel";
   team?: string;
   out: string;
   company?: string;
@@ -41,6 +42,9 @@ export async function runGenerate(patterns: string[], options: GenerateOptions):
     return 1;
   }
 
+  if (options.target === "otel") {
+    return generateOtel(graph, options);
+  }
   if (options.target === "port") {
     return generatePort(graph, options);
   }
@@ -172,5 +176,17 @@ async function generatePort(graph: OrgGraph, options: GenerateOptions): Promise<
   console.log(
     `Wrote ${catalog.blueprints.length} blueprint(s) and ${catalog.entities.length} entity(ies) to ${options.out}/`,
   );
+  return 0;
+}
+
+/** Writes one `.env` per service plus a collector config. Both, because which one you can land
+ * depends on whether you own the deployments or the collector. */
+async function generateOtel(graph: OrgGraph, options: GenerateOptions): Promise<number> {
+  const pkg = buildOtelPackage(graph);
+  await fs.mkdir(options.out, { recursive: true });
+  for (const file of pkg.files) {
+    await fs.writeFile(path.join(options.out, file.path), file.content, "utf8");
+  }
+  console.log(`Wrote attributes for ${pkg.services.length} service(s) to ${options.out}/`);
   return 0;
 }
