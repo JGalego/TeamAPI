@@ -22,6 +22,8 @@ export * from "./generators/crewai";
 export * from "./generators/backstage";
 export * from "./generators/paperclip";
 export * from "./generators/codeowners";
+export * from "./apply/slack";
+export * from "./slack/client";
 export * from "./apply/paperclip-drift";
 export * from "./diff/diff-graph";
 export * from "./github/client";

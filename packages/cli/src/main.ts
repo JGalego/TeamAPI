@@ -9,6 +9,7 @@ import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
 import { runApply } from "./commands/apply";
+import { runSlackSync } from "./commands/slack-sync";
 import { runPaperclipDrift } from "./commands/paperclip-drift";
 import { runImport, type ImportSource } from "./commands/import";
 import { runServeApi } from "./commands/serve-api";
@@ -124,6 +125,16 @@ generateCommand
     .option("--yes", "execute the plan instead of just printing it")
     .action(async (patterns: string[], opts: { org: string; token?: string; yes?: boolean }) => {
       process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
+    });
+
+  program
+    .command("slack-sync")
+    .description("Set each declared Slack channel's topic to name the team that owns it")
+    .argument("<patterns...>", "teamapi.yml paths or globs")
+    .option("--token <token>", "Slack bot token (defaults to SLACK_BOT_TOKEN)")
+    .option("--yes", "apply the plan instead of only printing it")
+    .action(async (patterns: string[], opts: { token?: string; yes?: boolean }) => {
+      process.exitCode = await runSlackSync(patterns, { token: opts.token, yes: opts.yes });
     });
 
   program

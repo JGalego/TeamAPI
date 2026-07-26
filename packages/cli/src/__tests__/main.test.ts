@@ -6,7 +6,7 @@ import type { Command } from "commander";
 // `vi.mock` factories are hoisted above every other statement in this file (including `const`
 // declarations), so the mocked fns they close over must themselves be created inside
 // `vi.hoisted` — a plain top-level `const` here would be used before initialization.
-const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runImport, runServeApi, runServeMcp, runChat } =
+const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runImport, runServeApi, runServeMcp, runChat, runSlackSync } =
   vi.hoisted(() => ({
     runValidate: vi.fn(async () => 0),
     runRender: vi.fn(async () => 0),
@@ -18,6 +18,7 @@ const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, run
     runServeApi: vi.fn(async () => {}),
     runServeMcp: vi.fn(async () => {}),
     runChat: vi.fn(async () => 0),
+    runSlackSync: vi.fn(async () => 0),
   }));
 
 vi.mock("../commands/validate", () => ({ runValidate }));
@@ -30,6 +31,7 @@ vi.mock("../commands/import", () => ({ runImport }));
 vi.mock("../commands/serve-api", () => ({ runServeApi }));
 vi.mock("../commands/serve-mcp", () => ({ runServeMcp }));
 vi.mock("../commands/chat", () => ({ runChat }));
+vi.mock("../commands/slack-sync", () => ({ runSlackSync }));
 
 // vitest hoists `vi.mock(...)` calls above every import in this file (including this one), so
 // `createProgram()`'s command actions call the mocked `run*` functions above instead of touching
@@ -299,6 +301,17 @@ describe("createProgram — chat", () => {
     const { program } = freshProgram();
     await expect(program.parseAsync(["node", "teamapi", "chat", "some/path"])).rejects.toThrow();
     expect(runChat).not.toHaveBeenCalled();
+  });
+});
+
+describe("createProgram — slack-sync", () => {
+  it("passes --token and --yes through, defaulting both to undefined", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "slack-sync", "some/path"]);
+    expect(runSlackSync).toHaveBeenCalledWith(["some/path"], { token: undefined, yes: undefined });
+
+    await program.parseAsync(["node", "teamapi", "slack-sync", "some/path", "--token", "t", "--yes"]);
+    expect(runSlackSync).toHaveBeenCalledWith(["some/path"], { token: "t", yes: true });
   });
 });
 

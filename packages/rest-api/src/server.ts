@@ -17,9 +17,13 @@ import { dashboardRoutes } from "./routes/dashboard";
 import { knowledgeRoutes } from "./routes/knowledge";
 import { contextRoutes } from "./routes/context";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph";
+import { slackRoutes } from "./routes/slack";
 
 export interface BuildServerOptions {
   logger?: boolean;
+  /** Slack app signing secret. The `/slack/whoowns` route exists only when this is set, so an
+   * unauthenticated command endpoint can never be mounted by accident. */
+  slackSigningSecret?: string;
 }
 
 // Read at runtime (not imported as a TS module) so this keeps working both from `dist/` in the
@@ -95,6 +99,10 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   await app.register(knowledgeRoutes);
   await app.register(contextRoutes);
   await app.register(knowledgeGraphRoutes);
+  const slackSigningSecret = options.slackSigningSecret ?? process.env.SLACK_SIGNING_SECRET;
+  if (slackSigningSecret) {
+    await app.register(slackRoutes, { signingSecret: slackSigningSecret });
+  }
   await app.register(dashboardRoutes);
 
   return app;
