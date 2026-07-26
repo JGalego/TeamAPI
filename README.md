@@ -51,6 +51,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🔗 Paperclip](#paperclip)
 - [💬 Slack](#slack)
 - [📟 PagerDuty](#pagerduty)
+- [🪪 Okta](#okta)
 - [🤝 Contributing](#contributing)
 
 <a id="quick-start"></a>
@@ -592,6 +593,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
 | `teamapi slack-sync <patterns...> [--token <token>] [--yes]` | Set each declared [Slack](#slack) channel's topic to name the team that owns it |
+| `teamapi okta-drift <patterns...> --url <url> [--token <token>] [--group-prefix <prefix>]` | Report where declared members and an [Okta](#okta) directory group disagree |
 | `teamapi pagerduty-drift <patterns...> [--token <token>] [--url <url>]` | Report where [PagerDuty](#pagerduty) and the org graph disagree about who gets paged |
 | `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]` | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only) |
 | `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
@@ -716,6 +718,27 @@ teamapi pagerduty-drift examples/acme-org
 ```
 
 Only `unresponsive` exits non-zero, so this can gate a required check without ordinary drift failing the build — a monitored service that pages nobody is worse than an unmonitored one, because the alert fires and everyone assumes it was handled. Service names match loosely (`Checkout API` = `checkout-api`), and read-only in both directions. Details, and why there is deliberately no `generate pagerduty`, in [`docs/integrations/pagerduty.md`](docs/integrations/pagerduty.md).
+
+<a id="okta"></a>
+
+## 🪪 Okta
+
+Every other check here compares the spec to a system the spec is supposed to drive. This one compares it to the only system authoritative *over* it: people join, move and leave whether or not anyone opens a pull request.
+
+```bash
+export OKTA_TOKEN=...
+teamapi okta-drift examples/acme-org --url https://acme.okta.com
+```
+
+```text
+! deactivated: 'yuki-tanaka' <yuki.tanaka@acme.example> is DEPROVISIONED in the directory but still listed on stream-checkout
+- left: 'noah-fischer' <noah.fischer@acme.example> is declared on stream-onboarding but not in its directory group
++ joined: New Joiner is in stream-checkout's directory group but no member declares them
+
+3 finding(s), 1 blocking; 6 member(s) matched.
+```
+
+Only `deactivated` exits non-zero. The dangerous finding isn't the missing name, it's the one that's still there — a deactivated account listed as accountable reads to everything downstream, from CODEOWNERS to an agent answering "who owns this", as an owner. Groups match team ids by name (`--group-prefix` strips a prefix first) and people match by `contact` email. Read-only: a joiner belongs in a pull request. Details in [`docs/integrations/okta.md`](docs/integrations/okta.md).
 
 <a id="contributing"></a>
 

@@ -6,7 +6,7 @@ import type { Command } from "commander";
 // `vi.mock` factories are hoisted above every other statement in this file (including `const`
 // declarations), so the mocked fns they close over must themselves be created inside
 // `vi.hoisted` — a plain top-level `const` here would be used before initialization.
-const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runImport, runServeApi, runServeMcp, runChat, runSlackSync, runPagerDutyDrift } =
+const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runImport, runServeApi, runServeMcp, runChat, runSlackSync, runPagerDutyDrift, runOktaDrift } =
   vi.hoisted(() => ({
     runValidate: vi.fn(async () => 0),
     runRender: vi.fn(async () => 0),
@@ -20,6 +20,7 @@ const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, run
     runChat: vi.fn(async () => 0),
     runSlackSync: vi.fn(async () => 0),
     runPagerDutyDrift: vi.fn(async () => 0),
+    runOktaDrift: vi.fn(async () => 0),
   }));
 
 vi.mock("../commands/validate", () => ({ runValidate }));
@@ -34,6 +35,7 @@ vi.mock("../commands/serve-mcp", () => ({ runServeMcp }));
 vi.mock("../commands/chat", () => ({ runChat }));
 vi.mock("../commands/slack-sync", () => ({ runSlackSync }));
 vi.mock("../commands/pagerduty-drift", () => ({ runPagerDutyDrift }));
+vi.mock("../commands/okta-drift", () => ({ runOktaDrift }));
 
 // vitest hoists `vi.mock(...)` calls above every import in this file (including this one), so
 // `createProgram()`'s command actions call the mocked `run*` functions above instead of touching
@@ -351,6 +353,25 @@ describe("createProgram — pagerduty-drift", () => {
       "node", "teamapi", "pagerduty-drift", "some/path", "--token", "t", "--url", "https://eu.pagerduty.com",
     ]);
     expect(runPagerDutyDrift).toHaveBeenCalledWith(["some/path"], { token: "t", url: "https://eu.pagerduty.com" });
+  });
+});
+
+describe("createProgram — okta-drift", () => {
+  it("requires --url", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "okta-drift", "some/path"])).rejects.toThrow();
+    expect(runOktaDrift).not.toHaveBeenCalled();
+  });
+
+  it("passes --url, --token and --group-prefix through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync([
+      "node", "teamapi", "okta-drift", "some/path",
+      "--url", "https://acme.okta.com", "--token", "t", "--group-prefix", "eng-",
+    ]);
+    expect(runOktaDrift).toHaveBeenCalledWith(["some/path"], {
+      url: "https://acme.okta.com", token: "t", groupPrefix: "eng-",
+    });
   });
 });
 
