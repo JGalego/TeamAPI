@@ -1,5 +1,70 @@
 # @jgalego/teamapi-core
 
+## 0.6.0
+
+### Minor Changes
+
+- ca583e4: Add a `generate agents-md` target: one AGENTS.md per repository, rendered from the
+  team that owns the service in it — ownership, the bounded context's ubiquitous
+  language, domain events, policies and steering documents. Policies and steering
+  are reproduced verbatim rather than summarised, so an agent reads what a reviewer
+  would quote back.
+- 6c77ac6: Add a `generate codeowners` target: one CODEOWNERS file per repository, owned by
+  the team that declares the service. Owners are written as `@org/team-id` with
+  `--org`, or as members' `githubUsername` handles without it. A repository claimed
+  by two teams is reported as a conflict and exits non-zero rather than being
+  assigned to whichever team sorted first.
+- ee64909: Add `teamapi doctor <github|slack|pagerduty|okta>`, which verifies a live
+  integration: authentication, the read, the field shapes the drift checks depend
+  on, and whether pagination is actually followed. The pagination check asks for one
+  item per page and counts what comes back, so it needs no large account and reports
+  `skip` rather than a pass when there is nothing to page through. Each client gains
+  a `verify()` so a rejected token can no longer be mistaken for an empty account.
+  Read-only; exits 1 on any failing check.
+- 42d5982: Add an `okta-drift` command reconciling declared `members[]` against an Okta
+  directory group. Only a `deactivated` finding exits non-zero — a member whose
+  account is no longer active but who is still listed, and therefore still reads as
+  an owner to everything downstream. Joiners and leavers are reported as warnings.
+  Read-only: nothing is written back to `teamapi.yml`.
+- 551234a: Add a `generate otel` target: ownership as OpenTelemetry resource attributes, so
+  traces, metrics and alerts attribute themselves to a team. Emits one `.env` per
+  service holding an `OTEL_RESOURCE_ATTRIBUTES` line, and a collector `transform`
+  processor that stamps the same attributes centrally. Values are percent-encoded,
+  since the variable is W3C Baggage and a comma in a team name would otherwise
+  truncate the list.
+- 6eff7a3: Add a `pagerduty-drift` command reporting where PagerDuty and the declared org
+  graph disagree about who gets paged. Only an `unresponsive` finding — a declared
+  service with no escalation policy, or one with nobody on it — exits non-zero, so
+  it can gate a required check without ordinary drift failing the build. Read-only
+  in both directions.
+- 9c426a5: Move Paperclip's HTTP out of `paperclip-drift` into a `PaperclipClient`, matching
+  the other four providers, and add `teamapi doctor paperclip`. Its `verify()`
+  separates a refused token from a company id that doesn't exist — two outcomes that
+  need different fixes and previously arrived as the same error. The doctor report
+  also shows how many running agents carry `metadata.teamapi`, since the rest fall
+  back to slug matching.
+- 1f8b769: Add a Paperclip integration: a `generate paperclip` target emitting an
+  `agentcompanies/v1` package, and a `paperclip-drift` command that reports where a
+  running Paperclip company diverges from the declared org graph.
+- fe754b3: Add a `generate port` target emitting a Port catalog as `blueprints.json` and
+  `entities.json` — a team, service and person blueprint, with services related to
+  their owning team. Unlike the Backstage target it carries `cognitiveLoad` and its
+  label, which Port can score, threshold and alert on.
+- e96acc8: Add a Slack integration: a `/whoowns` slash-command endpoint on the REST API,
+  mounted only when `SLACK_SIGNING_SECRET` is set and verifying Slack's request
+  signature in constant time with a five-minute replay window; and a `slack-sync`
+  command that sets each declared channel's topic to name the owning team, with the
+  same plan/apply split as `teamapi apply`.
+
+### Patch Changes
+
+- c411166: Move the PagerDuty and Okta HTTP calls out of their CLI commands into
+  `PagerDutyClient` and `OktaClient`, alongside the existing GitHub and Slack
+  clients, and cover all three against a stubbed fetch: auth schemes, pagination
+  contracts, and the failure modes that would otherwise read as an empty result.
+  Okta's link-following now refuses to revisit a page, so a malformed `Link` header
+  can't loop forever.
+
 ## 0.5.1
 
 ### Patch Changes
