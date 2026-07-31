@@ -6,6 +6,7 @@ export * from "./resolve/graph-builder";
 export * from "./resolve/store";
 export * from "./validate/format-errors";
 export * from "./cognitive-load/score";
+export * from "./gaps/plan";
 export * from "./context-map/patterns";
 export * from "./context-map/derive";
 export * from "./diagrams/diagram-model";
