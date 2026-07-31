@@ -62,6 +62,19 @@ describe("buildPortCatalog — examples/acme-org", () => {
     expect(devex.properties).not.toHaveProperty("cognitiveLoadLabel");
   });
 
+  it("emits supervision load as its own sortable number, separate from the total", async () => {
+    const catalog = buildPortCatalog(await acme());
+    const payments = of(catalog, "teamapi_team").find((e) => e.identifier === "platform-payments")!;
+    expect(payments.properties).toMatchObject({ cognitiveLoad: 18, supervisionLoad: 6 });
+  });
+
+  it("omits supervisionLoad for a team that assessed its load but not its supervision", async () => {
+    const catalog = buildPortCatalog(await acme());
+    const checkout = of(catalog, "teamapi_team").find((e) => e.identifier === "stream-checkout")!;
+    expect(checkout.properties).toHaveProperty("cognitiveLoad");
+    expect(checkout.properties).not.toHaveProperty("supervisionLoad");
+  });
+
   it("relates each service to the team that owns it", async () => {
     const catalog = buildPortCatalog(await acme());
     const checkoutApi = of(catalog, "teamapi_service").find((e) => e.identifier === "checkout-api")!;

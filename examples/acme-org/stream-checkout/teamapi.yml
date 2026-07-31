@@ -44,8 +44,12 @@ roles:
       roleId: head-of-engineering
       $ref: ../platform-payments/teamapi.yml
     alignsWith:
+      # Nobody here reports to DevEx and it has no authority over this team, but the checkout
+      # team's testing practice came from its coaching. `kind` names that; omit it (as
+      # stream-onboarding does) and it stays the plain dotted line it has always been.
       - teamName: Enabling DevEx
         roleId: coach
+        kind: learns-from
         $ref: ../enabling-devex/teamapi.yml
   - id: backend-engineer
     name: Checkout Backend Engineer

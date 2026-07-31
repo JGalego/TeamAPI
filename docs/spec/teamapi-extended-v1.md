@@ -216,6 +216,12 @@ agent's output is frequently the work itself rather than avoidable friction arou
 load and runs active `agents[]` but leaves this blank — the load exists whether or not anyone
 scored it.
 
+Because it sits outside `total`, `teamapi diff` tracks it as its own field: a team whose
+supervision load doubles without touching the other three types would otherwise show up as no
+change at all, which is exactly the quiet growth this field exists to expose. The Port generator
+emits it as `supervisionLoad`, a sortable number beside `cognitiveLoad`, and the dashboard shows it
+as a separate chip rather than widening the load bar.
+
 ## Services and bounded contexts
 
 `Service`: `{ name, url?, repository?, versioning?: { type }, boundedContext?: BoundedContext }`.

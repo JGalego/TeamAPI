@@ -149,6 +149,13 @@
     white-space: nowrap;
   }
   .load-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+  /* Distinguished by the 🤖 glyph and a border, not by colour alone. */
+  .load-supervision {
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0 6px;
+    flex: none;
+  }
 
   .teams-grid {
     display: grid;
@@ -324,6 +331,12 @@
         h("div", { class: "load-badge" }, [
           h("span", { class: "load-dot", style: `background:${status.color}` }),
           h("span", { text: `${status.icon} ${r.total} · ${r.label}` }),
+          // Supervision is reported but never folded into `total`, so it gets its own chip rather
+          // than widening the bar — the bar has to keep meaning the same thing across teams that
+          // have scored it and teams that haven't.
+          ...(r.assessment && r.assessment.supervision !== undefined
+            ? [h("span", { class: "load-supervision", title: "Agent supervision load (not counted in the total)", text: `🤖 ${r.assessment.supervision}` })]
+            : []),
         ]),
       ]);
       list.appendChild(row);

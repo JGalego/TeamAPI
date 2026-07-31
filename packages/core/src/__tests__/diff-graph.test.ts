@@ -197,3 +197,38 @@ describe("formatOrgGraphDiff", () => {
     expect(formatOrgGraphDiff(diffOrgGraphs(graph, graph))).toBe("");
   });
 });
+
+describe("diffOrgGraphs — supervision load", () => {
+  const withLoad = (supervision?: number) =>
+    makeGraph([makeTeam("a", { cognitiveLoad: { intrinsic: 5, extraneous: 3, germane: 5, supervision } })]);
+
+  it("notices supervision changing even when total and label do not", () => {
+    const diff = diffOrgGraphs(withLoad(3), withLoad(9));
+    expect(diff.teamsChanged).toHaveLength(1);
+    expect(diff.teamsChanged[0]!.cognitiveLoad).toEqual({
+      before: { total: 13, label: "sustainable", supervision: 3 },
+      after: { total: 13, label: "sustainable", supervision: 9 },
+    });
+  });
+
+  it("notices a team scoring supervision for the first time", () => {
+    const diff = diffOrgGraphs(withLoad(undefined), withLoad(6));
+    expect(diff.teamsChanged[0]!.cognitiveLoad!.before).toEqual({
+      total: 13,
+      label: "sustainable",
+      supervision: undefined,
+    });
+  });
+
+  it("reports no change when supervision is untouched", () => {
+    expect(isEmptyDiff(diffOrgGraphs(withLoad(6), withLoad(6)))).toBe(true);
+  });
+
+  it("names supervision in the formatted output, and omits it when unscored", () => {
+    expect(formatOrgGraphDiff(diffOrgGraphs(withLoad(3), withLoad(9)))).toContain(
+      "cognitive load: 13 (sustainable), supervision 3 -> 13 (sustainable), supervision 9",
+    );
+    const gained = formatOrgGraphDiff(diffOrgGraphs(withLoad(undefined), withLoad(6)));
+    expect(gained).toContain("cognitive load: 13 (sustainable) -> 13 (sustainable), supervision 6");
+  });
+});
