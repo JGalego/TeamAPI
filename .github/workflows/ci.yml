@@ -36,14 +36,39 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      # Ordered cheapest-first so an obvious failure reports in seconds rather than after a
+      # full build. Every step runs even if an earlier one fails: a contributor should get the
+      # whole list of what to fix in one run, not one item per push.
+      - name: Format
+        if: ${{ !cancelled() }}
+        run: pnpm format:check
+
       - name: Lint
+        if: ${{ !cancelled() }}
         run: pnpm lint
 
       - name: Typecheck
+        if: ${{ !cancelled() }}
         run: pnpm typecheck
 
+      - name: Dead code and unused dependencies
+        if: ${{ !cancelled() }}
+        run: pnpm deadcode
+
       - name: Build
+        if: ${{ !cancelled() }}
         run: pnpm build
 
-      - name: Test
-        run: pnpm test
+      # Runs the same suites as `pnpm test`, and additionally fails if any package drops below
+      # the coverage floor in its vitest.config.ts.
+      - name: Test with coverage
+        if: ${{ !cancelled() }}
+        run: pnpm test:coverage
+
+      - name: Upload coverage
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: packages/*/coverage/lcov.info
+          if-no-files-found: error

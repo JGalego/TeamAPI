@@ -1,0 +1,42 @@
+#!/bin/sh
+#
+# Checks the staged files only, so the cost stays proportional to the change. This is the fast
+# subset of CI — formatting and lint. Typecheck, dead-code and coverage are repo-wide and belong
+# in `pnpm verify` (or CI), not in a hook that runs on every commit.
+#
+# Installed by the root `prepare` script pointing core.hooksPath here. To skip once: git commit
+# --no-verify.
+
+set -e
+
+staged() {
+  git diff --cached --name-only --diff-filter=ACMR -z | tr '\0' '\n' | grep -E "$1" || true
+}
+
+fail=0
+
+formattable=$(staged '\.(ts|mts|cts|mjs|cjs|js|json|md|ya?ml)$')
+if [ -n "$formattable" ]; then
+  # shellcheck disable=SC2086
+  if ! echo "$formattable" | xargs pnpm exec prettier --check --ignore-unknown; then
+    echo ""
+    echo "  Formatting: run 'pnpm format' and stage the result."
+    fail=1
+  fi
+fi
+
+lintable=$(staged '\.ts$')
+if [ -n "$lintable" ]; then
+  # shellcheck disable=SC2086
+  if ! echo "$lintable" | xargs pnpm exec eslint --max-warnings 0; then
+    echo ""
+    echo "  Lint: fix the errors above, or run 'pnpm exec eslint --fix' on the files."
+    fail=1
+  fi
+fi
+
+if [ "$fail" -ne 0 ]; then
+  echo ""
+  echo "  Commit blocked. To bypass deliberately: git commit --no-verify"
+  exit 1
+fi
