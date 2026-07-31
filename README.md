@@ -260,7 +260,7 @@ flowchart TD
 | `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse`                        | [Knowledge graph](#ai-native) traversal                                                                                                                                        |
 | `GET /health`                                                                      | Health check                                                                                                                                                                   |
 
-**Example:** `curl http://127.0.0.1:3000/cognitive-load` — note `supervision`, the optional load of supervising a team's AI agents. It's reported but deliberately excluded from `total`, so adopting agents never silently re-labels a team.
+**Example:** `curl http://127.0.0.1:3000/cognitive-load` — note `supervision`, the optional load of supervising a team's AI agents. It stays out of `total` (whose thresholds are calibrated against the three Team Topologies types), but it's one of the label's independent triggers, on the same thresholds as `extraneous` — a team drowning in agent review shouldn't be able to report "sustainable" on the strength of three modest other scores. A team that hasn't scored it is unaffected.
 
 ```json
 [
