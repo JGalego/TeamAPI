@@ -49,6 +49,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [💻 CLI reference](#cli-reference)
 - [🕰️ Org history](#org-history)
 - [🕳️ Gaps](#gaps)
+- [🫥 Shadow AI](#shadow-ai)
 - [🔁 CI integration](#ci-integration)
 - [🔗 Paperclip](#paperclip)
 - [💬 Slack](#slack)
@@ -596,6 +597,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `teamapi validate <patterns...>`                                                                                                                            | Resolve every `$ref` transitively and report unresolved refs                                                                                                                                                                             |
 | `teamapi gaps <patterns...>`                                                                                                                                | Report [accountability holes between teams](#gaps) — unowned event contracts, vacant seats, unowned agents                                                                                                                               |
+| `teamapi shadow-ai <patterns...> --scan <dir>`                                                                                                              | Report [AI adoption found in repositories](#shadow-ai) against what teams declare in `agents[]`                                                                                                                                          |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]`                 | Render a diagram                                                                                                                                                                                                                         |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                          | Generate a minimal, schema-valid document                                                                                                                                                                                                |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
@@ -655,6 +657,26 @@ teamapi gaps examples/acme-org
 ```
 
 Only `orphan-subscription` and `dangling-owner` exit non-zero, and they share a shape: the declaration _looks_ complete and isn't. An agent whose `ownerId` resolves to nobody presents to every downstream consumer — `AGENTS.md`, the context bundle, a generated crew — exactly like an agent with a real human behind it, which makes it strictly worse than an agent with no owner at all. Only `collaboration` is expected to be mutual; `x-as-a-service` is deliberately one-directional, so consuming a platform is never reported. Pure, offline, no token. Details in [`docs/integrations/gaps.md`](docs/integrations/gaps.md).
+
+<a id="shadow-ai"></a>
+
+## 🫥 Shadow AI
+
+[Paperclip drift](#paperclip) answers "which agents are running that nothing declares" — for one runtime, behind one gateway. Most shadow AI never reaches a runtime. It's a `.mcp.json` somebody committed during a crunch, an SDK added to a manifest, a workflow step that calls a model. None of those needed anyone's approval, which is why they spread faster than the process meant to sanction them — and all of them are checked into git, so they can be read off the same source of truth as everything else.
+
+```bash
+teamapi shadow-ai examples/acme-org --scan ~/src
+```
+
+```text
++ undeclared: 'checkout-api' carries AI artifacts (CLAUDE.md, package.json (openai)) but stream-checkout declares no agents[]
+? unowned: 'legacy-batch' carries AI artifacts (.github/workflows/ai.yml (anthropics/claude-code-action@v1)) but no team declares the repository
+! forbidden: 'onboarding-api' carries AI artifacts (.mcp.json) but stream-onboarding's policy 'no-agents-on-applicant-pii' forbids agents
+
+3 finding(s), 1 blocking; 1 repo(s) matched, 1 quiet.
+```
+
+`--scan` reads repository checkouts already on disk — no clone, no fetch, no token. Only `forbidden` exits non-zero: undeclared usage is a conversation, but a team that wrote down "no agents on this code" in review and has one anyway is not a documentation problem. The report counts `quiet` repos separately and names that number when it finds nothing, because this detects _declaration_, not use — a clean result over an empty tree must not read like a clean bill of health. Details in [`docs/integrations/shadow-ai.md`](docs/integrations/shadow-ai.md).
 
 <a id="ci-integration"></a>
 

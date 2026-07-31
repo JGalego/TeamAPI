@@ -5,6 +5,7 @@ import { Argument, Command, InvalidArgumentError } from "commander";
 import { DEFAULT_CHAT_MODEL } from "@jgalego/teamapi-chat";
 import { runValidate } from "./commands/validate";
 import { runGaps } from "./commands/gaps";
+import { runShadowAi } from "./commands/shadow-ai";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
@@ -59,6 +60,15 @@ export function createProgram(): Command {
     .description("Report accountability holes between teams — unowned event contracts, vacant seats, unowned agents")
     .action(async (patterns: string[]) => {
       process.exitCode = await runGaps(patterns);
+    });
+
+  program
+    .command("shadow-ai")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Report AI adoption found in repositories against what teams declare in agents[] (read-only)")
+    .requiredOption("--scan <dir>", "directory whose immediate subdirectories are repository checkouts")
+    .action(async (patterns: string[], opts: { scan: string }) => {
+      process.exitCode = await runShadowAi(patterns, { scan: opts.scan });
     });
 
   const renderCommand = program
