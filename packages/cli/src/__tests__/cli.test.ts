@@ -101,6 +101,24 @@ describe("teamapi render", () => {
     expect(content).toContain("flowchart LR");
   });
 
+  it("draws agents attached to their owners with --with-agents", async () => {
+    const outFile = path.join(tmpDir, "with-agents.mmd");
+    const code = await runRender([ACME_GLOB], {
+      scope: "org-hierarchy",
+      format: "mermaid",
+      out: outFile,
+      withAgents: true,
+    });
+    expect(code).toBe(0);
+    const content = await fs.readFile(outFile, "utf-8");
+    expect(content).toContain("🤖 Test Generator (agent)");
+    expect(content).toContain('|"supervises"|');
+  });
+
+  it("rejects --with-agents on a scope it does not apply to", async () => {
+    expect(await runRender([ACME_GLOB], { scope: "topology", withAgents: true })).toBe(1);
+  });
+
   it("fails for scope=hierarchy without --team", async () => {
     const code = await runRender([ACME_GLOB], { scope: "hierarchy" });
     expect(code).toBe(1);

@@ -87,14 +87,21 @@ export function createProgram(): Command {
     )
     .option("--team <id>", "scope to one team id")
     .option("--out <file>", "write to a file instead of stdout")
-    .action(async (patterns: string[], opts: { scope: string; format: string; team?: string; out?: string }) => {
-      process.exitCode = await runRender(patterns, {
-        scope: opts.scope as "topology" | "hierarchy" | "context-map" | "org-hierarchy",
-        format: opts.format as "mermaid" | "dot",
-        team: opts.team,
-        out: opts.out,
-      });
-    });
+    .option("--with-agents", "org-hierarchy only: draw declared agents attached to the humans who own them")
+    .action(
+      async (
+        patterns: string[],
+        opts: { scope: string; format: string; team?: string; out?: string; withAgents?: boolean },
+      ) => {
+        process.exitCode = await runRender(patterns, {
+          scope: opts.scope as "topology" | "hierarchy" | "context-map" | "org-hierarchy",
+          format: opts.format as "mermaid" | "dot",
+          team: opts.team,
+          out: opts.out,
+          withAgents: opts.withAgents,
+        });
+      },
+    );
 
   const scaffoldCommand = program
     .command("scaffold")
