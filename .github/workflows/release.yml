@@ -35,11 +35,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-
-      - name: Test
-        run: pnpm test
+      # The full gate set, not just build + test. CI has already run this on the merged commit,
+      # so this is redundant by design: publishing to npm is irreversible, and a release is the
+      # one place where paying twice for the same checks is the cheaper mistake.
+      - name: Verify
+        run: pnpm verify
 
       # If there are pending changesets, opens/updates a "Version Packages" PR instead of
       # publishing. Merging that PR (with no changesets left) re-runs this workflow and this
