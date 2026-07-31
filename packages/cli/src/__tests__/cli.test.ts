@@ -5,12 +5,15 @@ import * as YAML from "js-yaml";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { runValidate } from "../commands/validate";
+import { runGaps } from "../commands/gaps";
+import { runShadowAi } from "../commands/shadow-ai";
 import { runRender } from "../commands/render";
 import { runScaffold } from "../commands/scaffold";
 import { runGenerate } from "../commands/generate";
 
 const ACME_ROOT = path.resolve(__dirname, "../../../../examples/acme-org");
 const ACME_GLOB = path.join(ACME_ROOT, "**/teamapi.yml");
+const DRIFTWOOD_ROOT = path.resolve(__dirname, "../../../../examples/driftwood-org");
 
 let tmpDir: string;
 
@@ -39,6 +42,56 @@ describe("teamapi validate", () => {
   });
 });
 
+describe("teamapi gaps", () => {
+  it("exits 0 for the example org — it has warnings, but nothing blocking", async () => {
+    const code = await runGaps([ACME_GLOB]);
+    expect(code).toBe(0);
+  });
+
+  it("exits 1 for the deliberately broken org", async () => {
+    const code = await runGaps([DRIFTWOOD_ROOT]);
+    expect(code).toBe(1);
+  });
+
+  it("exits 1 when no files match", async () => {
+    const code = await runGaps([path.join(tmpDir, "*.yml")]);
+    expect(code).toBe(1);
+  });
+});
+
+describe("teamapi shadow-ai", () => {
+  const seedRepo = async (name: string, files: Record<string, string>) => {
+    for (const [relative, content] of Object.entries(files)) {
+      const target = path.join(tmpDir, name, relative);
+      await fs.mkdir(path.dirname(target), { recursive: true });
+      await fs.writeFile(target, content, "utf-8");
+    }
+  };
+
+  it("exits 0 when the only AI usage is in a repo whose team declares agents", async () => {
+    await seedRepo("payments-api", { ".mcp.json": "{}" });
+    expect(await runShadowAi([ACME_GLOB], { scan: tmpDir })).toBe(0);
+  });
+
+  it("exits 1 when AI artifacts appear in a repo whose team's policy forbids agents", async () => {
+    await seedRepo("onboarding-api", { ".mcp.json": "{}" });
+    expect(await runShadowAi([ACME_GLOB], { scan: tmpDir })).toBe(1);
+  });
+
+  it("exits 1 when the scan directory does not exist", async () => {
+    expect(await runShadowAi([ACME_GLOB], { scan: path.join(tmpDir, "nope") })).toBe(1);
+  });
+
+  it("exits 1 when the scan directory holds no repositories", async () => {
+    expect(await runShadowAi([ACME_GLOB], { scan: tmpDir })).toBe(1);
+  });
+
+  it("exits 1 when no files match", async () => {
+    await seedRepo("payments-api", { ".mcp.json": "{}" });
+    expect(await runShadowAi([path.join(tmpDir, "*.yml")], { scan: tmpDir })).toBe(1);
+  });
+});
+
 describe("teamapi render", () => {
   it("writes a topology diagram to --out", async () => {
     const outFile = path.join(tmpDir, "topology.mmd");
@@ -46,6 +99,24 @@ describe("teamapi render", () => {
     expect(code).toBe(0);
     const content = await fs.readFile(outFile, "utf-8");
     expect(content).toContain("flowchart LR");
+  });
+
+  it("draws agents attached to their owners with --with-agents", async () => {
+    const outFile = path.join(tmpDir, "with-agents.mmd");
+    const code = await runRender([ACME_GLOB], {
+      scope: "org-hierarchy",
+      format: "mermaid",
+      out: outFile,
+      withAgents: true,
+    });
+    expect(code).toBe(0);
+    const content = await fs.readFile(outFile, "utf-8");
+    expect(content).toContain("🤖 Test Generator (agent)");
+    expect(content).toContain('|"supervises"|');
+  });
+
+  it("rejects --with-agents on a scope it does not apply to", async () => {
+    expect(await runRender([ACME_GLOB], { scope: "topology", withAgents: true })).toBe(1);
   });
 
   it("fails for scope=hierarchy without --team", async () => {

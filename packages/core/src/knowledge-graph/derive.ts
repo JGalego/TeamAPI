@@ -28,8 +28,12 @@ export interface KnowledgeNode {
 export type KnowledgeEdgeRelation =
   | "owns"
   | "fills"
+  | "accountableFor"
   | "reportsTo"
   | "alignsWith"
+  | "advises"
+  | "learnsFrom"
+  | "communityOfPractice"
   | "interaction"
   | "dependency"
   | "platform"
@@ -60,7 +64,9 @@ const resourceNodeId = (kind: KnowledgeNodeKind, teamId: TeamId, resourceId: str
  * Three edge families, each backed by something the schema can actually resolve — this
  * deliberately stays honest about what's a real link vs. a plausible-looking one:
  * - **Ownership** (`owns`): every resource belongs to the team whose document declares it.
- * - **Structural**: `fills` (member -> role), `reportsTo`/`alignsWith` (role -> role, reusing the
+ * - **Structural**: `fills` (member -> role), `accountableFor` (member -> agent, via
+ *   `agents[].ownerId`, and only when it resolves to a declared member), `reportsTo`/`alignsWith`
+ *   and the informal `advises`/`learnsFrom`/`communityOfPractice` (role -> role, reusing the
  *   graph's existing `roleEdges`), `interaction`/`dependency`/`platform` (team -> team, reusing
  *   the graph's existing team-level `edges`), `usedPrompt`/`ranBy` (session -> prompt/agent, via
  *   `sessions[].promptIds`/`agentId` — same-team fields, no `$ref` resolution needed).
@@ -117,7 +123,19 @@ export function deriveKnowledgeGraph(graph: OrgGraph): KnowledgeGraph {
       addOwned("service", team.id, service.name, service.name);
     }
     for (const agent of team.doc.agents) {
-      addOwned("agent", team.id, agent.id, agent.name);
+      const agentNodeId = addOwned("agent", team.id, agent.id, agent.name);
+      // `ownerId` is the only place the spec names a human behind an agent, so it is the only edge
+      // that answers "who is accountable for this thing". Emitted only when it resolves to a real
+      // member: a dangling ownerId is `teamapi gaps`'s blocking `dangling-owner` finding, and
+      // drawing an edge to a person who isn't there would launder exactly the false impression of
+      // accountability that finding exists to catch.
+      if (agent.ownerId && team.doc.members.some((m) => m.id === agent.ownerId)) {
+        edges.push({
+          from: resourceNodeId("member", team.id, agent.ownerId),
+          to: agentNodeId,
+          relation: "accountableFor",
+        });
+      }
     }
     for (const prompt of team.doc.prompts) {
       addOwned("prompt", team.id, prompt.id, prompt.name);
@@ -165,6 +183,9 @@ export function deriveKnowledgeGraph(graph: OrgGraph): KnowledgeGraph {
   const roleEdgeRelation: Record<(typeof graph.roleEdges)[number]["kind"], KnowledgeEdgeRelation> = {
     "reports-to": "reportsTo",
     "aligns-with": "alignsWith",
+    advises: "advises",
+    "learns-from": "learnsFrom",
+    "community-of-practice": "communityOfPractice",
   };
   for (const roleEdge of graph.roleEdges) {
     edges.push({

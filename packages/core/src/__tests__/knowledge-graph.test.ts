@@ -89,6 +89,48 @@ describe("deriveKnowledgeGraph", () => {
       relation: "fills",
     });
   });
+
+  it("links each agent to the human accountable for it", () => {
+    const kg = deriveKnowledgeGraph(graph);
+    expect(kg.edges).toContainEqual({
+      from: "member:platform-payments:sam-okafor",
+      to: "agent:platform-payments:test-generator",
+      relation: "accountableFor",
+    });
+  });
+
+  it("draws no accountability edge for an agent whose ownerId names nobody", async () => {
+    const driftwood = await buildOrgGraph({
+      seedUris: [path.resolve(__dirname, "../../../../examples/driftwood-org/platform-data/teamapi.yml")],
+    });
+    const kg = deriveKnowledgeGraph(driftwood);
+    // `pipeline-reviewer` is owned by someone who left — `teamapi gaps` blocks on it, and drawing
+    // an edge to a person who isn't there would launder exactly that false impression.
+    expect(kg.nodes.some((n) => n.id === "agent:platform-data:pipeline-reviewer")).toBe(true);
+    // Still owned by its team, just accountable to nobody.
+    expect(kg.edges).toContainEqual({
+      from: "team:platform-data",
+      to: "agent:platform-data:pipeline-reviewer",
+      relation: "owns",
+    });
+    expect(
+      kg.edges.some((e) => e.relation === "accountableFor" && e.to === "agent:platform-data:pipeline-reviewer"),
+    ).toBe(false);
+    expect(kg.edges).toContainEqual({
+      from: "member:platform-data:rowan-esposito",
+      to: "agent:platform-data:backfill-runner",
+      relation: "accountableFor",
+    });
+  });
+
+  it("maps the informal role-edge kinds into their own relations", async () => {
+    const kg = deriveKnowledgeGraph(graph);
+    expect(kg.edges).toContainEqual({
+      from: "role:stream-checkout:tech-lead",
+      to: "role:enabling-devex:coach",
+      relation: "learnsFrom",
+    });
+  });
 });
 
 describe("traverseKnowledgeGraph", () => {

@@ -59,24 +59,26 @@ describe("buildOrgGraph — examples/acme-org", () => {
         },
       ]),
     );
-    expect(alignsWith).toEqual(
-      expect.arrayContaining([
-        {
-          kind: "aligns-with",
-          fromTeam: "stream-checkout",
-          fromRole: "tech-lead",
-          toTeam: "enabling-devex",
-          toRole: "coach",
-        },
-        {
-          kind: "aligns-with",
-          fromTeam: "stream-onboarding",
-          fromRole: "tech-lead",
-          toTeam: "enabling-devex",
-          toRole: "coach",
-        },
-      ]),
-    );
+    // Stream Onboarding's entry declares no `kind`, so it keeps the original dotted-line meaning.
+    expect(alignsWith).toEqual([
+      {
+        kind: "aligns-with",
+        fromTeam: "stream-onboarding",
+        fromRole: "tech-lead",
+        toTeam: "enabling-devex",
+        toRole: "coach",
+      },
+    ]);
+    // Stream Checkout's names the tie instead, and resolves to an edge of that kind.
+    expect(graph.roleEdges.filter((e) => e.kind === "learns-from")).toEqual([
+      {
+        kind: "learns-from",
+        fromTeam: "stream-checkout",
+        fromRole: "tech-lead",
+        toTeam: "enabling-devex",
+        toRole: "coach",
+      },
+    ]);
     expect(graph.unresolved).toEqual([]);
   });
 });

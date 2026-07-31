@@ -8,6 +8,8 @@ import type { Command } from "commander";
 // `vi.hoisted` — a plain top-level `const` here would be used before initialization.
 const {
   runValidate,
+  runGaps,
+  runShadowAi,
   runRender,
   runScaffold,
   runGenerate,
@@ -23,6 +25,8 @@ const {
   runDoctor,
 } = vi.hoisted(() => ({
   runValidate: vi.fn(async () => 0),
+  runGaps: vi.fn(async () => 0),
+  runShadowAi: vi.fn(async () => 0),
   runRender: vi.fn(async () => 0),
   runScaffold: vi.fn(async () => 0),
   runGenerate: vi.fn(async () => 0),
@@ -39,6 +43,8 @@ const {
 }));
 
 vi.mock("../commands/validate", () => ({ runValidate }));
+vi.mock("../commands/gaps", () => ({ runGaps }));
+vi.mock("../commands/shadow-ai", () => ({ runShadowAi }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
@@ -106,6 +112,16 @@ describe("createProgram — render", () => {
     await expect(program.parseAsync(["node", "teamapi", "render", "some/path", "--scope", "bogus"])).rejects.toThrow();
     expect(stderr.join("")).toContain("Allowed choices are topology, hierarchy, context-map, org-hierarchy");
     expect(runRender).not.toHaveBeenCalled();
+  });
+
+  it("passes --with-agents through, and leaves it undefined when absent", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "render", "org", "--scope", "org-hierarchy", "--with-agents"]);
+    expect(runRender).toHaveBeenCalledWith(["org"], expect.objectContaining({ withAgents: true }));
+
+    const second = freshProgram();
+    await second.program.parseAsync(["node", "teamapi", "render", "org", "--scope", "org-hierarchy"]);
+    expect(runRender).toHaveBeenLastCalledWith(["org"], expect.objectContaining({ withAgents: undefined }));
   });
 
   it("rejects an invalid --format before ever calling runRender", async () => {
@@ -471,5 +487,31 @@ describe("createProgram — validate", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "validate", "a", "b"]);
     expect(runValidate).toHaveBeenCalledWith(["a", "b"]);
+  });
+});
+
+describe("createProgram — gaps", () => {
+  it("passes patterns straight through to runGaps", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "gaps", "a", "b"]);
+    expect(runGaps).toHaveBeenCalledWith(["a", "b"]);
+  });
+
+  it("requires at least one pattern", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "gaps"])).rejects.toThrow();
+  });
+});
+
+describe("createProgram — shadow-ai", () => {
+  it("passes patterns and --scan through to runShadowAi", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "shadow-ai", "org", "--scan", "./repos"]);
+    expect(runShadowAi).toHaveBeenCalledWith(["org"], { scan: "./repos" });
+  });
+
+  it("requires --scan", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "shadow-ai", "org"])).rejects.toThrow();
   });
 });

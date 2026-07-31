@@ -21,6 +21,7 @@ import {
   listServices,
   listTeams,
   orgWideCognitiveLoadReport,
+  planGaps,
   scoreCognitiveLoad,
   searchOrg,
   toDot,
@@ -208,6 +209,17 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       description: "Get every team's cognitive load assessment and label, sorted highest total first.",
       inputSchema: z.object({}),
       run: withDebug("get_org_cognitive_load_report", async () => json(orgWideCognitiveLoadReport(graph))),
+    }),
+
+    betaZodTool({
+      name: "get_org_gaps",
+      description:
+        "Find the accountability holes between teams rather than inside any one of them: services subscribing " +
+        "to events nothing publishes, agents whose ownerId names nobody on the team, vacant roles other teams " +
+        "report into, one-sided collaborations, and teams running agents without scoring the supervision load. " +
+        "Use this to answer 'what is nobody responsible for here?'.",
+      inputSchema: z.object({}),
+      run: withDebug("get_org_gaps", async () => json(planGaps(graph))),
     }),
   ];
 }

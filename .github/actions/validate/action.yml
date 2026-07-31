@@ -20,6 +20,14 @@ inputs:
     description: "Team id to scope the preview to (required for --scope hierarchy)"
     required: false
     default: ""
+  check-gaps:
+    description: >-
+      Also run `teamapi gaps` and fail the job on a blocking finding (a service subscribing to an
+      event nothing publishes, or an agent whose `ownerId` names nobody on the team). Warnings are
+      printed but never fail the job. Off by default, so adding it to an existing org's CI is an
+      explicit decision rather than a surprise red build.
+    required: false
+    default: "false"
   comment:
     description: "Post (and keep updated on later pushes) a PR comment with the result"
     required: false
@@ -67,6 +75,13 @@ runs:
         else
           echo "success=false" >> "$GITHUB_OUTPUT"
         fi
+
+    # Deliberately after `validate` and gated on it: gaps reads the resolved graph, so an
+    # unresolvable `$ref` would make it report holes that are really just missing documents.
+    - name: Check for accountability gaps
+      if: inputs.check-gaps == 'true' && steps.validate.outputs.success == 'true'
+      shell: bash
+      run: teamapi gaps ${{ inputs.patterns }}
 
     - name: Render preview diagram
       id: render

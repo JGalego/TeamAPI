@@ -2,7 +2,9 @@
 
 A read-only [Fastify](https://fastify.dev/) REST API over a resolved
 [Team API as Code](https://github.com/JGalego/TeamAPI) org graph — teams, roles, services,
-interactions, dependencies, cognitive load, and diagrams — plus interactive Swagger UI at `/docs`
+interactions, dependencies, cognitive load, cross-team gaps (`/gaps`), DDD context mapping,
+context bundles, a cross-resource knowledge graph, every AI-native document domain, and diagrams —
+plus interactive Swagger UI at `/docs`
 and a live browser dashboard at `/dashboard` (team list, cognitive-load bars, search, and a
 client-side-rendered diagram viewer; no separate process or build step).
 

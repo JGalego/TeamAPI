@@ -16,6 +16,7 @@ import {
   listServices,
   listTeams,
   orgWideCognitiveLoadReport,
+  planGaps,
   scoreCognitiveLoad,
   searchOrg,
   toDot,
@@ -240,6 +241,21 @@ export function registerTools(server: McpServer, store: OrgGraphStore): void {
       inputSchema: {},
     },
     async () => jsonResult(orgWideCognitiveLoadReport(store.current)),
+  );
+
+  registerTool(
+    "get_org_gaps",
+    {
+      title: "Get accountability gaps between teams",
+      description:
+        "Find the holes between teams rather than inside any one of them: services subscribing to events " +
+        "nothing publishes, agents whose ownerId names nobody on the team, vacant roles other teams report " +
+        "into, one-sided collaborations, and teams running agents without scoring the supervision load. " +
+        "Also reports how many cross-team role relationships the reporting hierarchy explains. Use this to " +
+        "answer 'what is nobody responsible for here?'.",
+      inputSchema: {},
+    },
+    async () => jsonResult(planGaps(store.current)),
   );
 
   registerKnowledgeTools(server, store);

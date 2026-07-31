@@ -19,6 +19,7 @@ const EXPECTED_TOOL_NAMES = [
   "search_org",
   "get_org_graph",
   "get_org_cognitive_load_report",
+  "get_org_gaps",
 ];
 
 /**
@@ -46,6 +47,15 @@ describe("buildChatTools — examples/acme-org", () => {
 
     const result = await findServiceOwner.run({ serviceName: "checkout-api" });
     expect(result).toContain("stream-checkout");
+  });
+
+  it("get_org_gaps answers what nobody is responsible for", async () => {
+    const graph = await buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
+    const gaps = toolNamed(buildChatTools(graph), "get_org_gaps");
+
+    const result = await gaps.run({});
+    expect(result).toContain("vacant-load-bearing");
+    expect(result).toContain("head-of-engineering");
   });
 
   it("get_team reports an unknown team id as an error string rather than throwing", async () => {
