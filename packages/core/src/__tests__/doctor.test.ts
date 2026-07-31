@@ -170,7 +170,7 @@ describe("doctorOkta", () => {
         return { body: members.slice(after, after + limit).map((email) => ({ status: "ACTIVE", profile: { email } })) };
       }
       const page = groups.slice(after, after + limit);
-      const headers =
+      const headers: Record<string, string> =
         after + limit < groups.length
           ? { link: `<https://acme.okta.com/api/v1/groups?limit=${limit}&after=${after + limit}>; rel="next"` }
           : {};

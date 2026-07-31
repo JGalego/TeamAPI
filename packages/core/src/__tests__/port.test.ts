@@ -1,14 +1,13 @@
 import * as path from "node:path";
 import { describe, expect, it } from "vitest";
 import { buildOrgGraph } from "../resolve/graph-builder";
-import { buildPortCatalog, portBlueprints } from "../generators/port";
+import { buildPortCatalog, portBlueprints, type PortCatalog, type PortEntity } from "../generators/port";
 
 const ACME_ROOT = path.resolve(__dirname, "../../../../examples/acme-org");
 const CHECKOUT_SEED = path.join(ACME_ROOT, "stream-checkout/teamapi.yml");
 const acme = () => buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
 
-const of = (c: { entities: { blueprint: string; identifier: string }[] }, blueprint: string) =>
-  c.entities.filter((e) => e.blueprint === blueprint);
+const of = (c: PortCatalog, blueprint: string): PortEntity[] => c.entities.filter((e) => e.blueprint === blueprint);
 
 describe("portBlueprints", () => {
   it("declares the three blueprints the entities reference, and nothing else", () => {

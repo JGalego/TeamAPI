@@ -34,8 +34,8 @@ describe("paperclip drift", () => {
     const report = planPaperclipDrift(graph, "c1", [...allDeclared(), { id: "rogue-1", name: "ShadowAgent" }]);
     const undeclared = report.findings.filter((f) => f.kind === "undeclared");
     expect(undeclared).toHaveLength(1);
-    expect(undeclared[0].detail).toContain("ShadowAgent");
-    expect(undeclared[0].severity).toBe("warning");
+    expect(undeclared[0]!.detail).toContain("ShadowAgent");
+    expect(undeclared[0]!.severity).toBe("warning");
   });
 
   it("flags a declared, active agent with nothing running for it", () => {
@@ -57,8 +57,8 @@ describe("paperclip drift", () => {
     ]);
     const forbidden = report.findings.filter((f) => f.kind === "forbidden");
     expect(forbidden).toHaveLength(1);
-    expect(forbidden[0].severity).toBe("blocking");
-    expect(forbidden[0].detail).toContain("no-agents-on-applicant-pii");
+    expect(forbidden[0]!.severity).toBe("blocking");
+    expect(forbidden[0]!.detail).toContain("no-agents-on-applicant-pii");
   });
 
   it("attributes hand-created agents by their scoped slug when metadata is absent", () => {
