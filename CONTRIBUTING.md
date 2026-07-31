@@ -17,12 +17,22 @@ Requires Node >=22 (see `.nvmrc`) and pnpm (see `packageManager` in `package.jso
 
 Run from the repo root; each fans out across all packages via [Turborepo](https://turborepo.com/):
 
-| Command          | What it does                                       |
-| ---------------- | -------------------------------------------------- |
-| `pnpm build`     | Compile every package (`tsc -b`)                   |
-| `pnpm test`      | Run every package's Vitest suite                   |
-| `pnpm lint`      | ESLint over every package's `src/`                 |
-| `pnpm typecheck` | Type-check without a full emit (`tsc -b --noEmit`) |
+| Command              | What it does                                                    |
+| -------------------- | --------------------------------------------------------------- |
+| `pnpm verify`        | Every check CI runs, in CI's order — the one to run before a PR |
+| `pnpm build`         | Compile every package (`tsc -b`)                                |
+| `pnpm test`          | Run every package's Vitest suite                                |
+| `pnpm test:coverage` | The same suites, plus each package's coverage floor             |
+| `pnpm lint`          | ESLint (type-aware) over every package's `src/`, warnings fail  |
+| `pnpm typecheck`     | Type-check the shipped sources and the tests, without emitting  |
+| `pnpm deadcode`      | Unreachable exports, unused and undeclared dependencies         |
+| `pnpm format`        | Apply Prettier (`pnpm format:check` to check without writing)   |
+
+`pnpm install` also installs a pre-commit hook that runs formatting and lint over your staged files.
+`git commit --no-verify` skips it.
+
+See [docs/code-quality.md](docs/code-quality.md) for what each gate catches and why it is set the
+way it is.
 
 Try any change against the bundled sample org before opening a PR:
 
@@ -47,10 +57,11 @@ This is a pnpm/Turborepo monorepo:
 
 ## Making a change
 
-1. Add tests alongside the code you change (`src/__tests__/`) — every package uses Vitest.
+1. Add tests alongside the code you change (`src/__tests__/`) — every package uses Vitest. Coverage
+   is enforced per package, so removing tests without replacing them fails the build.
 2. If you touch `packages/schema`, check whether `docs/spec/teamapi-extended-v1.md` needs a matching update.
 3. If you touch a package's public API, check whether its `README.md` still accurately describes it.
-4. Run `pnpm build && pnpm typecheck && pnpm lint && pnpm test` before opening a PR — this is exactly what CI runs.
+4. Run `pnpm verify` before opening a PR — this is exactly what CI runs, in the same order.
 
 ## Releasing
 
