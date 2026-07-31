@@ -1,0 +1,6 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  // A `FooOptions` interface that only names the parameter of the exported function beside it is
+  // part of that function's signature, not an unused export — callers get it structurally.
+  "ignoreExportsUsedInFile": true
+}
