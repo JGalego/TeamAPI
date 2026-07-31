@@ -55,7 +55,11 @@ interface ResourceToolOptions<T> {
 
 /** Registers the `list_<plural>`/`get_<singular>` MCP tool pair shared by every AI-native
  * resource domain — the MCP-layer counterpart to the REST API's `registerResourceRoutes`. */
-function registerResourceTools<T>(registerTool: LooseRegisterTool, store: OrgGraphStore, opts: ResourceToolOptions<T>): void {
+function registerResourceTools<T>(
+  registerTool: LooseRegisterTool,
+  store: OrgGraphStore,
+  opts: ResourceToolOptions<T>,
+): void {
   const { resourceName, pluralName, description, listInTeam, getById, listAcrossOrg } = opts;
 
   registerTool(
@@ -206,7 +210,15 @@ export function registerKnowledgeTools(server: McpServer, store: OrgGraphStore):
       description: "Fill a prompt's {{variable}} placeholders, falling back to each variable's declared default.",
       inputSchema: { teamId: z.string(), promptId: z.string(), variables: z.record(z.string()).optional() },
     },
-    async ({ teamId, promptId, variables }: { teamId: string; promptId: string; variables?: Record<string, string> }) => {
+    async ({
+      teamId,
+      promptId,
+      variables,
+    }: {
+      teamId: string;
+      promptId: string;
+      variables?: Record<string, string>;
+    }) => {
       if (!getTeam(store.current, teamId)) return errorResult(`Unknown team id '${teamId}'`);
       const prompt = getPrompt(store.current, teamId, promptId);
       if (!prompt) return errorResult(`Unknown prompt id '${promptId}' on team '${teamId}'`);
@@ -261,7 +273,11 @@ export function registerKnowledgeTools(server: McpServer, store: OrgGraphStore):
         "documents, policies, memory, knowledge base entries, prompts, and playbooks relevant to it, plus the " +
         "scoped team's related teams, members, and services when teamId is given. Relevance is a keyword-overlap " +
         "heuristic, not semantic search.",
-      inputSchema: { goal: z.string().min(1), teamId: z.string().optional(), limit: z.number().int().positive().optional() },
+      inputSchema: {
+        goal: z.string().min(1),
+        teamId: z.string().optional(),
+        limit: z.number().int().positive().optional(),
+      },
     },
     async ({ goal, teamId, limit }: { goal: string; teamId?: string; limit?: number }) => {
       if (teamId && !getTeam(store.current, teamId)) return errorResult(`Unknown team id '${teamId}'`);

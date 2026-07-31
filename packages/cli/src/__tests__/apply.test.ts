@@ -107,7 +107,10 @@ describe("runApply", () => {
 
   it("returns 1 and surfaces the error when the GitHub API call fails", async () => {
     await writeTeam("stream-billing");
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("bad credentials", { status: 401, statusText: "Unauthorized" })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("bad credentials", { status: 401, statusText: "Unauthorized" })),
+    );
 
     const code = await runApply([tmpDir], { org: "acme", token: "test-token" });
 

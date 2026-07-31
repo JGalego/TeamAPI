@@ -18,7 +18,11 @@ export async function contextRoutes(app: FastifyInstance): Promise<void> {
           type: "object",
           properties: {
             goal: { type: "string", description: "What the requester is trying to accomplish" },
-            teamId: { type: "string", description: "Scope the bundle to one team; boosts its own resources and adds relatedTeams/members/services" },
+            teamId: {
+              type: "string",
+              description:
+                "Scope the bundle to one team; boosts its own resources and adds relatedTeams/members/services",
+            },
             limit: { type: "integer", minimum: 1, description: "Max items per resource category (default 5)" },
           },
           required: ["goal"],

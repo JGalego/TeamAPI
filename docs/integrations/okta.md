@@ -1,7 +1,7 @@
 # Okta
 
 Every other check in this toolchain compares the spec to a system the spec is supposed to drive.
-This one compares it to the only system that is authoritative *over* it.
+This one compares it to the only system that is authoritative _over_ it.
 
 People join, move and leave whether or not anyone opens a pull request. A team document starts
 rotting the day it's written, and nothing else here can tell.
@@ -22,16 +22,16 @@ teamapi okta-drift /path/to/your/org --url https://acme.okta.com
 4 finding(s), 1 blocking; 6 member(s) matched.
 ```
 
-| finding | meaning | blocking |
-|---|---|---|
-| `deactivated` | declared member whose account is no longer active | **yes** |
-| `left` | declared member who isn't in the group | no |
-| `joined` | active group member nobody declares | no |
-| `no-group` | team with no matching directory group | no |
-| `unmatched` | member with no `contact` address to match on | no |
+| finding       | meaning                                           | blocking |
+| ------------- | ------------------------------------------------- | -------- |
+| `deactivated` | declared member whose account is no longer active | **yes**  |
+| `left`        | declared member who isn't in the group            | no       |
+| `joined`      | active group member nobody declares               | no       |
+| `no-group`    | team with no matching directory group             | no       |
+| `unmatched`   | member with no `contact` address to match on      | no       |
 
 **Only `deactivated` exits non-zero.** The dangerous finding isn't the missing name — it's the one
-that's *still there*. A deactivated account listed as accountable for a service reads, to
+that's _still there_. A deactivated account listed as accountable for a service reads, to
 everything downstream (CODEOWNERS, the dashboard, an agent answering "who owns this"), as an
 owner. Someone who left three months ago is silently on the hook.
 
@@ -48,7 +48,7 @@ People match **by email**, from `members[].contact`, case-insensitively and igno
 whitespace. A member with no `contact` is reported as `unmatched` rather than assumed present or
 absent — a guess either way would be worse than saying so.
 
-An inactive account that nobody declares is *not* reported as a joiner. It's an old account, not a
+An inactive account that nobody declares is _not_ reported as a joiner. It's an old account, not a
 new colleague.
 
 ## Read-only, and deliberately so

@@ -54,7 +54,11 @@ function listAcrossOrg<T extends { id: string }>(graph: OrgGraph, key: ResourceA
 }
 
 /** Case-insensitive substring match over a resource's searchable text fields plus its tags. */
-function matchesSearch(fields: Array<string | undefined>, tags: readonly string[] | undefined, search: string): boolean {
+function matchesSearch(
+  fields: Array<string | undefined>,
+  tags: readonly string[] | undefined,
+  search: string,
+): boolean {
   const q = search.toLowerCase();
   if (fields.some((f) => f?.toLowerCase().includes(q))) return true;
   return (tags ?? []).some((t) => t.toLowerCase().includes(q));
@@ -74,7 +78,8 @@ export function getAgent(graph: OrgGraph, teamId: TeamId, agentId: string): Agen
 
 export function listAllAgents(graph: OrgGraph, search?: string): ResourceEntry<Agent>[] {
   let results = listAcrossOrg<Agent>(graph, "agents");
-  if (search) results = results.filter((r) => matchesSearch([r.item.name, r.item.role, r.item.description], r.item.tags, search));
+  if (search)
+    results = results.filter((r) => matchesSearch([r.item.name, r.item.role, r.item.description], r.item.tags, search));
   return results;
 }
 
@@ -173,7 +178,10 @@ export function getPrompt(graph: OrgGraph, teamId: TeamId, promptId: string): Pr
 
 export function listAllPrompts(graph: OrgGraph, search?: string): ResourceEntry<Prompt>[] {
   let results = listAcrossOrg<Prompt>(graph, "prompts");
-  if (search) results = results.filter((r) => matchesSearch([r.item.name, r.item.description, r.item.template], r.item.tags, search));
+  if (search)
+    results = results.filter((r) =>
+      matchesSearch([r.item.name, r.item.description, r.item.template], r.item.tags, search),
+    );
   return results;
 }
 
@@ -246,13 +254,18 @@ export function listKnowledgeBase(graph: OrgGraph, teamId: TeamId): KnowledgeBas
   return listInTeam<KnowledgeBaseEntry>(graph.teams.get(teamId), "knowledgeBase");
 }
 
-export function getKnowledgeBaseEntry(graph: OrgGraph, teamId: TeamId, entryId: string): KnowledgeBaseEntry | undefined {
+export function getKnowledgeBaseEntry(
+  graph: OrgGraph,
+  teamId: TeamId,
+  entryId: string,
+): KnowledgeBaseEntry | undefined {
   return listKnowledgeBase(graph, teamId).find((e) => e.id === entryId);
 }
 
 export function searchKnowledgeBase(graph: OrgGraph, search?: string): ResourceEntry<KnowledgeBaseEntry>[] {
   let results = listAcrossOrg<KnowledgeBaseEntry>(graph, "knowledgeBase");
-  if (search) results = results.filter((r) => matchesSearch([r.item.title, r.item.body, r.item.category], r.item.tags, search));
+  if (search)
+    results = results.filter((r) => matchesSearch([r.item.title, r.item.body, r.item.category], r.item.tags, search));
   return results;
 }
 

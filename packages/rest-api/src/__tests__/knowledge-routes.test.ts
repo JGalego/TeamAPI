@@ -92,7 +92,11 @@ describe("AI-native resource routes", () => {
   });
 
   it("POST /teams/:id/prompts/:promptId/render 400s when a required variable is missing", async () => {
-    const res = await app.inject({ method: "POST", url: "/teams/platform-payments/prompts/code-review/render", payload: {} });
+    const res = await app.inject({
+      method: "POST",
+      url: "/teams/platform-payments/prompts/code-review/render",
+      payload: {},
+    });
     expect(res.statusCode).toBe(400);
   });
 
@@ -123,7 +127,11 @@ describe("POST /context", () => {
   });
 
   it("404s for an unknown teamId", async () => {
-    const res = await app.inject({ method: "POST", url: "/context", payload: { goal: "OAuth", teamId: "does-not-exist" } });
+    const res = await app.inject({
+      method: "POST",
+      url: "/context",
+      payload: { goal: "OAuth", teamId: "does-not-exist" },
+    });
     expect(res.statusCode).toBe(404);
   });
 });

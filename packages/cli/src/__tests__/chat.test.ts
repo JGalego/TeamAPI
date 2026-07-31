@@ -159,9 +159,7 @@ describe("runChat", () => {
   });
 
   it("recovers from a toolRunner rejection instead of crashing the session", async () => {
-    questionMock
-      .mockResolvedValueOnce("this call fails")
-      .mockResolvedValueOnce("exit");
+    questionMock.mockResolvedValueOnce("this call fails").mockResolvedValueOnce("exit");
     toolRunnerMock.mockRejectedValueOnce(new Error("rate limited"));
 
     const exitCode = await runChat([CHECKOUT_SEED], { team: "stream-checkout" });

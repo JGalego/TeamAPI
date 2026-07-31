@@ -62,7 +62,9 @@ export class GithubClient {
 
   private async raise(res: Response, method: string, path: string): Promise<never> {
     const detail = await res.text().catch(() => "");
-    throw new Error(`GitHub API ${method} ${path} failed: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`);
+    throw new Error(
+      `GitHub API ${method} ${path} failed: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`,
+    );
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
@@ -120,7 +122,12 @@ export class GithubClient {
     });
   }
 
-  setTeamMembership(org: string, teamSlug: string, username: string, role: "member" | "maintainer" = "member"): Promise<void> {
+  setTeamMembership(
+    org: string,
+    teamSlug: string,
+    username: string,
+    role: "member" | "maintainer" = "member",
+  ): Promise<void> {
     return this.request<void>("PUT", `/orgs/${org}/teams/${teamSlug}/memberships/${username}`, { role });
   }
 

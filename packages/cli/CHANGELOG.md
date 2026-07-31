@@ -145,7 +145,6 @@
 ### Patch Changes
 
 - caebd20: Fixes from a full code + docs review:
-
   - **schema**: enforce previously-undocumented-but-unenforced rules — `roles[].id`/`members[].id`
     uniqueness, `reportsTo` must reference an existing role and can't form a cycle (including
     self-reports), `reportsTo`/`reportsToRef` are now genuinely mutually exclusive, and `x-*` vendor

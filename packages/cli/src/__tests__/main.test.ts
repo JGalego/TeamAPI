@@ -6,23 +6,37 @@ import type { Command } from "commander";
 // `vi.mock` factories are hoisted above every other statement in this file (including `const`
 // declarations), so the mocked fns they close over must themselves be created inside
 // `vi.hoisted` — a plain top-level `const` here would be used before initialization.
-const { runValidate, runRender, runScaffold, runGenerate, runDiff, runApply, runImport, runServeApi, runServeMcp, runChat, runSlackSync, runPagerDutyDrift, runOktaDrift, runDoctor } =
-  vi.hoisted(() => ({
-    runValidate: vi.fn(async () => 0),
-    runRender: vi.fn(async () => 0),
-    runScaffold: vi.fn(async () => 0),
-    runGenerate: vi.fn(async () => 0),
-    runDiff: vi.fn(async () => 0),
-    runApply: vi.fn(async () => 0),
-    runImport: vi.fn(async () => 0),
-    runServeApi: vi.fn(async () => {}),
-    runServeMcp: vi.fn(async () => {}),
-    runChat: vi.fn(async () => 0),
-    runSlackSync: vi.fn(async () => 0),
-    runPagerDutyDrift: vi.fn(async () => 0),
-    runOktaDrift: vi.fn(async () => 0),
-    runDoctor: vi.fn(async () => 0),
-  }));
+const {
+  runValidate,
+  runRender,
+  runScaffold,
+  runGenerate,
+  runDiff,
+  runApply,
+  runImport,
+  runServeApi,
+  runServeMcp,
+  runChat,
+  runSlackSync,
+  runPagerDutyDrift,
+  runOktaDrift,
+  runDoctor,
+} = vi.hoisted(() => ({
+  runValidate: vi.fn(async () => 0),
+  runRender: vi.fn(async () => 0),
+  runScaffold: vi.fn(async () => 0),
+  runGenerate: vi.fn(async () => 0),
+  runDiff: vi.fn(async () => 0),
+  runApply: vi.fn(async () => 0),
+  runImport: vi.fn(async () => 0),
+  runServeApi: vi.fn(async () => {}),
+  runServeMcp: vi.fn(async () => {}),
+  runChat: vi.fn(async () => 0),
+  runSlackSync: vi.fn(async () => 0),
+  runPagerDutyDrift: vi.fn(async () => 0),
+  runOktaDrift: vi.fn(async () => 0),
+  runDoctor: vi.fn(async () => 0),
+}));
 
 vi.mock("../commands/validate", () => ({ runValidate }));
 vi.mock("../commands/render", () => ({ runRender }));
@@ -89,9 +103,7 @@ describe("createProgram — top level", () => {
 describe("createProgram — render", () => {
   it("rejects an invalid --scope before ever calling runRender", async () => {
     const { program, stderr } = freshProgram();
-    await expect(
-      program.parseAsync(["node", "teamapi", "render", "some/path", "--scope", "bogus"]),
-    ).rejects.toThrow();
+    await expect(program.parseAsync(["node", "teamapi", "render", "some/path", "--scope", "bogus"])).rejects.toThrow();
     expect(stderr.join("")).toContain("Allowed choices are topology, hierarchy, context-map, org-hierarchy");
     expect(runRender).not.toHaveBeenCalled();
   });
@@ -129,9 +141,7 @@ describe("createProgram — scaffold", () => {
     await expect(
       program.parseAsync(["node", "teamapi", "scaffold", "my-team", "--type", "bogus", "--out", "out.yml"]),
     ).rejects.toThrow();
-    expect(stderr.join("")).toContain(
-      "Allowed choices are stream-aligned, platform, complicated-subsystem, enabling",
-    );
+    expect(stderr.join("")).toContain("Allowed choices are stream-aligned, platform, complicated-subsystem, enabling");
     expect(runScaffold).not.toHaveBeenCalled();
   });
 
@@ -147,16 +157,19 @@ describe("createProgram — scaffold", () => {
       "--out",
       "out.yml",
     ]);
-    expect(runScaffold).toHaveBeenCalledWith({ id: "my-team", type: "stream-aligned", name: undefined, out: "out.yml" });
+    expect(runScaffold).toHaveBeenCalledWith({
+      id: "my-team",
+      type: "stream-aligned",
+      name: undefined,
+      out: "out.yml",
+    });
   });
 });
 
 describe("createProgram — serve-api", () => {
   it("rejects a non-numeric --port before ever calling runServeApi", async () => {
     const { program, stderr } = freshProgram();
-    await expect(
-      program.parseAsync(["node", "teamapi", "serve-api", "some/path", "--port", "abc"]),
-    ).rejects.toThrow();
+    await expect(program.parseAsync(["node", "teamapi", "serve-api", "some/path", "--port", "abc"])).rejects.toThrow();
     expect(stderr.join("")).toContain("must be an integer between 1 and 65535");
     expect(runServeApi).not.toHaveBeenCalled();
   });
@@ -171,9 +184,7 @@ describe("createProgram — serve-api", () => {
 
   it("rejects a negative --port", async () => {
     const { program } = freshProgram();
-    await expect(
-      program.parseAsync(["node", "teamapi", "serve-api", "some/path", "--port", "-1"]),
-    ).rejects.toThrow();
+    await expect(program.parseAsync(["node", "teamapi", "serve-api", "some/path", "--port", "-1"])).rejects.toThrow();
     expect(runServeApi).not.toHaveBeenCalled();
   });
 
@@ -193,7 +204,9 @@ describe("createProgram — generate", () => {
     await expect(
       program.parseAsync(["node", "teamapi", "generate", "not-a-target", "some/path", "--out", "out"]),
     ).rejects.toThrow();
-    expect(stderr.join("")).toContain("Allowed choices are crewai, backstage, paperclip, codeowners, agents-md, port, otel");
+    expect(stderr.join("")).toContain(
+      "Allowed choices are crewai, backstage, paperclip, codeowners, agents-md, port, otel",
+    );
     expect(runGenerate).not.toHaveBeenCalled();
   });
 
@@ -213,7 +226,11 @@ describe("createProgram — generate", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "generate", "otel", "some/path", "--out", "out"]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], {
-      target: "otel", team: undefined, out: "out", company: undefined, org: undefined,
+      target: "otel",
+      team: undefined,
+      out: "out",
+      company: undefined,
+      org: undefined,
     });
   });
 
@@ -221,7 +238,11 @@ describe("createProgram — generate", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "generate", "port", "some/path", "--out", "out"]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], {
-      target: "port", team: undefined, out: "out", company: undefined, org: undefined,
+      target: "port",
+      team: undefined,
+      out: "out",
+      company: undefined,
+      org: undefined,
     });
   });
 
@@ -229,14 +250,26 @@ describe("createProgram — generate", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "generate", "agents-md", "some/path", "--out", "out"]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], {
-      target: "agents-md", team: undefined, out: "out", company: undefined, org: undefined,
+      target: "agents-md",
+      team: undefined,
+      out: "out",
+      company: undefined,
+      org: undefined,
     });
   });
 
   it("accepts the codeowners target and passes --org through", async () => {
     const { program } = freshProgram();
     await program.parseAsync([
-      "node", "teamapi", "generate", "codeowners", "some/path", "--out", "out", "--org", "acme",
+      "node",
+      "teamapi",
+      "generate",
+      "codeowners",
+      "some/path",
+      "--out",
+      "out",
+      "--org",
+      "acme",
     ]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], {
       target: "codeowners",
@@ -250,7 +283,15 @@ describe("createProgram — generate", () => {
   it("accepts the paperclip target and passes --company through", async () => {
     const { program } = freshProgram();
     await program.parseAsync([
-      "node", "teamapi", "generate", "paperclip", "some/path", "--out", "out", "--company", "ACME Org",
+      "node",
+      "teamapi",
+      "generate",
+      "paperclip",
+      "some/path",
+      "--out",
+      "out",
+      "--company",
+      "ACME Org",
     ]);
     expect(runGenerate).toHaveBeenCalledWith(["some/path"], {
       target: "paperclip",
@@ -298,7 +339,9 @@ describe("createProgram — apply", () => {
 describe("createProgram — import", () => {
   it("only accepts github-org as a source", async () => {
     const { program } = freshProgram();
-    await expect(program.parseAsync(["node", "teamapi", "import", "slack-org", "acme", "--out", "out"])).rejects.toThrow();
+    await expect(
+      program.parseAsync(["node", "teamapi", "import", "slack-org", "acme", "--out", "out"]),
+    ).rejects.toThrow();
     expect(runImport).not.toHaveBeenCalled();
   });
 
@@ -352,7 +395,14 @@ describe("createProgram — pagerduty-drift", () => {
     expect(runPagerDutyDrift).toHaveBeenCalledWith(["some/path"], { token: undefined, url: undefined });
 
     await program.parseAsync([
-      "node", "teamapi", "pagerduty-drift", "some/path", "--token", "t", "--url", "https://eu.pagerduty.com",
+      "node",
+      "teamapi",
+      "pagerduty-drift",
+      "some/path",
+      "--token",
+      "t",
+      "--url",
+      "https://eu.pagerduty.com",
     ]);
     expect(runPagerDutyDrift).toHaveBeenCalledWith(["some/path"], { token: "t", url: "https://eu.pagerduty.com" });
   });
@@ -368,11 +418,21 @@ describe("createProgram — okta-drift", () => {
   it("passes --url, --token and --group-prefix through", async () => {
     const { program } = freshProgram();
     await program.parseAsync([
-      "node", "teamapi", "okta-drift", "some/path",
-      "--url", "https://acme.okta.com", "--token", "t", "--group-prefix", "eng-",
+      "node",
+      "teamapi",
+      "okta-drift",
+      "some/path",
+      "--url",
+      "https://acme.okta.com",
+      "--token",
+      "t",
+      "--group-prefix",
+      "eng-",
     ]);
     expect(runOktaDrift).toHaveBeenCalledWith(["some/path"], {
-      url: "https://acme.okta.com", token: "t", groupPrefix: "eng-",
+      url: "https://acme.okta.com",
+      token: "t",
+      groupPrefix: "eng-",
     });
   });
 });
@@ -388,7 +448,14 @@ describe("createProgram — doctor", () => {
   it("passes the integration and its options through", async () => {
     const okta = freshProgram();
     await okta.program.parseAsync([
-      "node", "teamapi", "doctor", "okta", "--url", "https://acme.okta.com", "--token", "t",
+      "node",
+      "teamapi",
+      "doctor",
+      "okta",
+      "--url",
+      "https://acme.okta.com",
+      "--token",
+      "t",
     ]);
     expect(runDoctor).toHaveBeenCalledWith("okta", { token: "t", url: "https://acme.okta.com", org: undefined });
 

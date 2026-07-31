@@ -35,7 +35,10 @@ describe("slackTopicFor", () => {
     expect(topic.length).toBeLessThanOrEqual(250 + " more".length + 4);
     expect(topic).toMatch(/, \+\d+ more$/);
     // whatever was listed is a whole name, never a truncated one
-    const listed = topic.slice(topic.indexOf("Owns: ") + 6).replace(/, \+\d+ more$/, "").split(", ");
+    const listed = topic
+      .slice(topic.indexOf("Owns: ") + 6)
+      .replace(/, \+\d+ more$/, "")
+      .split(", ");
     for (const name of listed) expect(many).toContain(name);
   });
 });
@@ -60,7 +63,10 @@ describe("planSlackSync — examples/acme-org", () => {
   });
 
   it("reports a declared channel that doesn't exist in the workspace", async () => {
-    const plan = planSlackSync(await acme(), live().filter((c) => c.name !== "stream-checkout"));
+    const plan = planSlackSync(
+      await acme(),
+      live().filter((c) => c.name !== "stream-checkout"),
+    );
     expect(plan.entries.find((e) => e.channel === "stream-checkout")).toMatchObject({
       action: "missing",
       teamId: "stream-checkout",
@@ -78,9 +84,7 @@ describe("planSlackSync — examples/acme-org", () => {
     graph.teams.get("platform-payments")!.doc.channels.push({ type: "slack", name: "stream-checkout" });
 
     const plan = planSlackSync(graph, live());
-    expect(plan.conflicts).toEqual([
-      { channel: "stream-checkout", teamIds: ["platform-payments", "stream-checkout"] },
-    ]);
+    expect(plan.conflicts).toEqual([{ channel: "stream-checkout", teamIds: ["platform-payments", "stream-checkout"] }]);
     expect(plan.entries.some((e) => e.channel === "stream-checkout")).toBe(false);
   });
 

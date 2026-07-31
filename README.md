@@ -6,12 +6,13 @@
   <h1>TeamAPI</h1>
   <p>Who owns this? Just <code>curl</code> your org.</p>
 
-  [![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml)
-  [![npm](https://img.shields.io/npm/v/%40jgalego%2Fteamapi?logo=npm&logoColor=white&color=cb3837)](https://www.npmjs.com/package/@jgalego/teamapi)
-  [![Socket](https://socket.dev/api/badge/npm/package/@jgalego/teamapi)](https://socket.dev/npm/package/@jgalego/teamapi)
-  [![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE)
-  [![Node](https://img.shields.io/node/v/%40jgalego%2Fteamapi?logo=node.js&logoColor=white&color=339933)](https://nodejs.org)
-  [![TypeScript](https://img.shields.io/github/package-json/dependency-version/JGalego/TeamAPI/dev/typescript?logo=typescript&logoColor=white&color=3178C6&label=TypeScript)](https://www.typescriptlang.org)
+[![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/%40jgalego%2Fteamapi?logo=npm&logoColor=white&color=cb3837)](https://www.npmjs.com/package/@jgalego/teamapi)
+[![Socket](https://socket.dev/api/badge/npm/package/@jgalego/teamapi)](https://socket.dev/npm/package/@jgalego/teamapi)
+[![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](LICENSE)
+[![Node](https://img.shields.io/node/v/%40jgalego%2Fteamapi?logo=node.js&logoColor=white&color=339933)](https://nodejs.org)
+[![TypeScript](https://img.shields.io/github/package-json/dependency-version/JGalego/TeamAPI/dev/typescript?logo=typescript&logoColor=white&color=3178C6&label=TypeScript)](https://www.typescriptlang.org)
+
 </div>
 
 Every team has an API: what it owns, who's accountable for what, how to ask it for things, how much it can take on. Usually this information is scattered across wikis, onboarding docs, and people's heads, where it drifts out of date.
@@ -92,12 +93,12 @@ Every example in this README runs against **ACME Org** ([`examples/acme-org`](ex
 
 Four more fictional-but-recognizable orgs ship alongside it, each modeled after a real-world team topology:
 
-| Example | Modeled after | Shape |
-|---|---|---|
-| [`examples/reelstream-org`](examples/reelstream-org) | Netflix-style streaming platform | Full-cycle stream team (Recommendations) + a delivery platform team + a chaos-engineering enabling team |
+| Example                                                  | Modeled after                        | Shape                                                                                                                           |
+| -------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| [`examples/reelstream-org`](examples/reelstream-org)     | Netflix-style streaming platform     | Full-cycle stream team (Recommendations) + a delivery platform team + a chaos-engineering enabling team                         |
 | [`examples/meridian-pay-org`](examples/meridian-pay-org) | Stripe-style payments infrastructure | A billing stream team, a ledger/payments platform team, and a `complicated-subsystem` fraud-scoring team it can't safely absorb |
-| [`examples/cartwell-org`](examples/cartwell-org) | Amazon-style marketplace | Two-pizza, single-threaded-owner teams (Search, Fulfillment) plus a seller-enablement team |
-| [`examples/wavelength-org`](examples/wavelength-org) | Spotify-style squads/chapters | A playlists squad, an audio-platform team, and a cross-squad chapter-coaching team |
+| [`examples/cartwell-org`](examples/cartwell-org)         | Amazon-style marketplace             | Two-pizza, single-threaded-owner teams (Search, Fulfillment) plus a seller-enablement team                                      |
+| [`examples/wavelength-org`](examples/wavelength-org)     | Spotify-style squads/chapters        | A playlists squad, an audio-platform team, and a cross-squad chapter-coaching team                                              |
 
 They work with every command in this README — swap in the path, e.g. `teamapi render examples/meridian-pay-org --scope topology`.
 
@@ -107,18 +108,18 @@ They work with every command in this README — swap in the path, e.g. `teamapi 
 
 A team includes the AI agents working alongside its people, and the knowledge they all draw on. Both live as optional sections in the same `teamapi.yml` document as everything else:
 
-| Section | What it is |
-|---|---|
-| `agents[]` | AI assistants treated as first-class team participants — provider, model, role, capabilities, permissions. |
-| `memory[]` | Persistent organizational memory: architecture decisions, conventions, lessons learned, recurring issues. |
-| `specifications[]` | Specification-driven-development artifacts — requirements/design/tasks/acceptance criteria, with a lifecycle, reviewers, approvals, and linked PRs/issues. |
+| Section               | What it is                                                                                                                                                                             |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agents[]`            | AI assistants treated as first-class team participants — provider, model, role, capabilities, permissions.                                                                             |
+| `memory[]`            | Persistent organizational memory: architecture decisions, conventions, lessons learned, recurring issues.                                                                              |
+| `specifications[]`    | Specification-driven-development artifacts — requirements/design/tasks/acceptance criteria, with a lifecycle, reviewers, approvals, and linked PRs/issues.                             |
 | `steeringDocuments[]` | Coding standards, API conventions, security guidelines, architecture principles — inherited **organization → team → project** by walking the existing `platform` team-reference chain. |
-| `prompts[]` | A version-controlled, renderable prompt library (`{{variable}}` templating, with history). |
-| `playbooks[]` | Ordered operational procedures — incident response, release, onboarding — with required roles and automation hooks. |
-| `policies[]` | Machine-readable governance (PR requirements, required approvals, security/dependency policy) for external automation to enforce. |
-| `knowledgeBase[]` | ADRs, FAQs, meeting notes, runbooks, design docs. |
-| `workflows[]` | Process state machines (e.g. testing → approval → deployment → announcement), independent of any particular CI/CD system. |
-| `sessions[]` | A record of AI collaboration sessions: objective, prompts used, artifacts produced, decisions made. |
+| `prompts[]`           | A version-controlled, renderable prompt library (`{{variable}}` templating, with history).                                                                                             |
+| `playbooks[]`         | Ordered operational procedures — incident response, release, onboarding — with required roles and automation hooks.                                                                    |
+| `policies[]`          | Machine-readable governance (PR requirements, required approvals, security/dependency policy) for external automation to enforce.                                                      |
+| `knowledgeBase[]`     | ADRs, FAQs, meeting notes, runbooks, design docs.                                                                                                                                      |
+| `workflows[]`         | Process state machines (e.g. testing → approval → deployment → announcement), independent of any particular CI/CD system.                                                              |
+| `sessions[]`          | A record of AI collaboration sessions: objective, prompts used, artifacts produced, decisions made.                                                                                    |
 
 Every section is optional, so documents written before they existed keep validating unchanged — there's no migration. And like the rest of the toolchain, they're read-only: edited in git, never `POST`ed.
 
@@ -234,21 +235,21 @@ flowchart TD
 
 `teamapi serve-api examples/acme-org --port 3000` spins up a live REST API over ACME Org. Open **`/docs`** for a Swagger UI with a "Try it out" button on every endpoint, or `/docs/json` for the raw OpenAPI spec.
 
-| Endpoint | Returns |
-|---|---|
-| `GET /teams`, `/teams/:id` | Team list / a single team |
-| `GET /teams/:id/interactions`, `/teams/:id/dependencies`, `/teams/:id/roles` | Team detail slices |
-| `GET /services`, `/services/:name` | Service catalog |
-| `GET /search?q=` | Free-text search across teams, services, roles, members |
-| `GET /graph` | The full resolved org graph |
-| `GET /diagrams/topology`, `/diagrams/hierarchy/:teamId`, `/diagrams/org-hierarchy` | Diagram data |
-| `GET /context-map` | DDD context map |
-| `GET /cognitive-load`, `/cognitive-load/:teamId` | Cognitive load assessments |
-| `GET /<domain>`, `/teams/:id/<domain>`, `/teams/:id/<domain>/:resourceId` | Any [AI-native section](#ai-native): `/agents`, `/memory`, `/specifications`, `/steering`, `/prompts`, `/playbooks`, `/policies`, `/knowledge-base`, `/workflows`, `/sessions` |
-| `POST /teams/:id/prompts/:promptId/render` | Fill a prompt's `{{variable}}` placeholders |
-| `POST /context` | [Context bundle](#ai-native) for a stated goal |
-| `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse` | [Knowledge graph](#ai-native) traversal |
-| `GET /health` | Health check |
+| Endpoint                                                                           | Returns                                                                                                                                                                        |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /teams`, `/teams/:id`                                                         | Team list / a single team                                                                                                                                                      |
+| `GET /teams/:id/interactions`, `/teams/:id/dependencies`, `/teams/:id/roles`       | Team detail slices                                                                                                                                                             |
+| `GET /services`, `/services/:name`                                                 | Service catalog                                                                                                                                                                |
+| `GET /search?q=`                                                                   | Free-text search across teams, services, roles, members                                                                                                                        |
+| `GET /graph`                                                                       | The full resolved org graph                                                                                                                                                    |
+| `GET /diagrams/topology`, `/diagrams/hierarchy/:teamId`, `/diagrams/org-hierarchy` | Diagram data                                                                                                                                                                   |
+| `GET /context-map`                                                                 | DDD context map                                                                                                                                                                |
+| `GET /cognitive-load`, `/cognitive-load/:teamId`                                   | Cognitive load assessments                                                                                                                                                     |
+| `GET /<domain>`, `/teams/:id/<domain>`, `/teams/:id/<domain>/:resourceId`          | Any [AI-native section](#ai-native): `/agents`, `/memory`, `/specifications`, `/steering`, `/prompts`, `/playbooks`, `/policies`, `/knowledge-base`, `/workflows`, `/sessions` |
+| `POST /teams/:id/prompts/:promptId/render`                                         | Fill a prompt's `{{variable}}` placeholders                                                                                                                                    |
+| `POST /context`                                                                    | [Context bundle](#ai-native) for a stated goal                                                                                                                                 |
+| `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse`                        | [Knowledge graph](#ai-native) traversal                                                                                                                                        |
+| `GET /health`                                                                      | Health check                                                                                                                                                                   |
 
 **Example:** `curl http://127.0.0.1:3000/cognitive-load`
 
@@ -280,7 +281,12 @@ flowchart TD
     "teamId": "stream-onboarding",
     "total": 11,
     "label": "sustainable",
-    "assessment": { "intrinsic": 4, "extraneous": 2, "germane": 5, "notes": "Well-bounded domain, low incidental complexity." }
+    "assessment": {
+      "intrinsic": 4,
+      "extraneous": 2,
+      "germane": 5,
+      "notes": "Well-bounded domain, low incidental complexity."
+    }
   }
 ]
 ```
@@ -584,23 +590,23 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 
 `npm install -g @jgalego/teamapi` — or `pnpm build` from a source checkout — puts `teamapi` on your PATH. If you built with `CI=true`, which skips linking, run `pnpm teamapi <command> ...` from the repo root instead.
 
-| Command | Purpose |
-|---|---|
-| `teamapi validate <patterns...>` | Resolve every `$ref` transitively and report unresolved refs |
-| `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]` | Render a diagram |
-| `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
+| Command                                                                                                                                                     | Purpose                                                                                                                                                                                                                                  |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `teamapi validate <patterns...>`                                                                                                                            | Resolve every `$ref` transitively and report unresolved refs                                                                                                                                                                             |
+| `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]`                 | Render a diagram                                                                                                                                                                                                                         |
+| `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                          | Generate a minimal, schema-valid document                                                                                                                                                                                                |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
-| `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
-| `teamapi import github-org <org> --out <dir> [--token <token>]` | Bootstrap `teamapi.yml` document(s) from an existing GitHub org |
-| `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]` | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes) |
-| `teamapi slack-sync <patterns...> [--token <token>] [--yes]` | Set each declared [Slack](#slack) channel's topic to name the team that owns it |
-| `teamapi doctor github\|slack\|pagerduty\|okta\|paperclip [--token <token>] [--url <url>] [--org <org>] [--company <id>]` | [Check a live integration](#doctor): auth, the read, field shapes, pagination |
-| `teamapi okta-drift <patterns...> --url <url> [--token <token>] [--group-prefix <prefix>]` | Report where declared members and an [Okta](#okta) directory group disagree |
-| `teamapi pagerduty-drift <patterns...> [--token <token>] [--url <url>]` | Report where [PagerDuty](#pagerduty) and the org graph disagree about who gets paged |
-| `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]` | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only) |
-| `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
-| `teamapi serve-mcp <patterns...>` | Start the MCP server |
-| `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |
+| `teamapi diff <patterns...> --against <ref>`                                                                                                                | Diff the resolved org graph against a git revision                                                                                                                                                                                       |
+| `teamapi import github-org <org> --out <dir> [--token <token>]`                                                                                             | Bootstrap `teamapi.yml` document(s) from an existing GitHub org                                                                                                                                                                          |
+| `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]`                                                                                  | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes)                                                                                                                                                |
+| `teamapi slack-sync <patterns...> [--token <token>] [--yes]`                                                                                                | Set each declared [Slack](#slack) channel's topic to name the team that owns it                                                                                                                                                          |
+| `teamapi doctor github\|slack\|pagerduty\|okta\|paperclip [--token <token>] [--url <url>] [--org <org>] [--company <id>]`                                   | [Check a live integration](#doctor): auth, the read, field shapes, pagination                                                                                                                                                            |
+| `teamapi okta-drift <patterns...> --url <url> [--token <token>] [--group-prefix <prefix>]`                                                                  | Report where declared members and an [Okta](#okta) directory group disagree                                                                                                                                                              |
+| `teamapi pagerduty-drift <patterns...> [--token <token>] [--url <url>]`                                                                                     | Report where [PagerDuty](#pagerduty) and the org graph disagree about who gets paged                                                                                                                                                     |
+| `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]`                                                                        | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only)                                                                                                                                             |
+| `teamapi serve-api <patterns...> [--port 3000]`                                                                                                             | Start the read-only REST API                                                                                                                                                                                                             |
+| `teamapi serve-mcp <patterns...>`                                                                                                                           | Start the MCP server                                                                                                                                                                                                                     |
+| `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]`                                                                           | Chat as a team or team member (requires `ANTHROPIC_API_KEY`)                                                                                                                                                                             |
 
 `<patterns...>` accepts file paths, globs, or a directory (auto-discovers every `teamapi.yml`/`.yaml` under it).
 
@@ -703,7 +709,7 @@ Only topics — not channel creation, invites or archiving. Channels no team dec
 
 ## 📟 PagerDuty
 
-Ownership without escalation is half an answer. "Who owns `checkout-api`" at three in the morning doesn't mean the org chart, it means the rotation — and those two drift apart quietly, because PagerDuty gets edited *during* an incident and `teamapi.yml` gets edited in review.
+Ownership without escalation is half an answer. "Who owns `checkout-api`" at three in the morning doesn't mean the org chart, it means the rotation — and those two drift apart quietly, because PagerDuty gets edited _during_ an incident and `teamapi.yml` gets edited in review.
 
 ```bash
 export PAGERDUTY_TOKEN=...
@@ -725,7 +731,7 @@ Only `unresponsive` exits non-zero, so this can gate a required check without or
 
 ## 🪪 Okta
 
-Every other check here compares the spec to a system the spec is supposed to drive. This one compares it to the only system authoritative *over* it: people join, move and leave whether or not anyone opens a pull request.
+Every other check here compares the spec to a system the spec is supposed to drive. This one compares it to the only system authoritative _over_ it: people join, move and leave whether or not anyone opens a pull request.
 
 ```bash
 export OKTA_TOKEN=...
@@ -746,7 +752,7 @@ Only `deactivated` exits non-zero. The dangerous finding isn't the missing name,
 
 ## 🩺 Checking an integration
 
-Every network integration here degrades silently rather than loudly. A rejected Slack token reads as an empty workspace, so every declared channel comes back `missing`. An Okta client that stops at page one makes everyone past the first batch look like a leaver — a *blocking* finding about people who never left.
+Every network integration here degrades silently rather than loudly. A rejected Slack token reads as an empty workspace, so every declared channel comes back `missing`. An Okta client that stops at page one makes everyone past the first batch look like a leaver — a _blocking_ finding about people who never left.
 
 ```bash
 teamapi doctor slack --token xoxb-…

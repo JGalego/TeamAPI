@@ -50,4 +50,10 @@ export type Specification = z.infer<typeof SpecificationSchema>;
 export const SpecificationsSchema = z
   .array(SpecificationSchema)
   .default([])
-  .superRefine((specs, ctx) => checkUniqueIds(specs.map((s) => s.id), ctx, "a team's specifications[]"));
+  .superRefine((specs, ctx) =>
+    checkUniqueIds(
+      specs.map((s) => s.id),
+      ctx,
+      "a team's specifications[]",
+    ),
+  );

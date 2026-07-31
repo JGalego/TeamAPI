@@ -15,5 +15,7 @@ export function membersByRole(team: ResolvedTeam): Map<string, string[]> {
 
 /** Renders a role node label as "Name (Kind) — member, member" or "Name (Kind) — vacant". */
 export function labelForRole(role: { name: string; kind: string }, memberNames: string[] | undefined): string {
-  return memberNames?.length ? `${role.name} (${role.kind}) — ${memberNames.join(", ")}` : `${role.name} (${role.kind}) — vacant`;
+  return memberNames?.length
+    ? `${role.name} (${role.kind}) — ${memberNames.join(", ")}`
+    : `${role.name} (${role.kind}) — vacant`;
 }

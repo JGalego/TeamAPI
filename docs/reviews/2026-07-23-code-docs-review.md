@@ -19,6 +19,7 @@ drift.
 ## 1. Fix now (high severity)
 
 ### 1.1 Same-team `reportsTo` is never validated against real role ids
+
 **Files:** `packages/core/src/diagrams/hierarchy.ts:23`, `packages/core/src/diagrams/org-hierarchy.ts:38-47`, `packages/schema/src/v1/roles.ts:49-53`
 
 Cross-team references (`reportsToRef`, `alignsWith`) are validated by `graph-builder.ts` via
@@ -35,6 +36,7 @@ reporting line is dropped with zero diagnostics anywhere in the pipeline.
 practice" — enforce it). Also add a self-report/same-team cycle check (A→B→A).
 
 ### 1.2 Duplicate `roles[].id` / `members[].id` is unenforced
+
 **Files:** `packages/schema/src/v1/roles.ts:61,75`
 
 The spec (`docs/spec/teamapi-extended-v1.md:66,104`) requires role/member ids to be unique within
@@ -46,6 +48,7 @@ roles sharing an id parse successfully and then corrupt every id-indexed consume
 duplicate-team-id check pattern already used in `graph-builder.ts`.
 
 ### 1.3 `--scope` / `--format` on `teamapi render` accept any string and silently fall back
+
 **File:** `packages/cli/src/commands/render.ts:30-34`, `packages/cli/src/main.ts:26-27`
 
 Both flags are free-text options with no `.choices()` constraint. `--scope toplogy` (typo) or
@@ -57,6 +60,7 @@ diagram / Mermaid) and exits 0 — no error, no warning. Commander (already a de
 `.choices(["mermaid","dot"])` on the respective options in `main.ts`.
 
 ### 1.4 `teamapi scaffold` misattributes user-input errors to "a bug in the template"
+
 **File:** `packages/cli/src/commands/scaffold.ts:31-36`
 
 An invalid `<id>` (not kebab-case) or invalid `--type` fails `TeamApiDocumentSchema.safeParse`, but
@@ -69,6 +73,7 @@ elsewhere in the codebase for exactly this kind of output.
 `--type`), not an implied internal bug.
 
 ### 1.5 `get_org_graph` (MCP) and `GET /graph` (REST) both silently omit `roleEdges`
+
 **Files:** `packages/mcp-server/src/tools/register.ts:197-214`, `packages/rest-api/src/routes/graph.ts:16-21`, root cause in `packages/core/src/model/org-graph.ts:33-47`
 
 Both are documented/described as returning "the full resolved org graph" / "all edges," but neither
@@ -82,10 +87,11 @@ claim.
 would fix both call sites at once — see §4 below on de-duplication).
 
 ### 1.6 The spec document's own `$ref`-resolution list is wrong
+
 **File:** `docs/spec/teamapi-extended-v1.md:21-24` vs. `packages/core/src/resolve/graph-builder.ts:125-131`
 
 The spec states `$ref` is resolved only in `platform`, `interactions[]`, and `dependencies[]`, and
-explicitly says `work.*[].$ref` is *not* traversed — but never mentions `roles[].reportsToRef.$ref`
+explicitly says `work.*[].$ref` is _not_ traversed — but never mentions `roles[].reportsToRef.$ref`
 or `roles[].alignsWith[].$ref` at all, both of which **are** traversed by the resolver (confirmed
 in code) and are exactly what makes the README's org-wide role-hierarchy diagram possible. The
 spec's own enumeration of what gets resolved is incomplete and misleading.
@@ -95,6 +101,7 @@ spec's own enumeration of what gets resolved is incomplete and misleading.
 `roles[].alignsWith[].$ref`) and confirm `work.*` remains intentionally unresolved.
 
 ### 1.7 Five of eleven links in the spec's root-object table point at non-existent anchors
+
 **File:** `docs/spec/teamapi-extended-v1.md:36-46`
 
 `#channel`, `#searchterm`, `#ref`, `#work`, `#meeting` don't exist as headings anywhere in the
@@ -108,6 +115,7 @@ sections (field tables, matching the style already used for `Team`/`Role`/`Servi
 mismatched anchor text on the other three.
 
 ### 1.8 `chat` package pins a different major of `zod` than every sibling package
+
 **File:** `packages/chat/package.json:30` (`zod: "^4.0.0"`) vs. `core`/`mcp-server`/`schema` (`^3.23.8`)
 
 `packages/chat/src/tools.ts` re-declares the same tool schemas as `mcp-server` but under Zod v4,
@@ -120,6 +128,7 @@ catch it, plus it forces two zod majors to coexist in `node_modules`.
 `@anthropic-ai/sdk`'s zod helper is tested against that version.
 
 ### 1.9 `packages/cli/src/commands/chat.ts` has zero test coverage
+
 **File:** `packages/cli/src/__tests__/` (no `chat` references at all)
 
 This is the actual command a user runs (`teamapi chat`), and it's where the largest share of
@@ -135,13 +144,15 @@ missing-`ANTHROPIC_API_KEY` early exit, and the `--debug` formatting helpers
 ## 2. Medium-severity findings, by package
 
 ### `packages/schema`
+
 - **No `.passthrough()` on `RefSchema`/`RoleRefSchema`** (`primitives.ts:10-12`, `roles.ts:7-10`) — breaks the spec's blanket claim that "every object allows unknown `x-*` vendor fields," unlike the structurally identical `InteractionSchema`/`DependencySchema` which do call `.passthrough()`. Any `x-*` field on a `platform:`, `reportsToRef:`, or `alignsWith[]` entry is silently stripped.
 - **`SUGGESTED_ROLE_KINDS`, `isSupportedVersion`, `resolveSchemaForVersion`** (`packages/schema/src/index.ts:9-22`) have zero test coverage and zero consumers anywhere in the monorepo — dead, untested exports (versioning forward-compat seam, currently unused since only `1.0.0` exists).
 - Root README's `find_service_owner` field-order in the JSON example was verified **correct**, including why `versioning` appears before `repository` (zod parse output follows shape-declaration order, not YAML source order) — noted here as a **non-issue**, since it's the kind of thing that looks like a bug at first glance.
 
 ### `packages/core`
+
 - **`detectConflicts` only compares interaction `mode`, never `contextMappingPattern`** (`context-map/derive.ts:62`) — two teams can declare genuinely conflicting DDD patterns (`SharedKernel` vs. `Conformist`) under the same `mode` and no conflict is surfaced, undercutting the function's own doc comment.
-- **A duplicate team id's own outbound refs are never traversed** (`resolve/graph-builder.ts:76-84`) — if the *shadowed* copy of a duplicate id was the only file referencing some other team, that other team silently vanishes from the graph with no specific diagnostic beyond the generic "duplicate id" entry.
+- **A duplicate team id's own outbound refs are never traversed** (`resolve/graph-builder.ts:76-84`) — if the _shadowed_ copy of a duplicate id was the only file referencing some other team, that other team silently vanishes from the graph with no specific diagnostic beyond the generic "duplicate id" entry.
 - **`findServiceOwner` assumes globally-unique service names** (`model/queries.ts:73`) — two teams can declare identically-named services; the function returns whichever was inserted first (an accident of Map iteration order), with no duplicate detection (unlike the explicit duplicate-team-id check elsewhere in the codebase).
 - **Cognitive-load thresholds ignore composition** (`cognitive-load/score.ts:21`) — `total ≥ 18/24` fires identically for `(intrinsic=10, germane=10, extraneous=1)` and `(intrinsic=1, germane=1, extraneous=16)`, conflating a benign profile with a genuinely bad one, despite the doc's own framing that extraneous load should be weighted worse.
 - **`getInteractions` defaults to `"both"`, `getDependencies` defaults to `"out"`** (`model/queries.ts:30,40`) — undocumented, easy-to-miss asymmetry between two near-identical function signatures.
@@ -149,7 +160,8 @@ missing-`ANTHROPIC_API_KEY` early exit, and the `--debug` formatting helpers
 - **`packages/core/README.md`** documents 3 of ~20+ public exports (cognitive-load scoring, context mapping, org-hierarchy diagrams, the CrewAI generator, and the entire `model/queries.ts` surface are all undocumented).
 
 ### `packages/cli`
-- **`--team` validation is inconsistent per `--scope`**: throws for `hierarchy`, silently produces an *empty* diagram for `topology`/`context-map` on an unknown id, and is silently ignored entirely for `org-hierarchy` (which doesn't accept team scoping at all) — none of this per-scope difference is documented.
+
+- **`--team` validation is inconsistent per `--scope`**: throws for `hierarchy`, silently produces an _empty_ diagram for `topology`/`context-map` on an unknown id, and is silently ignored entirely for `org-hierarchy` (which doesn't accept team scoping at all) — none of this per-scope difference is documented.
 - **Only `validate` inspects `graph.unresolved`**; `render`/`generate`/`serve-api`/`serve-mcp`/`chat` all build the graph with `allowPartial: true` and never check for partial-failure state, so a broken `$ref` or invalid team is silently dropped and the command proceeds as if everything were fine.
 - **`--port` has no validation** (`main.ts:70-73`, `serve-api.ts:19-20`) — `NaN`/negative/out-of-range values are only ever rejected deep inside Node/Fastify internals with a raw, unfriendly message.
 - **Hardcoded `--version` "0.1.0"** (`main.ts:12`) has drifted from the actual published `0.1.1`.
@@ -157,6 +169,7 @@ missing-`ANTHROPIC_API_KEY` early exit, and the `--debug` formatting helpers
 - No `engines` field in the **published** `packages/cli/package.json`, despite the root repo requiring Node ≥22 — a user on an unsupported Node version gets no npm-level warning for the actual installed artifact.
 
 ### `packages/rest-api`
+
 - **CORS/auth/rate-limiting**: none configured, and neither README mentions this as an operational caveat (though the CLI does correctly bind to `127.0.0.1`, not `0.0.0.0`, by default — a good safe default).
 - **`/graph`'s `meta.sourceRoots` and `unresolved[].fromUri`/`.reason` leak server filesystem paths** — low severity in isolation (read-only localhost dev tool) but worth a documented caveat given `buildServer` is also offered for embedding with an arbitrary `host`.
 - **`/search`'s own "missing `q`" check is dead code** for the fully-absent case (Fastify's AJV schema validation already 400s first) and only reachable for `q=` (present-but-empty) — two different error bodies for what a user would consider the same mistake.
@@ -165,6 +178,7 @@ missing-`ANTHROPIC_API_KEY` early exit, and the `--debug` formatting helpers
 - **Test coverage gaps**: `/teams/:id/dependencies`, `/teams/:id/roles`, `/services` list, `/diagrams/hierarchy/:teamId`, `/cognitive-load/:teamId`, `format=dot` branches, and `/docs`/`/docs/json` themselves all have **zero tests**.
 
 ### `packages/mcp-server`
+
 - **No `get_team_dependencies` tool** — `get_team_interactions` exists but there's no equivalent for the `Slowing`/`Blocking`/`OK` dependency edges that REST exposes via `/teams/:id/dependencies`; an assistant asked "what's blocking Stream Checkout?" has no direct tool for it.
 - **`find_service_owner` requires an exact match while `list_services`/`search_org` use substring matching**, and no tool description discloses this — a plausible wrong-tool-choice failure (`find_service_owner({serviceName:"checkout"})` fails even though `checkout-api` exists).
 - **7 of 12 tools are never actually invoked in tests** (only checked by name in a registered-tools list); `get_org_cognitive_load_report` isn't even in that name list, suggesting the test predates the tool.
@@ -173,6 +187,7 @@ missing-`ANTHROPIC_API_KEY` early exit, and the `--debug` formatting helpers
 - No `.min(1)` on free-text search inputs — an empty-string `search`/`query` silently matches everything instead of erroring.
 
 ### `packages/chat`
+
 - **No `stop_reason` check before reading the final message** (`packages/cli/src/commands/chat.ts:135-141`) — a `refusal`/`max_tokens` response returns HTTP 200 and is not caught, silently producing an empty or truncated reply with no indication anything went wrong.
 - **No turn/iteration cap on the tool-use loop**, and `onToolCall` is wired only under `--debug` — in default mode, a model stuck in a call-observe-call cycle just looks like the CLI hanging, with no visibility or cost guard.
 - **Tool schemas/dispatch fully duplicated** between `chat` and `mcp-server` (see §4) — already drifted: `chat`'s tools signal failure via a plain string prefix (`"Error: ..."`), while `mcp-server`'s `errorResult()` sets a structured `isError: true`, a weaker and inconsistent failure signal on the chat side.
@@ -208,7 +223,7 @@ interactions, context map, diagrams, search) are implemented **three separate ti
 MCP tool handlers (`packages/mcp-server/src/tools/register.ts`), once as Anthropic tool-use
 handlers (`packages/chat/src/tools.ts`), and once as REST routes
 (`packages/rest-api/src/routes/*.ts`) — each with its own hand-written Zod/JSON-Schema input
-validation and its own error-shaping convention. All three do correctly delegate the actual *data*
+validation and its own error-shaping convention. All three do correctly delegate the actual _data_
 logic to shared `@jgalego/teamapi-core` functions (so answers are consistent), but the **schema
 definitions, descriptions, and error-handling conventions are not shared**, and this report found
 concrete drift already: the team-type enum is hand-copied in two places, `find_service_owner`'s

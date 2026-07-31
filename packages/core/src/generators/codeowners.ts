@@ -43,7 +43,10 @@ export interface CodeownersOptions {
 /** `https://github.com/acme/checkout-api.git` → `acme/checkout-api`. Returns null for anything
  * that isn't a two-segment path, since CODEOWNERS has nowhere to go without `owner/repo`. */
 export function parseRepoSlug(repository: string): string | null {
-  const trimmed = repository.trim().replace(/\.git$/, "").replace(/\/+$/, "");
+  const trimmed = repository
+    .trim()
+    .replace(/\.git$/, "")
+    .replace(/\/+$/, "");
   const withoutScheme = trimmed.replace(/^[a-z+]+:\/\//i, "").replace(/^git@([^:]+):/i, "$1/");
   const segments = withoutScheme.split("/").filter(Boolean);
   if (segments.length < 3) return null; // host + owner + repo

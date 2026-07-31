@@ -91,7 +91,9 @@ describe("diffOrgGraphs", () => {
   });
 
   it("does not report a team as changed when nothing about it actually differs", () => {
-    const team = makeTeam("team-a", { roles: [{ id: "r", name: "R", kind: "Engineer", responsibilities: [], alignsWith: [] }] });
+    const team = makeTeam("team-a", {
+      roles: [{ id: "r", name: "R", kind: "Engineer", responsibilities: [], alignsWith: [] }],
+    });
     const diff = diffOrgGraphs(makeGraph([team]), makeGraph([makeTeam("team-a", team.doc)]));
     expect(diff.teamsChanged).toEqual([]);
   });
@@ -170,7 +172,9 @@ describe("formatOrgGraphDiff", () => {
     const newGraph = makeGraph(
       [
         ...teams.filter((t) => t.id !== "team-c"),
-        makeTeam("team-a", { roles: [{ id: "new-role", name: "New Role", kind: "Engineer", responsibilities: [], alignsWith: [] }] }),
+        makeTeam("team-a", {
+          roles: [{ id: "new-role", name: "New Role", kind: "Engineer", responsibilities: [], alignsWith: [] }],
+        }),
         makeTeam("team-d"),
       ],
       { edges: [{ kind: "dependency", from: "team-a", to: "team-b", type: "Blocking" }] },

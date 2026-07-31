@@ -49,7 +49,8 @@ export interface KnowledgeGraph {
 }
 
 const teamNodeId = (teamId: TeamId) => `team:${teamId}`;
-const resourceNodeId = (kind: KnowledgeNodeKind, teamId: TeamId, resourceId: string) => `${kind}:${teamId}:${resourceId}`;
+const resourceNodeId = (kind: KnowledgeNodeKind, teamId: TeamId, resourceId: string) =>
+  `${kind}:${teamId}:${resourceId}`;
 
 /**
  * Derives a knowledge graph linking every resource this schema knows about: teams, people, AI

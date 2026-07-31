@@ -2,11 +2,7 @@ import * as path from "node:path";
 import { beforeAll, describe, expect, it } from "vitest";
 import { buildOrgGraph } from "../resolve/graph-builder";
 import type { OrgGraph } from "../model/org-graph";
-import {
-  formatDriftReport,
-  planPaperclipDrift,
-  type PaperclipAgent,
-} from "../apply/paperclip-drift";
+import { formatDriftReport, planPaperclipDrift, type PaperclipAgent } from "../apply/paperclip-drift";
 
 const EXAMPLES = path.resolve(__dirname, "../../../../examples/acme-org");
 let graph: OrgGraph;
@@ -35,10 +31,7 @@ describe("paperclip drift", () => {
   });
 
   it("flags an agent running in Paperclip that no document declares", () => {
-    const report = planPaperclipDrift(graph, "c1", [
-      ...allDeclared(),
-      { id: "rogue-1", name: "ShadowAgent" },
-    ]);
+    const report = planPaperclipDrift(graph, "c1", [...allDeclared(), { id: "rogue-1", name: "ShadowAgent" }]);
     const undeclared = report.findings.filter((f) => f.kind === "undeclared");
     expect(undeclared).toHaveLength(1);
     expect(undeclared[0].detail).toContain("ShadowAgent");
@@ -76,9 +69,7 @@ describe("paperclip drift", () => {
   });
 
   it("summarises counts and marks blocking findings in the formatted report", () => {
-    const report = planPaperclipDrift(graph, "c1", [
-      generated("stream-onboarding", "kyc-helper", "KycHelper"),
-    ]);
+    const report = planPaperclipDrift(graph, "c1", [generated("stream-onboarding", "kyc-helper", "KycHelper")]);
     const text = formatDriftReport(report);
     expect(text).toContain("! forbidden");
     expect(text).toMatch(/blocking/);

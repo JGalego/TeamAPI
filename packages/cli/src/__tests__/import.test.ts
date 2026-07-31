@@ -48,7 +48,9 @@ describe("runImport", () => {
   it("writes one <team-id>/teamapi.yml per GitHub team", async () => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValueOnce(jsonResponse([{ slug: "stream-checkout", name: "Stream Checkout", description: "Cart and checkout" }]))
+      .mockResolvedValueOnce(
+        jsonResponse([{ slug: "stream-checkout", name: "Stream Checkout", description: "Cart and checkout" }]),
+      )
       .mockResolvedValueOnce(jsonResponse([{ login: "diego-alves" }]))
       .mockResolvedValueOnce(jsonResponse([{ name: "checkout-api", html_url: "https://github.com/acme/checkout-api" }]))
       .mockResolvedValueOnce(jsonResponse({ login: "diego-alves", name: "Diego Alves", email: "diego@acme.example" }));
@@ -57,14 +59,15 @@ describe("runImport", () => {
     const code = await runImport("github-org", "acme", { out: tmpDir, token: "test-token" });
 
     expect(code).toBe(0);
-    const written = YAML.load(await fs.readFile(path.join(tmpDir, "stream-checkout", "teamapi.yml"), "utf-8")) as Record<
-      string,
-      unknown
-    >;
+    const written = YAML.load(
+      await fs.readFile(path.join(tmpDir, "stream-checkout", "teamapi.yml"), "utf-8"),
+    ) as Record<string, unknown>;
     expect(written).toMatchObject({
       id: "stream-checkout",
       info: { name: "Stream Checkout", focus: "Cart and checkout", type: "stream-aligned" },
-      members: [{ id: "diego-alves", name: "Diego Alves", contact: "diego@acme.example", githubUsername: "diego-alves" }],
+      members: [
+        { id: "diego-alves", name: "Diego Alves", contact: "diego@acme.example", githubUsername: "diego-alves" },
+      ],
       services: [{ name: "checkout-api", repository: "https://github.com/acme/checkout-api" }],
     });
     expect(logSpy.mock.calls.flat().join("\n")).toContain("Wrote 1 team(s)");
@@ -78,7 +81,10 @@ describe("runImport", () => {
   });
 
   it("returns 1 and surfaces the error when the GitHub API call fails", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("bad credentials", { status: 401, statusText: "Unauthorized" })));
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(new Response("bad credentials", { status: 401, statusText: "Unauthorized" })),
+    );
     const code = await runImport("github-org", "acme", { out: tmpDir, token: "test-token" });
     expect(code).toBe(1);
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("401"));

@@ -41,4 +41,10 @@ export type Playbook = z.infer<typeof PlaybookSchema>;
 export const PlaybooksSchema = z
   .array(PlaybookSchema)
   .default([])
-  .superRefine((playbooks, ctx) => checkUniqueIds(playbooks.map((p) => p.id), ctx, "a team's playbooks[]"));
+  .superRefine((playbooks, ctx) =>
+    checkUniqueIds(
+      playbooks.map((p) => p.id),
+      ctx,
+      "a team's playbooks[]",
+    ),
+  );

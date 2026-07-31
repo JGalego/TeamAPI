@@ -92,20 +92,10 @@ export function renderAgentsMd(graph: OrgGraph, teamId: TeamId, services: string
   );
 
   const steering = doc.steeringDocuments ?? [];
-  parts.push(
-    section(
-      "How this team works",
-      steering.map((s) => `### ${s.title}\n\n${s.body.trim()}`).join("\n\n"),
-    ),
-  );
+  parts.push(section("How this team works", steering.map((s) => `### ${s.title}\n\n${s.body.trim()}`).join("\n\n")));
 
   const specs = doc.specifications ?? [];
-  parts.push(
-    section(
-      "Specifications",
-      list(specs.map((s) => `**${s.title}** (${s.kind}, ${s.status})`)),
-    ),
-  );
+  parts.push(section("Specifications", list(specs.map((s) => `**${s.title}** (${s.kind}, ${s.status})`))));
 
   parts.push(
     section(
@@ -115,7 +105,13 @@ export function renderAgentsMd(graph: OrgGraph, teamId: TeamId, services: string
     ),
   );
 
-  return parts.filter(Boolean).join("").replace(/\n{3,}/g, "\n\n").trimStart() + "\n";
+  return (
+    parts
+      .filter(Boolean)
+      .join("")
+      .replace(/\n{3,}/g, "\n\n")
+      .trimStart() + "\n"
+  );
 }
 
 /**

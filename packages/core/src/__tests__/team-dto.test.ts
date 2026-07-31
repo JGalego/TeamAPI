@@ -28,7 +28,13 @@ describe("toTeamDetailDto", () => {
   it("includes the scored cognitive load, not just the raw assessment", () => {
     const team = graph.teams.get("stream-checkout")!;
     const dto = toTeamDetailDto(team);
-    expect(dto.cognitiveLoad).toMatchObject({ intrinsic: 6, extraneous: 8, germane: 4, total: 18, label: "overloaded" });
+    expect(dto.cognitiveLoad).toMatchObject({
+      intrinsic: 6,
+      extraneous: 8,
+      germane: 4,
+      total: 18,
+      label: "overloaded",
+    });
   });
 
   it("omits cognitiveLoad for a team with no assessment", () => {

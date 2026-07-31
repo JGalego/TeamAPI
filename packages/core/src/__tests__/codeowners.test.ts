@@ -7,8 +7,11 @@ const ACME_ROOT = path.resolve(__dirname, "../../../../examples/acme-org");
 const CHECKOUT_SEED = path.join(ACME_ROOT, "stream-checkout/teamapi.yml");
 
 const checkout = (files: { repo: string }[]) =>
-  files.find((f) => f.repo === "acme-example/checkout-api") as never as
-    { content: string; teamId: string; services: string[] };
+  files.find((f) => f.repo === "acme-example/checkout-api") as never as {
+    content: string;
+    teamId: string;
+    services: string[];
+  };
 
 describe("parseRepoSlug", () => {
   it("reduces the URL forms a repository field actually carries to owner/repo", () => {
@@ -49,7 +52,9 @@ describe("codeowners generator — examples/acme-org", () => {
   it("falls back to member handles when no org is given", async () => {
     const graph = await buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
     const { files } = buildCodeowners(graph);
-    const rule = checkout(files).content.split("\n").find((l) => l.startsWith("* "))!;
+    const rule = checkout(files)
+      .content.split("\n")
+      .find((l) => l.startsWith("* "))!;
     // every handle on the rule line is a real githubUsername from the team document
     const declared = new Set(graph.teams.get("stream-checkout")!.doc.members.map((m) => m.githubUsername));
     for (const owner of rule.slice(2).split(" ")) {

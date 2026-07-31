@@ -1,10 +1,4 @@
-import {
-  buildOrgGraph,
-  formatOktaDrift,
-  OktaClient,
-  planOktaDrift,
-  type DirectoryGroup,
-} from "@jgalego/teamapi-core";
+import { buildOrgGraph, formatOktaDrift, OktaClient, planOktaDrift, type DirectoryGroup } from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 

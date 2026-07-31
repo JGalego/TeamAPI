@@ -14,12 +14,7 @@ export const RefSchema = z
   .passthrough();
 export type Ref = z.infer<typeof RefSchema>;
 
-export const TeamTypeSchema = z.enum([
-  "stream-aligned",
-  "platform",
-  "complicated-subsystem",
-  "enabling",
-]);
+export const TeamTypeSchema = z.enum(["stream-aligned", "platform", "complicated-subsystem", "enabling"]);
 export type TeamType = z.infer<typeof TeamTypeSchema>;
 
 /** Team Topologies interaction modes (canonical lowercase-kebab casing for this extended schema). */

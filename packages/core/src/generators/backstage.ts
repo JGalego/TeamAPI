@@ -38,7 +38,11 @@ export interface BackstageComponentEntity {
   spec: { type: "service"; lifecycle: "production"; owner: string; system: string };
 }
 
-export type BackstageEntity = BackstageGroupEntity | BackstageUserEntity | BackstageSystemEntity | BackstageComponentEntity;
+export type BackstageEntity =
+  | BackstageGroupEntity
+  | BackstageUserEntity
+  | BackstageSystemEntity
+  | BackstageComponentEntity;
 
 export interface BackstageCatalog {
   teamId: TeamId;

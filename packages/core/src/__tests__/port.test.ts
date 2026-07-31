@@ -12,11 +12,7 @@ const of = (c: { entities: { blueprint: string; identifier: string }[] }, bluepr
 
 describe("portBlueprints", () => {
   it("declares the three blueprints the entities reference, and nothing else", () => {
-    expect(portBlueprints().map((b) => b.identifier)).toEqual([
-      "teamapi_team",
-      "teamapi_service",
-      "teamapi_person",
-    ]);
+    expect(portBlueprints().map((b) => b.identifier)).toEqual(["teamapi_team", "teamapi_service", "teamapi_person"]);
   });
 
   it("points every relation at a blueprint that exists", () => {
