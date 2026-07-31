@@ -25,14 +25,15 @@ teamapi gaps examples/acme-org
 4 finding(s), 0 blocking; 9 seam(s) checked.
 ```
 
-| finding               | meaning                                                        | blocking |
-| --------------------- | -------------------------------------------------------------- | -------- |
-| `orphan-subscription` | a service subscribes to an event no declared service publishes | **yes**  |
-| `dangling-owner`      | an agent's `ownerId` names nobody in that team's `members[]`   | **yes**  |
-| `unconsumed-event`    | a service publishes an event no declared service subscribes to | no       |
-| `vacant-load-bearing` | a vacant role another team's reporting line terminates in      | no       |
-| `unacknowledged`      | a `collaboration` the other team declares nothing back about   | no       |
-| `unaccountable-agent` | an `agents[]` entry naming no `ownerId` at all                 | no       |
+| finding                | meaning                                                        | blocking |
+| ---------------------- | -------------------------------------------------------------- | -------- |
+| `orphan-subscription`  | a service subscribes to an event no declared service publishes | **yes**  |
+| `dangling-owner`       | an agent's `ownerId` names nobody in that team's `members[]`   | **yes**  |
+| `unconsumed-event`     | a service publishes an event no declared service subscribes to | no       |
+| `vacant-load-bearing`  | a vacant role another team's reporting line terminates in      | no       |
+| `unacknowledged`       | a `collaboration` the other team declares nothing back about   | no       |
+| `unaccountable-agent`  | an `agents[]` entry naming no `ownerId` at all                 | no       |
+| `unscored-supervision` | active agents, but no `cognitiveLoad.supervision` score        | no       |
 
 **Two findings exit non-zero, and they have the same shape as each other:** the declaration _looks_
 complete and isn't. This is the argument [`okta.md`](okta.md) makes about deactivated accounts —
@@ -56,6 +57,10 @@ broken or depends on a publisher nobody has written down, and both are worth sto
   state of any org. Failing a build because somebody resigned would make the check something teams
   route around.
 - **`unacknowledged`** may just mean the other team has not written their side up yet.
+- **`unscored-supervision`** is a prompt, not a defect: supervising agents is real work that no role
+  describes and no sprint budgets for, and a cognitive-load assessment that omits it is describing
+  a quieter team than the one doing the work. Only reported for teams that assess their load at all
+  and run at least one active agent.
 
 ## Matching
 

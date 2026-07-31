@@ -42,6 +42,15 @@ describe("toTeamDetailDto", () => {
     expect(toTeamDetailDto(team).cognitiveLoad).toBeUndefined();
   });
 
+  it("carries supervision through without adding it to total", () => {
+    const dto = toTeamDetailDto(graph.teams.get("platform-payments")!);
+    expect(dto.cognitiveLoad).toMatchObject({ intrinsic: 7, extraneous: 5, germane: 6, supervision: 6, total: 18 });
+  });
+
+  it("leaves supervision undefined for a team that has not scored it", () => {
+    expect(toTeamDetailDto(graph.teams.get("stream-checkout")!).cognitiveLoad!.supervision).toBeUndefined();
+  });
+
   it("flattens searchTerms to plain strings and exposes the platform $ref", () => {
     const team = graph.teams.get("stream-checkout")!;
     const dto = toTeamDetailDto(team);
