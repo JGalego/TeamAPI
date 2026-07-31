@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "@jgalego/teamapi-core": "workspace:*",
-    "@jgalego/teamapi-schema": "workspace:*",
     "@anthropic-ai/sdk": "^0.112.3",
     "zod": "^3.23.8"
   },
