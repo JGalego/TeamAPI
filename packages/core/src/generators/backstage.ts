@@ -39,10 +39,7 @@ export interface BackstageComponentEntity {
 }
 
 export type BackstageEntity =
-  | BackstageGroupEntity
-  | BackstageUserEntity
-  | BackstageSystemEntity
-  | BackstageComponentEntity;
+  BackstageGroupEntity | BackstageUserEntity | BackstageSystemEntity | BackstageComponentEntity;
 
 export interface BackstageCatalog {
   teamId: TeamId;
