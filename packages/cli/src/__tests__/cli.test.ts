@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { runValidate } from "../commands/validate";
 import { runGaps } from "../commands/gaps";
+import { runShadowAi } from "../commands/shadow-ai";
 import { runRender } from "../commands/render";
 import { runScaffold } from "../commands/scaffold";
 import { runGenerate } from "../commands/generate";
@@ -55,6 +56,39 @@ describe("teamapi gaps", () => {
   it("exits 1 when no files match", async () => {
     const code = await runGaps([path.join(tmpDir, "*.yml")]);
     expect(code).toBe(1);
+  });
+});
+
+describe("teamapi shadow-ai", () => {
+  const seedRepo = async (name: string, files: Record<string, string>) => {
+    for (const [relative, content] of Object.entries(files)) {
+      const target = path.join(tmpDir, name, relative);
+      await fs.mkdir(path.dirname(target), { recursive: true });
+      await fs.writeFile(target, content, "utf-8");
+    }
+  };
+
+  it("exits 0 when the only AI usage is in a repo whose team declares agents", async () => {
+    await seedRepo("payments-api", { ".mcp.json": "{}" });
+    expect(await runShadowAi([ACME_GLOB], { scan: tmpDir })).toBe(0);
+  });
+
+  it("exits 1 when AI artifacts appear in a repo whose team's policy forbids agents", async () => {
+    await seedRepo("onboarding-api", { ".mcp.json": "{}" });
+    expect(await runShadowAi([ACME_GLOB], { scan: tmpDir })).toBe(1);
+  });
+
+  it("exits 1 when the scan directory does not exist", async () => {
+    expect(await runShadowAi([ACME_GLOB], { scan: path.join(tmpDir, "nope") })).toBe(1);
+  });
+
+  it("exits 1 when the scan directory holds no repositories", async () => {
+    expect(await runShadowAi([ACME_GLOB], { scan: tmpDir })).toBe(1);
+  });
+
+  it("exits 1 when no files match", async () => {
+    await seedRepo("payments-api", { ".mcp.json": "{}" });
+    expect(await runShadowAi([path.join(tmpDir, "*.yml")], { scan: tmpDir })).toBe(1);
   });
 });
 

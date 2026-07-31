@@ -9,6 +9,7 @@ import type { Command } from "commander";
 const {
   runValidate,
   runGaps,
+  runShadowAi,
   runRender,
   runScaffold,
   runGenerate,
@@ -25,6 +26,7 @@ const {
 } = vi.hoisted(() => ({
   runValidate: vi.fn(async () => 0),
   runGaps: vi.fn(async () => 0),
+  runShadowAi: vi.fn(async () => 0),
   runRender: vi.fn(async () => 0),
   runScaffold: vi.fn(async () => 0),
   runGenerate: vi.fn(async () => 0),
@@ -42,6 +44,7 @@ const {
 
 vi.mock("../commands/validate", () => ({ runValidate }));
 vi.mock("../commands/gaps", () => ({ runGaps }));
+vi.mock("../commands/shadow-ai", () => ({ runShadowAi }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
@@ -487,5 +490,18 @@ describe("createProgram — gaps", () => {
   it("requires at least one pattern", async () => {
     const { program } = freshProgram();
     await expect(program.parseAsync(["node", "teamapi", "gaps"])).rejects.toThrow();
+  });
+});
+
+describe("createProgram — shadow-ai", () => {
+  it("passes patterns and --scan through to runShadowAi", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "shadow-ai", "org", "--scan", "./repos"]);
+    expect(runShadowAi).toHaveBeenCalledWith(["org"], { scan: "./repos" });
+  });
+
+  it("requires --scan", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "shadow-ai", "org"])).rejects.toThrow();
   });
 });
