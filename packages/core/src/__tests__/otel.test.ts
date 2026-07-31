@@ -100,7 +100,7 @@ describe("collector config", () => {
     const parsed = YAML.load(buildCollectorConfig(buildOtelAttributes(await acme()))) as {
       processors: { "transform/teamapi": Record<string, Array<{ statements: string[] }>> };
     };
-    const p = parsed.processors["transform/teamapi"]!;
+    const p = parsed.processors["transform/teamapi"];
     expect(p.trace_statements![0]!.statements).toEqual(p.metric_statements![0]!.statements);
     expect(p.trace_statements![0]!.statements).toEqual(p.log_statements![0]!.statements);
   });

@@ -192,7 +192,7 @@ describe("runSlackSync", () => {
   it("sets the topic once when --yes is given", async () => {
     const setTopics: string[] = [];
     vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
-      if (String(url).includes("setTopic")) setTopics.push(String(init?.body));
+      if (String(url).includes("setTopic")) setTopics.push(typeof init?.body === "string" ? init.body : "");
       return {
         ok: true,
         status: 200,
@@ -202,7 +202,7 @@ describe("runSlackSync", () => {
 
     expect(await runSlackSync([ACME], { token: "t", yes: true })).toBe(0);
     expect(setTopics).toHaveLength(1);
-    const sent = new URLSearchParams(setTopics[0]!);
+    const sent = new URLSearchParams(setTopics[0]);
     expect(sent.get("channel")).toBe("C1");
     expect(sent.get("topic")).toContain("Stream Checkout");
     expect(logs.join("\n")).toContain("Applied.");

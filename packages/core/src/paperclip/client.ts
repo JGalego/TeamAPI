@@ -49,7 +49,7 @@ export class PaperclipClient {
     });
     if (!res.ok) throw new Error(`Paperclip returned ${res.status} ${res.statusText} for ${url}`);
 
-    const body = (await res.json()) as unknown;
+    const body = await res.json();
     const agents = Array.isArray(body) ? body : (body as { agents?: unknown[] }).agents;
     if (!Array.isArray(agents)) {
       throw new Error(`Unexpected response from ${url}: expected an array of agents`);

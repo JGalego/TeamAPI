@@ -8,6 +8,11 @@ interface ToolConfig {
   inputSchema?: Record<string, z.ZodTypeAny>;
 }
 
+// `any` rather than `unknown` on purpose: parameter positions are contravariant, so a handler
+// declared as `(args: { teamId: string }) => ...` is assignable to `(args: any) => ...` but not
+// to `(args: unknown) => ...`. `unknown` here would reject every call site. See the note on
+// `looseRegisterTool` below for why the parameter is erased at all.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ToolHandler = (args: any) => CallToolResult | Promise<CallToolResult>;
 
 export type LooseRegisterTool = (name: string, config: ToolConfig, cb: ToolHandler) => unknown;
@@ -22,5 +27,10 @@ export type LooseRegisterTool = (name: string, config: ToolConfig, cb: ToolHandl
  * inference; handler argument shapes are annotated explicitly at each call site instead.
  */
 export function looseRegisterTool(server: McpServer): LooseRegisterTool {
+  // The double assertion is what does the work: it is the point at which TypeScript stops
+  // instantiating `registerTool`'s generic signature. `no-unnecessary-type-assertion` reads it as
+  // redundant because the bound method is structurally assignable, but removing it reintroduces
+  // the inference blowup above as a hard `TS2589: Type instantiation is excessively deep`.
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
   return server.registerTool.bind(server) as unknown as LooseRegisterTool;
 }

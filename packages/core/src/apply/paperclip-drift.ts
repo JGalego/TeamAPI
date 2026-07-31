@@ -47,11 +47,10 @@ export interface PaperclipDriftReport {
 /** A team whose policies forbid agents outright. Recognised by a policy id or description that
  * denies agents, e.g. acme-org's `no-agents-on-applicant-pii`. */
 function agentsForbidden(graph: OrgGraph, teamId: TeamId): string | null {
-  const raw = graph.teams.get(teamId)?.doc as Record<string, any> | undefined;
-  for (const policy of (raw?.policies ?? []) as Record<string, any>[]) {
-    const haystack = `${policy.id ?? ""} ${policy.name ?? ""} ${policy.description ?? ""}`.toLowerCase();
+  for (const policy of graph.teams.get(teamId)?.doc.policies ?? []) {
+    const haystack = `${policy.id} ${policy.name} ${policy.description ?? ""}`.toLowerCase();
     if (/no[- ]agents?|agents?[- ]forbidden|no ai agent/.test(haystack)) {
-      return String(policy.id ?? policy.name ?? "policy");
+      return policy.id;
     }
   }
   return null;
@@ -78,9 +77,8 @@ export function planPaperclipDrift(
   const declared = new Map<string, { teamId: TeamId; agentId: string }>();
   const declaredByKey = new Map<string, { teamId: TeamId; agentId: string }>();
   for (const teamId of [...graph.teams.keys()].sort()) {
-    const raw = graph.teams.get(teamId)!.doc as Record<string, any>;
-    for (const agent of (raw.agents ?? []) as Record<string, any>[]) {
-      if ((agent.status ?? "active") !== "active") continue;
+    for (const agent of graph.teams.get(teamId)!.doc.agents) {
+      if (agent.status !== "active") continue;
       declared.set(`${teamId}-${agent.id}`, { teamId, agentId: agent.id });
       declaredByKey.set(`${teamId}/${agent.id}`, { teamId, agentId: agent.id });
     }

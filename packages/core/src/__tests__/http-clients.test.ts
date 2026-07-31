@@ -119,7 +119,7 @@ describe("SlackClient", () => {
     await new SlackClient({ token: "t", baseUrl: "https://slack.test/api" }).setTopic("C1", "Owned by checkout");
 
     expect(calls[0]!.url).toBe("https://slack.test/api/conversations.setTopic");
-    const sent = new URLSearchParams(calls[0]!.body!);
+    const sent = new URLSearchParams(calls[0]!.body);
     expect(sent.get("channel")).toBe("C1");
     expect(sent.get("topic")).toBe("Owned by checkout");
   });
