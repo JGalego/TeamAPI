@@ -14,6 +14,10 @@
       "outputs": ["coverage/**"]
     },
     "lint": {
+      // Type-aware rules resolve cross-package types through each dependency's emitted
+      // .d.ts, so upstream packages have to be built first. Without this the linter sees
+      // `error typed value` for every workspace import on a clean tree.
+      "dependsOn": ["^build"],
       "outputs": []
     },
     "typecheck": {
