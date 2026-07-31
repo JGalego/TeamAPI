@@ -2,17 +2,41 @@ import { describe, expect, it } from "vitest";
 import { scoreCognitiveLoad } from "../cognitive-load/score";
 
 describe("scoreCognitiveLoad — supervision", () => {
-  it("leaves total and label untouched, so adopting agents never silently re-labels a team", () => {
-    const base = { intrinsic: 5, extraneous: 3, germane: 5 };
-    const withSupervision = scoreCognitiveLoad({ ...base, supervision: 10 });
-    expect(withSupervision.total).toBe(scoreCognitiveLoad(base).total);
-    expect(withSupervision.label).toBe(scoreCognitiveLoad(base).label);
+  const base = { intrinsic: 5, extraneous: 3, germane: 5 } as const; // total 13, sustainable on its own
+
+  it("never counts toward total, however high it is", () => {
+    expect(scoreCognitiveLoad({ ...base, supervision: 10 }).total).toBe(scoreCognitiveLoad(base).total);
+  });
+
+  it("changes nothing at all for a team that has not scored it", () => {
+    expect(scoreCognitiveLoad(base)).toEqual(scoreCognitiveLoad({ ...base, supervision: undefined }));
+  });
+
+  it.each([
+    [3, "sustainable"],
+    [4, "elevated"],
+    [6, "elevated"],
+    [7, "overloaded"],
+    [10, "overloaded"],
+  ] as const)("labels supervision=%i as %s on its own, with the other three scores modest", (supervision, expected) => {
+    expect(scoreCognitiveLoad({ ...base, supervision }).label).toBe(expected);
+  });
+
+  it("stops a team drowning in agent review from reporting sustainable", () => {
+    // The failure this trigger exists to prevent: three modest scores, a fleet nobody can keep up
+    // with, and a label that says everything is fine.
+    const drowning = scoreCognitiveLoad({ intrinsic: 4, extraneous: 2, germane: 4, supervision: 9 });
+    expect(drowning.total).toBe(10);
+    expect(drowning.label).toBe("overloaded");
+  });
+
+  it("never lowers a label the other triggers already raised", () => {
+    const raised = scoreCognitiveLoad({ intrinsic: 9, extraneous: 8, germane: 9, supervision: 1 });
+    expect(raised.label).toBe("overloaded");
   });
 
   it("carries the score through on the assessment for callers that want it", () => {
-    expect(scoreCognitiveLoad({ intrinsic: 5, extraneous: 3, germane: 5, supervision: 7 }).assessment.supervision).toBe(
-      7,
-    );
+    expect(scoreCognitiveLoad({ ...base, supervision: 7 }).assessment.supervision).toBe(7);
   });
 });
 

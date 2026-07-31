@@ -206,11 +206,19 @@ weighting `extraneous` load more heavily than the total score — Team Topologie
 (avoidable overhead) as the load type teams should actively minimize.
 
 `supervision` (new) is the load of supervising AI agents: reviewing what they produce, maintaining
-their prompts, being the person everyone asks. It is **not** part of `total`, and does not affect
-the label. The three types above come from _Team Topologies_ and the thresholds are calibrated
-against their sum, so folding a fourth term in would silently re-label every team that adopted one;
-it is reported alongside instead. It is also not folded into `extraneous`, because reviewing an
-agent's output is frequently the work itself rather than avoidable friction around it.
+their prompts, being the person everyone asks. It is **not** part of `total`, but it **is** one of
+the label's independent triggers, on the same thresholds as `extraneous` (≥4 elevated, ≥7
+overloaded).
+
+Those are two separate decisions. The three types above come from _Team Topologies_ and the
+thresholds are calibrated against their sum, so summing a fourth term would re-scale `total` for
+every team that adopted an agent. But the label has never been a function of `total` alone — a high
+`extraneous` score alone is already sufficient — and supervision joins it there, because a team
+drowning in agent review must not be able to report "sustainable" on the strength of three modest
+other scores. A team that has not scored `supervision` is unaffected: an absent value reads as 0.
+
+It is not folded into `extraneous` either, because reviewing an agent's output is frequently the
+work itself rather than avoidable friction around it.
 
 `teamapi gaps` reports an `unscored-supervision` warning for a team that assesses its cognitive
 load and runs active `agents[]` but leaves this blank — the load exists whether or not anyone

@@ -335,7 +335,7 @@
           // than widening the bar — the bar has to keep meaning the same thing across teams that
           // have scored it and teams that haven't.
           ...(r.assessment && r.assessment.supervision !== undefined
-            ? [h("span", { class: "load-supervision", title: "Agent supervision load (not counted in the total)", text: `🤖 ${r.assessment.supervision}` })]
+            ? [h("span", { class: "load-supervision", title: "Agent supervision load — not counted in the total, but it can raise the label", text: `🤖 ${r.assessment.supervision}` })]
             : []),
         ]),
       ]);

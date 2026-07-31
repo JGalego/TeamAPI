@@ -203,11 +203,20 @@ describe("diffOrgGraphs — supervision load", () => {
     makeGraph([makeTeam("a", { cognitiveLoad: { intrinsic: 5, extraneous: 3, germane: 5, supervision } })]);
 
   it("notices supervision changing even when total and label do not", () => {
-    const diff = diffOrgGraphs(withLoad(3), withLoad(9));
+    // 4 and 6 are both inside the "elevated" band, so neither total nor label moves.
+    const diff = diffOrgGraphs(withLoad(4), withLoad(6));
     expect(diff.teamsChanged).toHaveLength(1);
     expect(diff.teamsChanged[0]!.cognitiveLoad).toEqual({
-      before: { total: 13, label: "sustainable", supervision: 3 },
-      after: { total: 13, label: "sustainable", supervision: 9 },
+      before: { total: 13, label: "elevated", supervision: 4 },
+      after: { total: 13, label: "elevated", supervision: 6 },
+    });
+  });
+
+  it("shows the label moving when supervision alone crosses a threshold", () => {
+    const diff = diffOrgGraphs(withLoad(6), withLoad(7));
+    expect(diff.teamsChanged[0]!.cognitiveLoad).toEqual({
+      before: { total: 13, label: "elevated", supervision: 6 },
+      after: { total: 13, label: "overloaded", supervision: 7 },
     });
   });
 
@@ -218,6 +227,8 @@ describe("diffOrgGraphs — supervision load", () => {
       label: "sustainable",
       supervision: undefined,
     });
+    // Writing the number down is what surfaced the load; the team was already carrying it.
+    expect(diff.teamsChanged[0]!.cognitiveLoad!.after!.label).toBe("elevated");
   });
 
   it("reports no change when supervision is untouched", () => {
@@ -225,10 +236,10 @@ describe("diffOrgGraphs — supervision load", () => {
   });
 
   it("names supervision in the formatted output, and omits it when unscored", () => {
-    expect(formatOrgGraphDiff(diffOrgGraphs(withLoad(3), withLoad(9)))).toContain(
-      "cognitive load: 13 (sustainable), supervision 3 -> 13 (sustainable), supervision 9",
+    expect(formatOrgGraphDiff(diffOrgGraphs(withLoad(4), withLoad(6)))).toContain(
+      "cognitive load: 13 (elevated), supervision 4 -> 13 (elevated), supervision 6",
     );
     const gained = formatOrgGraphDiff(diffOrgGraphs(withLoad(undefined), withLoad(6)));
-    expect(gained).toContain("cognitive load: 13 (sustainable) -> 13 (sustainable), supervision 6");
+    expect(gained).toContain("cognitive load: 13 (sustainable) -> 13 (elevated), supervision 6");
   });
 });
