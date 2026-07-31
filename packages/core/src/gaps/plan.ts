@@ -50,6 +50,11 @@ export interface GapsReport {
   /** Seams that resolved cleanly: a subscription with a publisher, an agent with a real owner, a
    * cross-team edge both sides declare. The healthy case. */
   matched: number;
+  /** Cross-team role relationships split by whether the reporting hierarchy explains them. Not a
+   * finding — a statistic, and the one that says most plainly how much of the org runs on ties the
+   * chart does not draw. A high `informal` count is not a problem to fix; it is the shape of the
+   * place, and worth knowing before reorganising anything. */
+  roleTies: { formal: number; informal: number };
 }
 
 interface EventEndpoint {
@@ -234,7 +239,8 @@ export function planGaps(graph: OrgGraph): GapsReport {
     }
   }
 
-  return { findings, matched };
+  const formal = graph.roleEdges.filter((e) => e.kind === "reports-to").length;
+  return { findings, matched, roleTies: { formal, informal: graph.roleEdges.length - formal } };
 }
 
 const MARK: Record<GapKind, string> = {
@@ -247,13 +253,24 @@ const MARK: Record<GapKind, string> = {
   "vacant-load-bearing": "?",
 };
 
+/** Only worth saying when there are cross-team role ties at all, and only interesting when some of
+ * them aren't reporting lines. */
+function roleTieLine(report: GapsReport): string | null {
+  const total = report.roleTies.formal + report.roleTies.informal;
+  if (total === 0 || report.roleTies.informal === 0) return null;
+  return `Reporting lines explain ${report.roleTies.formal} of ${total} cross-team role relationship(s).`;
+}
+
 export function formatGaps(report: GapsReport): string {
+  const ties = roleTieLine(report);
   if (report.findings.length === 0) {
-    return `No gaps. ${report.matched} seam(s) checked, each with someone on both sides.`;
+    const clean = `No gaps. ${report.matched} seam(s) checked, each with someone on both sides.`;
+    return ties ? `${clean}\n${ties}` : clean;
   }
   const lines = report.findings.map((f) => `${MARK[f.kind]} ${f.kind}: ${f.detail}`);
   const blocking = report.findings.filter((f) => f.severity === "blocking").length;
   lines.push("");
+  if (ties) lines.push(ties);
   lines.push(`${report.findings.length} finding(s), ${blocking} blocking; ${report.matched} seam(s) checked.`);
   return lines.join("\n");
 }

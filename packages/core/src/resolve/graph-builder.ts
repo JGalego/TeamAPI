@@ -131,7 +131,7 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
         enqueueRole(role.reportsToRef.$ref, "reports-to", role.id, role.reportsToRef.roleId);
       }
       for (const align of role.alignsWith) {
-        enqueueRole(align.$ref, "aligns-with", role.id, align.roleId);
+        enqueueRole(align.$ref, align.kind ?? "aligns-with", role.id, align.roleId);
       }
     }
   }

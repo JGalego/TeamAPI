@@ -1,4 +1,4 @@
-import type { OrgGraph } from "../model/org-graph";
+import type { OrgGraph, RoleGraphEdge } from "../model/org-graph";
 import type { DiagramEdge, DiagramModel } from "./diagram-model";
 import { labelForRole, membersByRole } from "./role-label";
 
@@ -46,7 +46,15 @@ export function buildOrgHierarchyDiagram(graph: OrgGraph): DiagramModel {
     }
   }
 
-  // Cross-team role relationships, resolved during graph-building.
+  // Cross-team role relationships, resolved during graph-building. An exhaustive map rather than
+  // an `else`, so adding a relation kind is a compile error here instead of a silent mislabel.
+  const INFORMAL_LABEL: Record<Exclude<RoleGraphEdge["kind"], "reports-to">, string> = {
+    "aligns-with": "aligns with",
+    advises: "advises",
+    "learns-from": "learns from",
+    "community-of-practice": "community of practice",
+  };
+
   for (const roleEdge of graph.roleEdges) {
     if (roleEdge.kind === "reports-to") {
       edges.push({
@@ -55,15 +63,15 @@ export function buildOrgHierarchyDiagram(graph: OrgGraph): DiagramModel {
         to: nodeId(roleEdge.fromTeam, roleEdge.fromRole),
         style: "solid",
       });
-    } else {
-      edges.push({
-        id: `e${edges.length}`,
-        from: nodeId(roleEdge.fromTeam, roleEdge.fromRole),
-        to: nodeId(roleEdge.toTeam, roleEdge.toRole),
-        style: "dashed",
-        label: "aligns with",
-      });
+      continue;
     }
+    edges.push({
+      id: `e${edges.length}`,
+      from: nodeId(roleEdge.fromTeam, roleEdge.fromRole),
+      to: nodeId(roleEdge.toTeam, roleEdge.toRole),
+      style: "dashed",
+      label: INFORMAL_LABEL[roleEdge.kind],
+    });
   }
 
   return { title: "Organization Hierarchy", direction: "TD", nodes, edges, groups };

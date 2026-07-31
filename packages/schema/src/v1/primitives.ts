@@ -22,6 +22,20 @@ export const InteractionModeSchema = z.enum(["collaboration", "x-as-a-service", 
 export type InteractionMode = z.infer<typeof InteractionModeSchema>;
 
 export const DependencyTypeSchema = z.enum(["OK", "Slowing", "Blocking"]);
+
+/**
+ * How a role relates to another role it does not report to.
+ *
+ * `aligns-with` is the original dotted line — a matrix relationship the role coordinates with. The
+ * other three name the informal network that work, and AI practice in particular, actually travels
+ * along: who a role takes advice from, who it learns a practice from, and which community of
+ * practice it belongs to. These relationships routinely exist for months before anyone draws a box
+ * for them, and the reporting hierarchy never explains them.
+ *
+ * Omitting `kind` means `aligns-with`, so every document written before this existed keeps its
+ * exact meaning.
+ */
+export const RoleRelationSchema = z.enum(["aligns-with", "advises", "learns-from", "community-of-practice"]);
 export type DependencyType = z.infer<typeof DependencyTypeSchema>;
 
 export const DurationUnitSchema = z.enum(["days", "weeks", "months"]);
