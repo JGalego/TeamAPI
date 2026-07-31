@@ -272,7 +272,8 @@ describe("Responsibility", () => {
 describe("getTeamApiJsonSchema", () => {
   it("produces a JSON Schema with the expected root required fields", () => {
     const schema = getTeamApiJsonSchema();
-    const def = (schema.definitions as Record<string, any>)?.TeamApiDocument ?? schema;
+    const definitions = schema.definitions as Record<string, { required?: string[] }> | undefined;
+    const def = definitions?.TeamApiDocument ?? schema;
     expect(def.required).toEqual(expect.arrayContaining(["teamApiVersion", "id", "info"]));
   });
 });

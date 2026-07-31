@@ -1,4 +1,5 @@
 import YAML from "js-yaml";
+import type { Agent, Policy, Prompt } from "@jgalego/teamapi-schema";
 import type { OrgGraph, TeamId } from "../model/org-graph";
 
 /**
@@ -59,7 +60,7 @@ function doc(frontmatter: Record<string, unknown>, body: string): string {
     Object.entries(frontmatter).filter(([, v]) => {
       if (v === undefined || v === null) return false;
       if (Array.isArray(v)) return v.length > 0;
-      if (typeof v === "object") return Object.keys(v as object).length > 0;
+      if (typeof v === "object") return Object.keys(v).length > 0;
       return true;
     }),
   );
@@ -74,9 +75,8 @@ function bullets(heading: string, items: string[]): string {
 /** One `AGENTS.md` per active agent. Provider/model/permissions go under `metadata`, since the
  * spec reserves the base package for portable data and says vendor runtime config does not
  * belong in it. */
-function agentDoc(graph: OrgGraph, teamId: TeamId, agent: Record<string, any>): PaperclipFile {
-  const capabilities = (agent.capabilities ?? []) as string[];
-  const permissions = (agent.permissions ?? []) as string[];
+function agentDoc(teamId: TeamId, agent: Agent): PaperclipFile {
+  const { capabilities, permissions } = agent;
   const body =
     (agent.description ?? `${agent.name} works on ${teamId}.`) +
     bullets("Capabilities", capabilities) +
@@ -109,34 +109,32 @@ function agentDoc(graph: OrgGraph, teamId: TeamId, agent: Record<string, any>): 
 
 /** One `SKILL.md` per prompt. Kept minimal so it stays a valid Agent Skills package — the spec
  * requires that `SKILL.md` remain owned by that specification. */
-function skillDoc(teamId: TeamId, prompt: Record<string, any>): PaperclipFile {
-  const template = prompt.template ?? prompt.body ?? prompt.content ?? "";
+function skillDoc(teamId: TeamId, prompt: Prompt): PaperclipFile {
   return {
     path: `skills/${scoped(teamId, prompt.id)}/SKILL.md`,
     content: doc(
       {
-        name: prompt.name ?? prompt.id,
+        name: prompt.name,
         description: prompt.description ?? `Prompt ${prompt.id} from ${teamId}.`,
         metadata: { teamapi: { team: teamId, promptId: prompt.id } },
       },
-      String(template),
+      prompt.template,
     ),
   };
 }
 
 function teamDoc(graph: OrgGraph, teamId: TeamId, agentSlugs: string[], skillSlugs: string[]): PaperclipFile {
   const team = graph.teams.get(teamId)!;
-  const info = team.doc.info as Record<string, any>;
-  const policies = ((team.doc as Record<string, any>).policies ?? []) as Record<string, any>[];
+  const { info, policies } = team.doc;
   const includes = [
     ...agentSlugs.map((s) => `../../agents/${s}/AGENTS.md`),
     ...skillSlugs.map((s) => `../../skills/${s}/SKILL.md`),
   ];
   const body =
-    (info.focus ?? `The ${info.name ?? teamId} team.`) +
+    (info.focus ?? `The ${info.name} team.`) +
     bullets(
       "Policies",
-      policies.map((p) => `**${p.id}** — ${p.description ?? p.name ?? "see teamapi.yml"}`),
+      policies.map((p: Policy) => `**${p.id}** — ${p.description ?? p.name}`),
     );
   return {
     path: `teams/${teamId}/TEAM.md`,
@@ -145,12 +143,12 @@ function teamDoc(graph: OrgGraph, teamId: TeamId, agentSlugs: string[], skillSlu
         schema: "agentcompanies/v1",
         kind: "team",
         slug: teamId,
-        name: info.name ?? teamId,
+        name: info.name,
         description: info.focus,
         // The Team Topologies type is the single most useful thing a runtime can know about a
         // team, so it rides along as a tag — the base spec has nowhere better to put it.
         includes,
-        tags: [info.type].filter(Boolean),
+        tags: [info.type],
       },
       body,
     ),
@@ -164,15 +162,14 @@ export function buildPaperclipPackage(graph: OrgGraph, company: PaperclipCompany
 
   for (const teamId of teamIds) {
     const team = graph.teams.get(teamId)!;
-    const raw = team.doc as Record<string, any>;
-    const agents = ((raw.agents ?? []) as Record<string, any>[]).filter((a) => {
-      if ((a.status ?? "active") === "active") return true;
+    const agents = team.doc.agents.filter((a) => {
+      if (a.status === "active") return true;
       skippedAgents.push(`${teamId}/${a.id}`);
       return false;
     });
-    const prompts = (raw.prompts ?? []) as Record<string, any>[];
+    const prompts = team.doc.prompts;
 
-    for (const agent of agents) files.push(agentDoc(graph, teamId, agent));
+    for (const agent of agents) files.push(agentDoc(teamId, agent));
     for (const prompt of prompts) files.push(skillDoc(teamId, prompt));
     files.push(
       teamDoc(
