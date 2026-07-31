@@ -1,0 +1,13 @@
+{
+  // Typechecks the test sources, which tsconfig.json deliberately excludes so they
+  // stay out of the published build. Without this they would never be typechecked.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false
+  },
+  "include": ["src"],
+  "exclude": []
+}
