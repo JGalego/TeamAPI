@@ -331,6 +331,14 @@ not called out below (`capabilities`, `tags`, `reviewers`, etc.) is a plain stri
 knowledge base entries, prompts, and playbooks most relevant to a stated `goal`, plus (when
 `teamId` is given) that team's related teams, members, and services.
 
+It also returns `seams[]`: every pair of teams the matched entries span, with the interaction
+`mode` declared between them, and `undeclared: true` when neither team declares any edge to the
+other. A bundle otherwise reads as if the goal belongs to whichever team was scoped, when in
+practice the highest-scoring entries routinely straddle a boundary — which is where the risk is.
+An undeclared seam deserves more caution than a declared one, not less: the work is about to cross
+a line nobody has written down. Derived from the `teamId` each scored entry already carries, so it
+costs one pass and no extra lookups.
+
 Relevance is a heuristic: `goal` is tokenized (lowercased, alphanumeric runs of length >= 3), and
 each candidate resource is scored by how many of those tokens appear in its text fields/tags —
 returned as `matchedTerms` alongside each result, so the ranking is auditable rather than a black
