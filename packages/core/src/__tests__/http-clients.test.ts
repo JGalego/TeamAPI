@@ -130,7 +130,10 @@ describe("PagerDutyClient", () => {
     body: { services: items, more },
     match: "/services",
   });
-  const policies = (more = false, items = [{ id: "P1", name: "checkout on-call", escalation_rules: [{ targets: [{}, {}] }] }]) => ({
+  const policies = (
+    more = false,
+    items = [{ id: "P1", name: "checkout on-call", escalation_rules: [{ targets: [{}, {}] }] }],
+  ) => ({
     body: { escalation_policies: items, more },
     match: "/escalation_policies",
   });
@@ -203,7 +206,8 @@ describe("PagerDutyClient", () => {
 
 describe("Okta link-header pagination", () => {
   it("picks next out of a header that also carries self", () => {
-    const header = '<https://acme.okta.com/api/v1/groups?limit=200>; rel="self", <https://acme.okta.com/api/v1/groups?after=x>; rel="next"';
+    const header =
+      '<https://acme.okta.com/api/v1/groups?limit=200>; rel="self", <https://acme.okta.com/api/v1/groups?after=x>; rel="next"';
     expect(nextLink(header)).toBe("https://acme.okta.com/api/v1/groups?after=x");
   });
 
@@ -308,7 +312,16 @@ describe("PaperclipClient", () => {
     fakeFetch([{ body: [{ id: "a1", name: "One" }] }]);
     expect(await new PaperclipClient({ token: "t", url: "http://pc.test" }).listAgents("c1")).toHaveLength(1);
 
-    fakeFetch([{ body: { agents: [{ id: "a1", name: "One" }, { id: "a2", name: "Two" }] } }]);
+    fakeFetch([
+      {
+        body: {
+          agents: [
+            { id: "a1", name: "One" },
+            { id: "a2", name: "Two" },
+          ],
+        },
+      },
+    ]);
     expect(await new PaperclipClient({ token: "t", url: "http://pc.test" }).listAgents("c1")).toHaveLength(2);
   });
 

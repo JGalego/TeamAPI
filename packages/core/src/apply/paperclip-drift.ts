@@ -136,8 +136,6 @@ export function formatDriftReport(report: PaperclipDriftReport): string {
   const lines = report.findings.map((f) => `${mark[f.kind]} ${f.kind}: ${f.detail}`);
   const blocking = report.findings.filter((f) => f.severity === "blocking").length;
   lines.push("");
-  lines.push(
-    `${report.findings.length} finding(s), ${blocking} blocking; ${report.matched} agent(s) matched.`,
-  );
+  lines.push(`${report.findings.length} finding(s), ${blocking} blocking; ${report.matched} agent(s) matched.`);
   return lines.join("\n");
 }

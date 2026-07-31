@@ -14,7 +14,12 @@ import {
 } from "../doctor";
 
 /** Route a fake fetch by URL, honouring the page size the caller asked for. */
-function serve(handler: (url: string, params: URLSearchParams) => { status?: number; body: unknown; headers?: Record<string, string> }) {
+function serve(
+  handler: (
+    url: string,
+    params: URLSearchParams,
+  ) => { status?: number; body: unknown; headers?: Record<string, string> },
+) {
   vi.stubGlobal("fetch", async (url: string, init?: RequestInit) => {
     const href = String(url);
     const params = new URLSearchParams(

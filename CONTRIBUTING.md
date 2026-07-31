@@ -17,11 +17,11 @@ Requires Node >=22 (see `.nvmrc`) and pnpm (see `packageManager` in `package.jso
 
 Run from the repo root; each fans out across all packages via [Turborepo](https://turborepo.com/):
 
-| Command | What it does |
-|---|---|
-| `pnpm build` | Compile every package (`tsc -b`) |
-| `pnpm test` | Run every package's Vitest suite |
-| `pnpm lint` | ESLint over every package's `src/` |
+| Command          | What it does                                       |
+| ---------------- | -------------------------------------------------- |
+| `pnpm build`     | Compile every package (`tsc -b`)                   |
+| `pnpm test`      | Run every package's Vitest suite                   |
+| `pnpm lint`      | ESLint over every package's `src/`                 |
 | `pnpm typecheck` | Type-check without a full emit (`tsc -b --noEmit`) |
 
 Try any change against the bundled sample org before opening a PR:

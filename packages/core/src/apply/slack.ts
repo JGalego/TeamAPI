@@ -77,7 +77,11 @@ export function planSlackSync(graph: OrgGraph, channels: SlackChannel[]): SlackS
     }
     const teamId = teamIds[0]!;
     const doc = graph.teams.get(teamId)!.doc;
-    const desiredTopic = slackTopicFor(doc.info.name, doc.info.focus, doc.services.map((s) => s.name));
+    const desiredTopic = slackTopicFor(
+      doc.info.name,
+      doc.info.focus,
+      doc.services.map((s) => s.name),
+    );
     const existing = byName.get(name);
 
     if (!existing) {

@@ -38,7 +38,15 @@ describe("importGithubOrg", () => {
       id: "stream-checkout",
       info: { name: "Stream Checkout", focus: "Cart and checkout", type: "stream-aligned" },
       roles: [],
-      members: [{ id: "diego-alves", name: "Diego Alves", contact: "diego@acme.example", githubUsername: "diego-alves", roleIds: [] }],
+      members: [
+        {
+          id: "diego-alves",
+          name: "Diego Alves",
+          contact: "diego@acme.example",
+          githubUsername: "diego-alves",
+          roleIds: [],
+        },
+      ],
       services: [{ name: "checkout-api", repository: "https://github.com/acme/checkout-api" }],
     });
 

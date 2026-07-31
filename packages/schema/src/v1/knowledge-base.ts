@@ -31,4 +31,10 @@ export type KnowledgeBaseEntry = z.infer<typeof KnowledgeBaseEntrySchema>;
 export const KnowledgeBaseSchema = z
   .array(KnowledgeBaseEntrySchema)
   .default([])
-  .superRefine((entries, ctx) => checkUniqueIds(entries.map((e) => e.id), ctx, "a team's knowledgeBase[]"));
+  .superRefine((entries, ctx) =>
+    checkUniqueIds(
+      entries.map((e) => e.id),
+      ctx,
+      "a team's knowledgeBase[]",
+    ),
+  );

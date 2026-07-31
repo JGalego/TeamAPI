@@ -18,11 +18,11 @@ define the shape and change rarely, entities are the data and change every merge
 
 ## The model
 
-| blueprint | from | properties | relations |
-|---|---|---|---|
-| `teamapi_team` | each team | topology, focus, **cognitive load + label** | `members` → person |
-| `teamapi_service` | `services[]` | repository, versioning | `owner` → team |
-| `teamapi_person` | `members[]` | email, GitHub username, allocation | — |
+| blueprint         | from         | properties                                  | relations          |
+| ----------------- | ------------ | ------------------------------------------- | ------------------ |
+| `teamapi_team`    | each team    | topology, focus, **cognitive load + label** | `members` → person |
+| `teamapi_service` | `services[]` | repository, versioning                      | `owner` → team     |
+| `teamapi_person`  | `members[]`  | email, GitHub username, allocation          | —                  |
 
 ## Why this and not just Backstage
 

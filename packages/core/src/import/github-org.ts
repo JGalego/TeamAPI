@@ -23,7 +23,10 @@ export async function importGithubOrg(
 
   const results: ImportedTeam[] = [];
   for (const team of teams) {
-    const [members, repos] = await Promise.all([client.listTeamMembers(org, team.slug), client.listTeamRepos(org, team.slug)]);
+    const [members, repos] = await Promise.all([
+      client.listTeamMembers(org, team.slug),
+      client.listTeamRepos(org, team.slug),
+    ]);
 
     const sortedMembers = [...members].sort((a, b) => a.login.localeCompare(b.login));
     const enrichedMembers = await Promise.all(

@@ -9,9 +9,5 @@ import type { FastifyInstance } from "fastify";
 const dashboardHtml = readFileSync(join(__dirname, "..", "dashboard", "index.html"), "utf-8");
 
 export async function dashboardRoutes(app: FastifyInstance): Promise<void> {
-  app.get(
-    "/dashboard",
-    { schema: { hide: true } },
-    async (_req, reply) => reply.type("text/html").send(dashboardHtml),
-  );
+  app.get("/dashboard", { schema: { hide: true } }, async (_req, reply) => reply.type("text/html").send(dashboardHtml));
 }

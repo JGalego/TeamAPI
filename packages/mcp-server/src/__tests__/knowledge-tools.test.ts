@@ -80,7 +80,10 @@ describe("AI-native knowledge tools", () => {
   });
 
   it("get_agent returns an error result for an unknown team", async () => {
-    const result = await client.callTool({ name: "get_agent", arguments: { teamId: "does-not-exist", resourceId: "x" } });
+    const result = await client.callTool({
+      name: "get_agent",
+      arguments: { teamId: "does-not-exist", resourceId: "x" },
+    });
     expect(result.isError).toBe(true);
   });
 
@@ -90,7 +93,9 @@ describe("AI-native knowledge tools", () => {
       arguments: { teamId: "stream-checkout", effective: true },
     });
     const docs = JSON.parse(textOf(result));
-    expect(docs.map((d: { id: string }) => d.id)).toEqual(expect.arrayContaining(["security-guidelines", "api-conventions"]));
+    expect(docs.map((d: { id: string }) => d.id)).toEqual(
+      expect.arrayContaining(["security-guidelines", "api-conventions"]),
+    );
   });
 
   it("render_prompt fills a required variable", async () => {

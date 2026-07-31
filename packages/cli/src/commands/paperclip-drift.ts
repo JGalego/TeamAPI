@@ -14,10 +14,7 @@ export interface PaperclipDriftOptions {
   token?: string;
 }
 
-export async function runPaperclipDrift(
-  patterns: string[],
-  options: PaperclipDriftOptions,
-): Promise<number> {
+export async function runPaperclipDrift(patterns: string[], options: PaperclipDriftOptions): Promise<number> {
   const seeds = await expandSeeds(patterns);
   if (seeds.length === 0) {
     console.error(`No files matched: ${patterns.join(", ")}`);

@@ -82,9 +82,7 @@ describe("teamapi generate", () => {
     const org = YAML.load(await fs.readFile(path.join(outDir, "org.yaml"), "utf-8"));
     expect(org).toHaveProperty("crews.platform-payments.process", "hierarchical");
 
-    const checkoutAgents = YAML.load(
-      await fs.readFile(path.join(outDir, "stream-checkout", "agents.yaml"), "utf-8"),
-    );
+    const checkoutAgents = YAML.load(await fs.readFile(path.join(outDir, "stream-checkout", "agents.yaml"), "utf-8"));
     expect(checkoutAgents).toHaveProperty("backend_engineer.role", "Checkout Backend Engineer");
   });
 

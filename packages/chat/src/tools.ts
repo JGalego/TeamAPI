@@ -175,7 +175,8 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
           return render(buildHierarchyDiagram(graph, teamId));
         }
         if (scope === "org-hierarchy") return render(buildOrgHierarchyDiagram(graph));
-        if (scope === "context-map") return render(buildContextMapDiagram(graph, deriveContextMap(graph, teamId), teamId));
+        if (scope === "context-map")
+          return render(buildContextMapDiagram(graph, deriveContextMap(graph, teamId), teamId));
         return render(buildTopologyDiagram(graph, teamId));
       }),
     }),

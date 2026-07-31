@@ -49,4 +49,10 @@ export type Policy = z.infer<typeof PolicySchema>;
 export const PoliciesSchema = z
   .array(PolicySchema)
   .default([])
-  .superRefine((policies, ctx) => checkUniqueIds(policies.map((p) => p.id), ctx, "a team's policies[]"));
+  .superRefine((policies, ctx) =>
+    checkUniqueIds(
+      policies.map((p) => p.id),
+      ctx,
+      "a team's policies[]",
+    ),
+  );

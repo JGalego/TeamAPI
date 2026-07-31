@@ -1,4 +1,10 @@
-import { buildOrgGraph, executeGithubTeamsApply, formatApplyPlan, GithubClient, planGithubTeamsApply } from "@jgalego/teamapi-core";
+import {
+  buildOrgGraph,
+  executeGithubTeamsApply,
+  formatApplyPlan,
+  GithubClient,
+  planGithubTeamsApply,
+} from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 

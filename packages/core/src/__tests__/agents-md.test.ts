@@ -23,9 +23,7 @@ describe("buildAgentsMd — examples/acme-org", () => {
 
   it("opens with a line that stands on its own out of context", async () => {
     const { files } = buildAgentsMd(await acme());
-    expect(fileFor(files, "checkout-api").content.split("\n")[0]).toBe(
-      "# checkout-api — owned by Stream Checkout",
-    );
+    expect(fileFor(files, "checkout-api").content.split("\n")[0]).toBe("# checkout-api — owned by Stream Checkout");
   });
 
   it("names the owning team, its topology type and where to ask", async () => {

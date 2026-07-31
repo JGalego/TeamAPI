@@ -34,4 +34,10 @@ export type Agent = z.infer<typeof AgentSchema>;
 export const AgentsSchema = z
   .array(AgentSchema)
   .default([])
-  .superRefine((agents, ctx) => checkUniqueIds(agents.map((a) => a.id), ctx, "a team's agents[]"));
+  .superRefine((agents, ctx) =>
+    checkUniqueIds(
+      agents.map((a) => a.id),
+      ctx,
+      "a team's agents[]",
+    ),
+  );

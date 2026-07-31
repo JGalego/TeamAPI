@@ -27,7 +27,7 @@ Point a slash command at `https://<your-host>/slack/whoowns`, and:
   Ask in #stream-checkout.
 ```
 
-Unknown service names get the list of what *is* declared, which is usually enough to spot the
+Unknown service names get the list of what _is_ declared, which is usually enough to spot the
 name someone half-remembered.
 
 **The route only exists when `SLACK_SIGNING_SECRET` is set.** Not "returns 401 when unset" —

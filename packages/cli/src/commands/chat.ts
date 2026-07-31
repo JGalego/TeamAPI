@@ -160,7 +160,9 @@ export async function runChat(patterns: string[], options: ChatOptions): Promise
           gray(`  (hit the ${MAX_TOOL_ITERATIONS}-tool-call limit before finishing — try a narrower question.)\n`),
         );
       } else if (finalMessage.stop_reason === "refusal") {
-        console.log(`\n${magenta(bold(`${persona.name}>`))} ${red("(response withheld by the model for this message.)")}\n`);
+        console.log(
+          `\n${magenta(bold(`${persona.name}>`))} ${red("(response withheld by the model for this message.)")}\n`,
+        );
       } else if (finalMessage.stop_reason !== "end_turn" && finalMessage.stop_reason !== "stop_sequence") {
         console.log(`\n${magenta(bold(`${persona.name}>`))} ${text}`);
         console.log(gray(`  (response ended early: stop_reason=${finalMessage.stop_reason})\n`));

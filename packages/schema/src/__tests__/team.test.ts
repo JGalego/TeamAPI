@@ -103,7 +103,10 @@ describe("TeamApiDocumentSchema", () => {
     ]);
     expect(parsed.roles[0]?.alignsWith).toEqual([]);
     expect(parsed.interactions[0]?.contextMappingPattern).toBe("CustomerSupplier");
-    expect(parsed.roles[0]?.responsibilities).toEqual(["Architecture", { text: "On-call", doneWhen: "A runbook exists." }]);
+    expect(parsed.roles[0]?.responsibilities).toEqual([
+      "Architecture",
+      { text: "On-call", doneWhen: "A runbook exists." },
+    ]);
   });
 
   it("rejects an invalid team type", () => {
@@ -128,9 +131,7 @@ describe("TeamApiDocumentSchema", () => {
       platform: { $ref: "../platform-payments/teamapi.yml", "x-owner": "platform-team" },
     };
     const parsed = TeamApiDocumentSchema.parse(withExtension);
-    expect((parsed.platform as Record<string, unknown> | undefined)?.["x-owner"]).toBe(
-      "platform-team",
-    );
+    expect((parsed.platform as Record<string, unknown> | undefined)?.["x-owner"]).toBe("platform-team");
   });
 
   it("allows vendor extension fields on a role's reportsToRef via passthrough", () => {
@@ -151,9 +152,7 @@ describe("TeamApiDocumentSchema", () => {
       ],
     };
     const parsed = TeamApiDocumentSchema.parse(withExtension);
-    expect((parsed.roles[0]?.reportsToRef as Record<string, unknown> | undefined)?.["x-since"]).toBe(
-      "2025-01-01",
-    );
+    expect((parsed.roles[0]?.reportsToRef as Record<string, unknown> | undefined)?.["x-since"]).toBe("2025-01-01");
   });
 });
 
