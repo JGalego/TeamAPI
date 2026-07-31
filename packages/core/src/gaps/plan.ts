@@ -32,7 +32,9 @@ export type GapKind =
   /** A declares a dependency or interaction on B, and B declares nothing back. */
   | "unacknowledged"
   /** An `agents[]` entry naming no human owner at all. */
-  | "unaccountable-agent";
+  | "unaccountable-agent"
+  /** Active agents, but no `cognitiveLoad.supervision` score for the work of supervising them. */
+  | "unscored-supervision";
 
 export interface GapFinding {
   kind: GapKind;
@@ -184,6 +186,19 @@ export function planGaps(graph: OrgGraph): GapsReport {
       matched++;
     }
 
+    // Supervising agents is real work that no role describes and no sprint budgets for. A team
+    // that has scored its cognitive load but left `supervision` blank while running a fleet has
+    // an assessment that is silently missing a term — the load exists either way.
+    const activeAgents = doc.agents.filter((a) => a.status === "active").length;
+    if (activeAgents > 0 && doc.cognitiveLoad && doc.cognitiveLoad.supervision === undefined) {
+      findings.push({
+        kind: "unscored-supervision",
+        severity: "warning",
+        teamId,
+        detail: `${teamId} runs ${activeAgents} active agent(s) but scored no cognitiveLoad.supervision for supervising them`,
+      });
+    }
+
     // Vacant seats that other teams report into. A vacancy inside one team is a staffing question;
     // a vacancy other teams' reporting lines terminate in is an accountability hole.
     const filled = new Set(doc.members.flatMap((m) => m.roleIds));
@@ -227,6 +242,7 @@ const MARK: Record<GapKind, string> = {
   "orphan-subscription": "!",
   "unconsumed-event": "-",
   "unaccountable-agent": "-",
+  "unscored-supervision": "-",
   unacknowledged: "~",
   "vacant-load-bearing": "?",
 };

@@ -98,7 +98,12 @@ cognitiveLoad:
   intrinsic: 7
   extraneous: 5
   germane: 6
-  notes: PCI compliance scope adds real intrinsic complexity; onboarding docs need work.
+  # Five declared agents, and reviewing what they produce lands on the same three engineers. Not
+  # part of `total` by design — see the spec — so adding it doesn't move this team's label.
+  supervision: 6
+  notes: >
+    PCI compliance scope adds real intrinsic complexity; onboarding docs need work. Supervising the
+    agent fleet costs about a day a week across the team and appears on nobody's role description.
 meetings:
   - purpose: daily sync
     dayOfWeek: Tuesday

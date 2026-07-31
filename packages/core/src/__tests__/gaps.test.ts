@@ -113,6 +113,17 @@ describe("planGaps", () => {
     expect(report.matched).toBe(9);
   });
 
+  it("warns when a team runs active agents but scored no supervision load", async () => {
+    const found = kinds(planGaps(await driftwood()).findings, "unscored-supervision");
+    expect(found.map((f) => f.teamId)).toEqual(["platform-data", "stream-insights"]);
+    expect(found[0]!.detail).toContain("2 active agent(s)");
+  });
+
+  it("stays quiet about supervision once a team has scored it", async () => {
+    // platform-payments runs five agents and declares cognitiveLoad.supervision.
+    expect(kinds(planGaps(await acme()).findings, "unscored-supervision")).toEqual([]);
+  });
+
   it("finds both blocking kinds in the deliberately broken org", async () => {
     const report = planGaps(await driftwood());
     expect(
@@ -137,6 +148,7 @@ describe("formatGaps", () => {
     expect(out).toContain("- unconsumed-event:");
     expect(out).toContain("? vacant-load-bearing:");
     expect(out).toContain("~ unacknowledged:");
-    expect(out).toContain("7 finding(s), 2 blocking; 2 seam(s) checked.");
+    expect(out).toContain("- unscored-supervision:");
+    expect(out).toContain("9 finding(s), 2 blocking; 2 seam(s) checked.");
   });
 });

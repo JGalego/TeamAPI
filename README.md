@@ -254,7 +254,7 @@ flowchart TD
 | `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse`                        | [Knowledge graph](#ai-native) traversal                                                                                                                                        |
 | `GET /health`                                                                      | Health check                                                                                                                                                                   |
 
-**Example:** `curl http://127.0.0.1:3000/cognitive-load`
+**Example:** `curl http://127.0.0.1:3000/cognitive-load` — note `supervision`, the optional load of supervising a team's AI agents. It's reported but deliberately excluded from `total`, so adopting agents never silently re-labels a team.
 
 ```json
 [
@@ -266,7 +266,8 @@ flowchart TD
       "intrinsic": 7,
       "extraneous": 5,
       "germane": 6,
-      "notes": "PCI compliance scope adds real intrinsic complexity; onboarding docs need work."
+      "supervision": 6,
+      "notes": "PCI compliance scope adds real intrinsic complexity; onboarding docs need work. Supervising the agent fleet costs about a day a week across the team and appears on nobody's role description."
     }
   },
   {

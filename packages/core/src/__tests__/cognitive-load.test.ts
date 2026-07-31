@@ -1,6 +1,21 @@
 import { describe, expect, it } from "vitest";
 import { scoreCognitiveLoad } from "../cognitive-load/score";
 
+describe("scoreCognitiveLoad — supervision", () => {
+  it("leaves total and label untouched, so adopting agents never silently re-labels a team", () => {
+    const base = { intrinsic: 5, extraneous: 3, germane: 5 };
+    const withSupervision = scoreCognitiveLoad({ ...base, supervision: 10 });
+    expect(withSupervision.total).toBe(scoreCognitiveLoad(base).total);
+    expect(withSupervision.label).toBe(scoreCognitiveLoad(base).label);
+  });
+
+  it("carries the score through on the assessment for callers that want it", () => {
+    expect(scoreCognitiveLoad({ intrinsic: 5, extraneous: 3, germane: 5, supervision: 7 }).assessment.supervision).toBe(
+      7,
+    );
+  });
+});
+
 describe("scoreCognitiveLoad", () => {
   it.each([
     [{ intrinsic: 2, extraneous: 2, germane: 2 }, "sustainable"],

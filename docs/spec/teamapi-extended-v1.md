@@ -178,17 +178,29 @@ A reference to another team's role — same `$ref` convention as `Interaction`/`
 Inspired by [Team-Cognitive-Load-Assessment](https://github.com/TeamTopologies/Team-Cognitive-Load-Assessment):
 a 1-10 self-assessment across the three load types from _Team Topologies_.
 
-| Field        | Type          | Required |
-| ------------ | ------------- | -------- |
-| `intrinsic`  | number (1-10) | Yes      |
-| `extraneous` | number (1-10) | Yes      |
-| `germane`    | number (1-10) | Yes      |
-| `notes`      | string        | No       |
-| `assessedOn` | string        | No       |
+| Field         | Type          | Required |
+| ------------- | ------------- | -------- |
+| `intrinsic`   | number (1-10) | Yes      |
+| `extraneous`  | number (1-10) | Yes      |
+| `germane`     | number (1-10) | Yes      |
+| `supervision` | number (1-10) | No       |
+| `notes`       | string        | No       |
+| `assessedOn`  | string        | No       |
 
 `@jgalego/teamapi-core`'s `scoreCognitiveLoad` derives a `sustainable | elevated | overloaded` label,
 weighting `extraneous` load more heavily than the total score — Team Topologies treats extraneous
 (avoidable overhead) as the load type teams should actively minimize.
+
+`supervision` (new) is the load of supervising AI agents: reviewing what they produce, maintaining
+their prompts, being the person everyone asks. It is **not** part of `total`, and does not affect
+the label. The three types above come from _Team Topologies_ and the thresholds are calibrated
+against their sum, so folding a fourth term in would silently re-label every team that adopted one;
+it is reported alongside instead. It is also not folded into `extraneous`, because reviewing an
+agent's output is frequently the work itself rather than avoidable friction around it.
+
+`teamapi gaps` reports an `unscored-supervision` warning for a team that assesses its cognitive
+load and runs active `agents[]` but leaves this blank — the load exists whether or not anyone
+scored it.
 
 ## Services and bounded contexts
 
