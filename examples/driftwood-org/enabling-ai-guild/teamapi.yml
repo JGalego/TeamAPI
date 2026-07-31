@@ -1,0 +1,46 @@
+teamApiVersion: "1.0.0"
+id: enabling-ai-guild
+info:
+  name: Enabling AI Guild
+  focus: Coaching other teams on prompt practice, agent review, and evaluation — a community of practice that grew into a team
+  type: enabling
+channels:
+  - type: slack
+    name: ai-guild
+searchTerms:
+  - term: ai
+  - term: prompts
+  - term: agents
+  - term: evaluation
+roles:
+  - id: guild-lead
+    name: AI Guild Lead
+    kind: DeliveryLead
+    responsibilities:
+      - Coaching teams on agent review practice
+      - text: Maintaining the shared prompt library
+        doneWhen: Every prompt in the library names an owner and a version.
+members:
+  - id: sasha-brenner
+    name: Sasha Brenner
+    contact: sasha.brenner@driftwood.example
+    roleIds: [guild-lead]
+    allocation: 20
+cognitiveLoad:
+  intrinsic: 3
+  extraneous: 5
+  germane: 6
+  notes: >
+    Run at 20% allocation by someone whose formal role sits on another team. The coaching demand is
+    org-wide; the budget for it is one afternoon a week.
+memory:
+  - id: guild-formed-bottom-up
+    title: The guild formed before anyone approved it
+    kind: lesson-learned
+    body: >
+      This started as a Slack channel where four engineers compared prompts. It acquired a name, a
+      weekly session, and a shared prompt library months before it appeared in any org chart, and
+      by then every team was already routing agent questions to it. Writing it down here was
+      retroactive: the relationships in alignsWith[] existed long before the box did.
+    tags: [informal-network, agents, community-of-practice]
+    contributors: [sasha-brenner]

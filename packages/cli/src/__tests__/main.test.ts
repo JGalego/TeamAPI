@@ -8,6 +8,7 @@ import type { Command } from "commander";
 // `vi.hoisted` — a plain top-level `const` here would be used before initialization.
 const {
   runValidate,
+  runGaps,
   runRender,
   runScaffold,
   runGenerate,
@@ -23,6 +24,7 @@ const {
   runDoctor,
 } = vi.hoisted(() => ({
   runValidate: vi.fn(async () => 0),
+  runGaps: vi.fn(async () => 0),
   runRender: vi.fn(async () => 0),
   runScaffold: vi.fn(async () => 0),
   runGenerate: vi.fn(async () => 0),
@@ -39,6 +41,7 @@ const {
 }));
 
 vi.mock("../commands/validate", () => ({ runValidate }));
+vi.mock("../commands/gaps", () => ({ runGaps }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
@@ -471,5 +474,18 @@ describe("createProgram — validate", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "validate", "a", "b"]);
     expect(runValidate).toHaveBeenCalledWith(["a", "b"]);
+  });
+});
+
+describe("createProgram — gaps", () => {
+  it("passes patterns straight through to runGaps", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "gaps", "a", "b"]);
+    expect(runGaps).toHaveBeenCalledWith(["a", "b"]);
+  });
+
+  it("requires at least one pattern", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "gaps"])).rejects.toThrow();
   });
 });

@@ -48,6 +48,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
 - [🕰️ Org history](#org-history)
+- [🕳️ Gaps](#gaps)
 - [🔁 CI integration](#ci-integration)
 - [🔗 Paperclip](#paperclip)
 - [💬 Slack](#slack)
@@ -91,7 +92,7 @@ teamapi serve-mcp examples/acme-org     # point Claude Desktop/Code at this comm
 
 Every example in this README runs against **ACME Org** ([`examples/acme-org`](examples/acme-org)), a small fictional e-commerce company: Platform Payments runs the `payments-api` and `ledger` services everyone else depends on, Stream Checkout owns the cart and checkout flow, Stream Onboarding handles sign-up and KYC, and Enabling DevEx coaches the other three on testing and delivery practices.
 
-Four more fictional-but-recognizable orgs ship alongside it, each modeled after a real-world team topology:
+Five more fictional-but-recognizable orgs ship alongside it — four modeled after a real-world team topology, and one modeled after a real-world failure mode:
 
 | Example                                                  | Modeled after                        | Shape                                                                                                                           |
 | -------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -99,8 +100,9 @@ Four more fictional-but-recognizable orgs ship alongside it, each modeled after 
 | [`examples/meridian-pay-org`](examples/meridian-pay-org) | Stripe-style payments infrastructure | A billing stream team, a ledger/payments platform team, and a `complicated-subsystem` fraud-scoring team it can't safely absorb |
 | [`examples/cartwell-org`](examples/cartwell-org)         | Amazon-style marketplace             | Two-pizza, single-threaded-owner teams (Search, Fulfillment) plus a seller-enablement team                                      |
 | [`examples/wavelength-org`](examples/wavelength-org)     | Spotify-style squads/chapters        | A playlists squad, an audio-platform team, and a cross-squad chapter-coaching team                                              |
+| [`examples/driftwood-org`](examples/driftwood-org)       | An org whose AI outran its org chart | Deliberately broken: an orphaned event contract, agents owned by someone who left, a vacant seat two teams report into          |
 
-They work with every command in this README — swap in the path, e.g. `teamapi render examples/meridian-pay-org --scope topology`.
+They work with every command in this README — swap in the path, e.g. `teamapi render examples/meridian-pay-org --scope topology`. Driftwood is the exception worth knowing about: it validates cleanly like the rest, but it's built to fail [`teamapi gaps`](#gaps), so it's the one to point a new check at when you want to see findings rather than a clean report.
 
 <a id="ai-native"></a>
 
@@ -593,6 +595,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | Command                                                                                                                                                     | Purpose                                                                                                                                                                                                                                  |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `teamapi validate <patterns...>`                                                                                                                            | Resolve every `$ref` transitively and report unresolved refs                                                                                                                                                                             |
+| `teamapi gaps <patterns...>`                                                                                                                                | Report [accountability holes between teams](#gaps) — unowned event contracts, vacant seats, unowned agents                                                                                                                               |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]`                 | Render a diagram                                                                                                                                                                                                                         |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                          | Generate a minimal, schema-valid document                                                                                                                                                                                                |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
@@ -631,6 +634,27 @@ Role edges:
 ```
 
 When nothing has changed, it prints a single line rather than an empty report. Either way it exits 0 — this is an inspection tool, not a validation gate (see [CI integration](#ci-integration) for that).
+
+<a id="gaps"></a>
+
+## 🕳️ Gaps
+
+Every other check here compares the spec to an outside system. This one compares it to itself, because the holes it looks for are invisible from any single `teamapi.yml` — each document is individually valid, and the gap only appears once the graph is resolved. A service subscribing to an event nobody publishes reads as complete from inside the subscriber. A vacant seat reads as ordinary from inside the team that declared it; it's the two _other_ teams reporting into it that make the vacancy load-bearing.
+
+```bash
+teamapi gaps examples/acme-org
+```
+
+```text
+- unconsumed-event: 'ledger' publishes 'LedgerEntryPosted', which no declared service subscribes to
+- unconsumed-event: 'checkout-api' publishes 'OrderPlaced', which no declared service subscribes to
+? vacant-load-bearing: 'head-of-engineering' on platform-payments is vacant, but stream-checkout, stream-onboarding report(s) into it
+~ unacknowledged: stream-checkout declares a collaboration with stream-onboarding, which declares nothing back
+
+4 finding(s), 0 blocking; 9 seam(s) checked.
+```
+
+Only `orphan-subscription` and `dangling-owner` exit non-zero, and they share a shape: the declaration _looks_ complete and isn't. An agent whose `ownerId` resolves to nobody presents to every downstream consumer — `AGENTS.md`, the context bundle, a generated crew — exactly like an agent with a real human behind it, which makes it strictly worse than an agent with no owner at all. Only `collaboration` is expected to be mutual; `x-as-a-service` is deliberately one-directional, so consuming a platform is never reported. Pure, offline, no token. Details in [`docs/integrations/gaps.md`](docs/integrations/gaps.md).
 
 <a id="ci-integration"></a>
 

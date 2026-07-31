@@ -5,12 +5,14 @@ import * as YAML from "js-yaml";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { runValidate } from "../commands/validate";
+import { runGaps } from "../commands/gaps";
 import { runRender } from "../commands/render";
 import { runScaffold } from "../commands/scaffold";
 import { runGenerate } from "../commands/generate";
 
 const ACME_ROOT = path.resolve(__dirname, "../../../../examples/acme-org");
 const ACME_GLOB = path.join(ACME_ROOT, "**/teamapi.yml");
+const DRIFTWOOD_ROOT = path.resolve(__dirname, "../../../../examples/driftwood-org");
 
 let tmpDir: string;
 
@@ -35,6 +37,23 @@ describe("teamapi validate", () => {
 
   it("exits 1 when no files match", async () => {
     const code = await runValidate([path.join(tmpDir, "*.yml")]);
+    expect(code).toBe(1);
+  });
+});
+
+describe("teamapi gaps", () => {
+  it("exits 0 for the example org — it has warnings, but nothing blocking", async () => {
+    const code = await runGaps([ACME_GLOB]);
+    expect(code).toBe(0);
+  });
+
+  it("exits 1 for the deliberately broken org", async () => {
+    const code = await runGaps([DRIFTWOOD_ROOT]);
+    expect(code).toBe(1);
+  });
+
+  it("exits 1 when no files match", async () => {
+    const code = await runGaps([path.join(tmpDir, "*.yml")]);
     expect(code).toBe(1);
   });
 });

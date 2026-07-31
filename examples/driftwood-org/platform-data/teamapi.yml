@@ -1,0 +1,90 @@
+teamApiVersion: "1.0.0"
+id: platform-data
+info:
+  name: Platform Data
+  focus: Feature store, event pipelines, and the shared data platform every other team builds on
+  type: platform
+channels:
+  - type: slack
+    name: platform-data
+searchTerms:
+  - term: data
+  - term: feature store
+  - term: pipelines
+services:
+  - name: feature-store
+    repository: https://github.com/driftwood-example/feature-store
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Feature Set
+          definition: A versioned collection of model inputs computed from source events
+      aggregates:
+        - FeatureSet
+      publishedEvents:
+        - FeatureSetPublished
+      subscribedEvents:
+        # Nothing in this org publishes ModelTrained. The pipeline that used to emit it was owned
+        # by a team that was reorganised away, and the subscription outlived it.
+        - ModelTrained
+roles:
+  - id: head-of-data
+    name: Head of Data
+    kind: EngineeringManager
+    responsibilities:
+      - Data platform direction and staffing
+      - Cross-team data governance
+  - id: platform-engineer
+    name: Data Platform Engineer
+    kind: Engineer
+    responsibilities:
+      - feature-store development
+    reportsTo: head-of-data
+members:
+  # head-of-data is deliberately unfilled: the previous holder left four months ago and two other
+  # teams still report into the seat.
+  - id: rowan-esposito
+    name: Rowan Esposito
+    contact: rowan.esposito@driftwood.example
+    roleIds: [platform-engineer]
+    allocation: 100
+cognitiveLoad:
+  intrinsic: 8
+  extraneous: 7
+  germane: 3
+  notes: >
+    Carrying the feature store, three ingestion pipelines, and an agent fleet nobody has time to
+    review, with the manager seat vacant since March.
+agents:
+  - id: pipeline-reviewer
+    name: Pipeline Reviewer
+    provider: Anthropic
+    model: claude-sonnet-4-5
+    role: reviewer
+    capabilities: [code-review, schema-validation]
+    status: active
+    ownerId: dana-whitfield # Dana left in March; no members[] entry names them any more.
+    permissions: [read:specifications, comment:pull-requests]
+    tags: [data, reviews]
+  - id: backfill-runner
+    name: Backfill Runner
+    provider: OpenAI
+    model: gpt-4.1
+    role: operator
+    capabilities: [pipeline-execution, backfill]
+    status: active
+    ownerId: rowan-esposito
+    permissions: [write:pipelines]
+    tags: [data, automation]
+memory:
+  - id: agents-outlived-their-owners
+    title: Our agent roster outlived the people who owned it
+    kind: lesson-learned
+    body: >
+      Both agents on this team were introduced by individual engineers during a delivery crunch,
+      with an ownerId pointing at whoever wrote the prompt. When Dana left, the review agent kept
+      running and kept commenting on pull requests; nothing in the org chart changed, because the
+      agent was never on it. Ownership of an agent needs to survive the person who set it up.
+    tags: [agents, ownership]
+    contributors: [rowan-esposito]

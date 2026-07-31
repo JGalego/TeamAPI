@@ -1,0 +1,101 @@
+teamApiVersion: "1.0.0"
+id: stream-insights
+info:
+  name: Stream Insights
+  focus: Customer-facing analytics dashboards and the insight generation behind them
+  type: stream-aligned
+channels:
+  - type: slack
+    name: stream-insights
+searchTerms:
+  - term: insights
+  - term: analytics
+  - term: dashboards
+services:
+  - name: insights-api
+    repository: https://github.com/driftwood-example/insights-api
+    versioning:
+      type: semantic
+    boundedContext:
+      ubiquitousLanguage:
+        - term: Insight
+          definition: A generated observation about a customer's usage, shown on their dashboard
+      aggregates:
+        - Insight
+      publishedEvents:
+        - InsightGenerated
+      subscribedEvents:
+        - FeatureSetPublished
+roles:
+  - id: tech-lead
+    name: Insights Tech Lead
+    kind: TechLead
+    responsibilities:
+      - Insights architecture
+      - text: Reviewing everything the reporting agent writes
+        doneWhen: Every generated report has a named human reviewer before it reaches a customer.
+    reportsToRef:
+      teamName: Platform Data
+      roleId: head-of-data
+      $ref: ../platform-data/teamapi.yml
+    alignsWith:
+      - teamName: Enabling AI Guild
+        roleId: guild-lead
+        $ref: ../enabling-ai-guild/teamapi.yml
+  - id: analytics-engineer
+    name: Analytics Engineer
+    kind: Engineer
+    responsibilities:
+      - insights-api development
+    reportsTo: tech-lead
+members:
+  - id: mira-okonjo
+    name: Mira Okonjo
+    contact: mira.okonjo@driftwood.example
+    roleIds: [tech-lead]
+    allocation: 100
+  - id: tobias-lindqvist
+    name: Tobias Lindqvist
+    contact: tobias.lindqvist@driftwood.example
+    roleIds: [analytics-engineer]
+    allocation: 60
+cognitiveLoad:
+  intrinsic: 5
+  extraneous: 6
+  germane: 4
+  notes: >
+    Most of the extraneous load is reviewing generated report copy — work that appears on nobody's
+    role description and in no sprint.
+interactions:
+  - teamName: Platform Data
+    mode: collaboration
+    purpose: Co-designing the feature-store contract for insight generation
+    startDate: "2026-04-01"
+    expectedDuration: 8
+    expectedDurationUnit: weeks
+    $ref: ../platform-data/teamapi.yml
+dependencies:
+  - teamName: Platform Data
+    description: Insight generation reads directly from the shared feature store
+    type: Slowing
+    $ref: ../platform-data/teamapi.yml
+agents:
+  - id: report-writer
+    name: Report Writer
+    provider: OpenAI
+    model: gpt-4.1
+    role: technical-writer
+    capabilities: [summarisation, report-generation]
+    status: active
+    # No ownerId: this one was set up in a hack week and nobody was ever assigned to it.
+    permissions: [read:knowledge-base, write:documentation]
+    tags: [reporting, customer-facing]
+  - id: dashboard-qa
+    name: Dashboard QA
+    provider: Anthropic
+    model: claude-haiku-4-5
+    role: qa
+    capabilities: [visual-regression, test-generation]
+    status: active
+    permissions: [read:specifications]
+    tags: [testing]
