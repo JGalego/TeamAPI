@@ -14,10 +14,27 @@ async function acme(): Promise<PaperclipPackage> {
   return buildPaperclipPackage(graph, { name: "ACME Org" });
 }
 
-function frontmatter(content: string): Record<string, any> {
+/**
+ * The frontmatter keys these tests assert on. Deliberately not exhaustive: this is a test-side
+ * view of the generator's output, and anything not listed here is something no test reads yet.
+ */
+interface Frontmatter {
+  schema?: string;
+  kind?: string;
+  slug?: string;
+  name?: string;
+  description?: string;
+  provider?: string;
+  model?: string;
+  tags?: string[];
+  includes?: string[];
+  metadata?: { teamapi?: { provider?: string; team?: string } };
+}
+
+function frontmatter(content: string): Frontmatter {
   const match = /^---\n([\s\S]*?)\n---\n/.exec(content);
   expect(match, "document should open with YAML frontmatter").not.toBeNull();
-  return YAML.load(match![1]) as Record<string, any>;
+  return YAML.load(match![1]!) as Frontmatter;
 }
 
 function fileAt(pkg: PaperclipPackage, p: string): string {
@@ -60,8 +77,8 @@ describe("paperclip generator (agentcompanies/v1)", () => {
     const fm = frontmatter(fileAt(pkg, "agents/platform-payments-architecture-reviewer/AGENTS.md"));
     expect(fm.provider).toBeUndefined();
     expect(fm.model).toBeUndefined();
-    expect(fm.metadata.teamapi.provider).toBeTruthy();
-    expect(fm.metadata.teamapi.team).toBe("platform-payments");
+    expect(fm.metadata!.teamapi!.provider).toBeTruthy();
+    expect(fm.metadata!.teamapi!.team).toBe("platform-payments");
   });
 
   it("omits reportsTo, because Team API models reporting between roles and not agents", async () => {
