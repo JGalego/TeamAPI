@@ -52,6 +52,7 @@ export function portBlueprints(): PortBlueprint[] {
           },
           focus: { type: "string", title: "Focus" },
           cognitiveLoad: { type: "number", title: "Cognitive load" },
+          supervisionLoad: { type: "number", title: "Supervision load" },
           cognitiveLoadLabel: {
             type: "string",
             title: "Cognitive load label",
@@ -131,6 +132,7 @@ export function buildPortCatalog(graph: OrgGraph, teamId?: TeamId): PortCatalog 
         topology: doc.info.type,
         focus: doc.info.focus,
         cognitiveLoad: load?.total,
+        supervisionLoad: load?.assessment.supervision,
         cognitiveLoadLabel: load?.label,
       }),
       relations: { members: doc.members.map((m) => m.id) },

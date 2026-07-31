@@ -290,4 +290,21 @@ describe("REST API", () => {
     expect(res.body).toContain("Org Dashboard");
     expect(res.body).toContain("/cognitive-load");
   });
+
+  it("GET /dashboard renders supervision load as its own chip, not as part of the bar", async () => {
+    const res = await app.inject({ method: "GET", url: "/dashboard" });
+    expect(res.body).toContain("load-supervision");
+    expect(res.body).toContain("assessment.supervision");
+    // The bar width still comes from `total` alone, which is what keeps it comparable across
+    // teams that have scored supervision and teams that haven't.
+    expect(res.body).toContain("width:${Math.round((r.total / max) * 100)}%");
+  });
+
+  it("GET /cognitive-load carries supervision through for a team that scored it", async () => {
+    const res = await app.inject({ method: "GET", url: "/cognitive-load" });
+    const report: { teamId: string; total: number; assessment: { supervision?: number } }[] = res.json();
+    const payments = report.find((r) => r.teamId === "platform-payments")!;
+    expect(payments.assessment.supervision).toBe(6);
+    expect(payments.total).toBe(18);
+  });
 });

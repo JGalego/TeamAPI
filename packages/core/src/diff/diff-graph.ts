@@ -4,6 +4,10 @@ import type { GraphEdge, OrgGraph, RoleGraphEdge, TeamId } from "../model/org-gr
 export interface CognitiveLoadSnapshot {
   total: number;
   label: string;
+  /** Tracked separately from `total`, which deliberately excludes it. A team that doubles its
+   * supervision load without touching the other three types would otherwise show up as no change
+   * at all — which is exactly the kind of quiet growth this field exists to make visible. */
+  supervision?: number;
 }
 
 export interface TeamDiff {
@@ -89,7 +93,10 @@ function diffTeam(teamId: TeamId, oldGraph: OrgGraph, newGraph: OrgGraph): TeamD
 
   const oldLoad = oldTeam.doc.cognitiveLoad ? scoreCognitiveLoad(oldTeam.doc.cognitiveLoad) : undefined;
   const newLoad = newTeam.doc.cognitiveLoad ? scoreCognitiveLoad(newTeam.doc.cognitiveLoad) : undefined;
-  const loadChanged = oldLoad?.total !== newLoad?.total || oldLoad?.label !== newLoad?.label;
+  const loadChanged =
+    oldLoad?.total !== newLoad?.total ||
+    oldLoad?.label !== newLoad?.label ||
+    oldLoad?.assessment.supervision !== newLoad?.assessment.supervision;
 
   const hasChanges =
     roles.added.length > 0 ||
@@ -107,8 +114,12 @@ function diffTeam(teamId: TeamId, oldGraph: OrgGraph, newGraph: OrgGraph): TeamD
     ...(loadChanged
       ? {
           cognitiveLoad: {
-            before: oldLoad ? { total: oldLoad.total, label: oldLoad.label } : undefined,
-            after: newLoad ? { total: newLoad.total, label: newLoad.label } : undefined,
+            before: oldLoad
+              ? { total: oldLoad.total, label: oldLoad.label, supervision: oldLoad.assessment.supervision }
+              : undefined,
+            after: newLoad
+              ? { total: newLoad.total, label: newLoad.label, supervision: newLoad.assessment.supervision }
+              : undefined,
           },
         }
       : {}),
@@ -176,7 +187,8 @@ export function formatOrgGraphDiff(diff: OrgGraphDiff): string {
   for (const team of diff.teamsChanged) {
     lines.push(`~ ${team.teamId}`);
     if (team.cognitiveLoad) {
-      const fmt = (s?: CognitiveLoadSnapshot) => (s ? `${s.total} (${s.label})` : "none");
+      const fmt = (s?: CognitiveLoadSnapshot) =>
+        s ? `${s.total} (${s.label})${s.supervision === undefined ? "" : `, supervision ${s.supervision}`}` : "none";
       lines.push(`  cognitive load: ${fmt(team.cognitiveLoad.before)} -> ${fmt(team.cognitiveLoad.after)}`);
     }
     for (const id of team.rolesAdded) lines.push(`  + role added: ${id}`);

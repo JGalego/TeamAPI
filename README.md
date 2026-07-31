@@ -232,7 +232,7 @@ flowchart TD
   stream_checkout__tech_lead --> stream_checkout__frontend_engineer
   stream_onboarding__tech_lead --> stream_onboarding__engineer
   platform_payments__head_of_engineering --> stream_checkout__tech_lead
-  stream_checkout__tech_lead -.->|"aligns with"| enabling_devex__coach
+  stream_checkout__tech_lead -.->|"learns from"| enabling_devex__coach
   platform_payments__head_of_engineering --> stream_onboarding__tech_lead
   stream_onboarding__tech_lead -.->|"aligns with"| enabling_devex__coach
   classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;
@@ -305,7 +305,7 @@ flowchart TD
 
 ## 🖥️ Dashboard
 
-The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — static HTML/CSS/JS fetching the REST API you already have running, no separate process or build step. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded, never color alone), free-text search, and a tabbed diagram viewer (`topology` / `org-hierarchy` / `context-map`) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — team list, cognitive load, and search keep working.
+The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — static HTML/CSS/JS fetching the REST API you already have running, no separate process or build step. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded, never color alone — with a separate 🤖 chip for supervision load, kept out of the bar so its width means the same thing for every team), free-text search, and a tabbed diagram viewer (`topology` / `org-hierarchy` / `context-map`) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — team list, cognitive load, and search keep working.
 
 ```bash
 teamapi serve-api examples/acme-org --port 3000
@@ -550,7 +550,7 @@ Of every AI integration here this one has the widest reach, precisely because it
 
 `teamapi generate port examples/acme-org --out ./port` emits a [Port](https://www.getport.io/) catalog as `blueprints.json` (apply once) and `entities.json` (apply on every change): a `teamapi_team` per team, a `teamapi_service` per service related to its owner, and a `teamapi_person` per member.
 
-It overlaps almost entirely with the Backstage target, with one exception that matters — **cognitive load**. Port scores and colours numeric properties, so a team's self-assessed load becomes something you can sort by, threshold and alert on. Backstage's entity model has nowhere to put it, so that target drops the most actionable number in the document. Details in [`docs/integrations/port.md`](docs/integrations/port.md).
+It overlaps almost entirely with the Backstage target, with one exception that matters — **cognitive load**. Port scores and colours numeric properties, so a team's self-assessed load becomes something you can sort by, threshold and alert on. Backstage's entity model has nowhere to put it, so that target drops the most actionable number in the document. `supervisionLoad` is emitted as its own property alongside `cognitiveLoad`, since it's deliberately not part of the total — which makes "who is carrying the most agent-supervision load" a sortable column rather than a thing you'd have to go read four YAML files to learn. Details in [`docs/integrations/port.md`](docs/integrations/port.md).
 
 <a id="opentelemetry"></a>
 
