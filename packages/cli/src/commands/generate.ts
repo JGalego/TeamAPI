@@ -89,9 +89,7 @@ async function generateCrewAi(graph: OrgGraph, options: GenerateOptions): Promis
 }
 
 async function generateBackstage(graph: OrgGraph, options: GenerateOptions): Promise<number> {
-  const entities = options.team
-    ? buildBackstageCatalog(graph, options.team).entities
-    : buildBackstageOrgCatalog(graph);
+  const entities = options.team ? buildBackstageCatalog(graph, options.team).entities : buildBackstageOrgCatalog(graph);
 
   await fs.mkdir(options.out, { recursive: true });
   const file = path.join(options.out, "catalog-info.yaml");
@@ -111,9 +109,7 @@ async function generatePaperclip(graph: OrgGraph, options: GenerateOptions): Pro
   }
   console.log(`Wrote ${pkg.files.length} file(s) to ${options.out}/ (agentcompanies/v1)`);
   if (pkg.skippedAgents.length > 0) {
-    console.log(
-      `  ! skipped ${pkg.skippedAgents.length} non-active agent(s): ${pkg.skippedAgents.join(", ")}`,
-    );
+    console.log(`  ! skipped ${pkg.skippedAgents.length} non-active agent(s): ${pkg.skippedAgents.join(", ")}`);
   }
   return 0;
 }
@@ -168,11 +164,7 @@ async function generatePort(graph: OrgGraph, options: GenerateOptions): Promise<
     `${JSON.stringify(catalog.blueprints, null, 2)}\n`,
     "utf8",
   );
-  await fs.writeFile(
-    path.join(options.out, "entities.json"),
-    `${JSON.stringify(catalog.entities, null, 2)}\n`,
-    "utf8",
-  );
+  await fs.writeFile(path.join(options.out, "entities.json"), `${JSON.stringify(catalog.entities, null, 2)}\n`, "utf8");
   console.log(
     `Wrote ${catalog.blueprints.length} blueprint(s) and ${catalog.entities.length} entity(ies) to ${options.out}/`,
   );

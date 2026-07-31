@@ -73,7 +73,10 @@ describe("planPagerDutyDrift", () => {
   });
 
   it("warns, but does not block, on a declared service PagerDuty has never heard of", async () => {
-    const report = planPagerDutyDrift(await acme(), healthy().filter((s) => s.name !== "ledger"));
+    const report = planPagerDutyDrift(
+      await acme(),
+      healthy().filter((s) => s.name !== "ledger"),
+    );
     expect(report.findings).toEqual([
       {
         kind: "unmonitored",

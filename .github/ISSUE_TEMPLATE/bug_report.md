@@ -21,6 +21,7 @@ teamapi ...
 ```
 
 **Versions**
+
 - `@jgalego/teamapi` (or the specific package) version:
 - Node version:
 - OS:

@@ -38,4 +38,10 @@ export type SteeringDocument = z.infer<typeof SteeringDocumentSchema>;
 export const SteeringDocumentsSchema = z
   .array(SteeringDocumentSchema)
   .default([])
-  .superRefine((docs, ctx) => checkUniqueIds(docs.map((d) => d.id), ctx, "a team's steeringDocuments[]"));
+  .superRefine((docs, ctx) =>
+    checkUniqueIds(
+      docs.map((d) => d.id),
+      ctx,
+      "a team's steeringDocuments[]",
+    ),
+  );

@@ -11,10 +11,10 @@ opportunity and also the hazard, so the division of labour matters more than the
 
 **TeamAPI declares. Paperclip enforces and executes.**
 
-TeamAPI's `AgentSchema.permissions` field is documented as *"enforced by whatever external
-automation actually executes the agent's actions, not by this schema."* Paperclip is that
+TeamAPI's `AgentSchema.permissions` field is documented as _"enforced by whatever external
+automation actually executes the agent's actions, not by this schema."_ Paperclip is that
 automation — it has a governed tool gateway, budgets, and approval workflows. TeamAPI has the
-reviewed, versioned statement of what *should* be true.
+reviewed, versioned statement of what _should_ be true.
 
 So the flow runs one way: **spec → runtime**, the way Terraform config relates to infrastructure.
 Two org charts with two write paths is a classic failure mode; this integration designates
@@ -37,13 +37,13 @@ teamapi serve-mcp /path/to/your/org
 Register that command as a local stdio MCP tool provider in Paperclip. Every agent then gets the
 org graph as governed tools:
 
-| Tool | What an agent can finally answer |
-|---|---|
-| `find_service_owner` | "Who owns `checkout-api`?" — instead of guessing or asking in Slack |
-| `get_team_cognitive_load` | "Is this team already overloaded?" before assigning more work |
-| `get_team_dependencies`, `get_team_interactions` | "Who do I need to coordinate with?" |
-| `get_context_bundle` | Everything relevant to a stated goal, in one call |
-| `list_policies`, `list_steering_documents` | The standards this team actually holds |
+| Tool                                             | What an agent can finally answer                                    |
+| ------------------------------------------------ | ------------------------------------------------------------------- |
+| `find_service_owner`                             | "Who owns `checkout-api`?" — instead of guessing or asking in Slack |
+| `get_team_cognitive_load`                        | "Is this team already overloaded?" before assigning more work       |
+| `get_team_dependencies`, `get_team_interactions` | "Who do I need to coordinate with?"                                 |
+| `get_context_bundle`                             | Everything relevant to a stated goal, in one call                   |
+| `list_policies`, `list_steering_documents`       | The standards this team actually holds                              |
 
 `get_context_bundle` is worth calling out. Given a goal — `{"goal": "Implement OAuth"}`, optionally
 scoped to a team — it returns the relevant specifications, steering documents, policies, memory and
@@ -71,18 +71,18 @@ agents/<team-id>-<agent-id>/AGENTS.md
 skills/<team-id>-<prompt-id>/SKILL.md
 ```
 
-| TeamAPI | Package |
-|---|---|
-| the org graph | `COMPANY.md`, including every team |
-| a team + its `info.type` | `TEAM.md`, topology type as a tag |
-| `agents[]` | `AGENTS.md`, one per active agent |
-| `prompts[]` | `SKILL.md`, a valid Agent Skills package |
-| `policies[]` | rendered into the team body, where markdown is canonical |
-| `provider`, `model`, `ownerId`, `permissions` | `metadata.teamapi` |
+| TeamAPI                                       | Package                                                  |
+| --------------------------------------------- | -------------------------------------------------------- |
+| the org graph                                 | `COMPANY.md`, including every team                       |
+| a team + its `info.type`                      | `TEAM.md`, topology type as a tag                        |
+| `agents[]`                                    | `AGENTS.md`, one per active agent                        |
+| `prompts[]`                                   | `SKILL.md`, a valid Agent Skills package                 |
+| `policies[]`                                  | rendered into the team body, where markdown is canonical |
+| `provider`, `model`, `ownerId`, `permissions` | `metadata.teamapi`                                       |
 
 Three deliberate gaps, each because the source data doesn't support the alternative:
 
-- **No `reportsTo` on agents.** TeamAPI models reporting between *roles* — people — not between
+- **No `reportsTo` on agents.** TeamAPI models reporting between _roles_ — people — not between
   agents. Any agent hierarchy here would be invented, so the runtime arranges them.
 - **No per-agent `skills`.** Prompts become real skill packages, but nothing in the schema says
   which agent uses which, so they attach at team level rather than being guessed.

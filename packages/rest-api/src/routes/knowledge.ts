@@ -144,7 +144,11 @@ export async function knowledgeRoutes(app: FastifyInstance): Promise<void> {
         querystring: {
           type: "object",
           properties: {
-            effective: { type: "string", enum: ["true", "false"], description: "Include inherited organization-scoped documents" },
+            effective: {
+              type: "string",
+              enum: ["true", "false"],
+              description: "Include inherited organization-scoped documents",
+            },
           },
         },
         response: { 404: errorResponseSchema },
@@ -177,7 +181,10 @@ export async function knowledgeRoutes(app: FastifyInstance): Promise<void> {
       const graph = app.orgGraphStore.current;
       if (!getTeam(graph, req.params.id)) return reply.code(404).send({ error: `Unknown team id '${req.params.id}'` });
       const doc = getSteeringDocument(graph, req.params.id, req.params.resourceId);
-      if (!doc) return reply.code(404).send({ error: `Unknown steering document id '${req.params.resourceId}' on team '${req.params.id}'` });
+      if (!doc)
+        return reply
+          .code(404)
+          .send({ error: `Unknown steering document id '${req.params.resourceId}' on team '${req.params.id}'` });
       return doc;
     },
   );
@@ -189,7 +196,8 @@ export async function knowledgeRoutes(app: FastifyInstance): Promise<void> {
       schema: {
         tags: ["Prompts"],
         summary: "Render a prompt",
-        description: "Fills a prompt's {{variable}} placeholders from the request body, falling back to each variable's declared default.",
+        description:
+          "Fills a prompt's {{variable}} placeholders from the request body, falling back to each variable's declared default.",
         params: {
           type: "object",
           properties: { id: { type: "string" }, promptId: { type: "string" } },
@@ -206,7 +214,8 @@ export async function knowledgeRoutes(app: FastifyInstance): Promise<void> {
       const graph = app.orgGraphStore.current;
       if (!getTeam(graph, req.params.id)) return reply.code(404).send({ error: `Unknown team id '${req.params.id}'` });
       const prompt = getPrompt(graph, req.params.id, req.params.promptId);
-      if (!prompt) return reply.code(404).send({ error: `Unknown prompt id '${req.params.promptId}' on team '${req.params.id}'` });
+      if (!prompt)
+        return reply.code(404).send({ error: `Unknown prompt id '${req.params.promptId}' on team '${req.params.id}'` });
       try {
         return { rendered: renderPrompt(prompt, req.body?.variables ?? {}) };
       } catch (err) {

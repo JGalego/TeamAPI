@@ -197,8 +197,10 @@ export function formatOrgGraphDiff(diff: OrgGraphDiff): string {
 
   if (diff.roleEdgesAdded.length > 0 || diff.roleEdgesRemoved.length > 0) {
     lines.push("Role edges:");
-    for (const e of diff.roleEdgesAdded) lines.push(`  + ${e.kind} ${e.fromTeam}.${e.fromRole} -> ${e.toTeam}.${e.toRole}`);
-    for (const e of diff.roleEdgesRemoved) lines.push(`  - ${e.kind} ${e.fromTeam}.${e.fromRole} -> ${e.toTeam}.${e.toRole}`);
+    for (const e of diff.roleEdgesAdded)
+      lines.push(`  + ${e.kind} ${e.fromTeam}.${e.fromRole} -> ${e.toTeam}.${e.toRole}`);
+    for (const e of diff.roleEdgesRemoved)
+      lines.push(`  - ${e.kind} ${e.fromTeam}.${e.fromRole} -> ${e.toTeam}.${e.toRole}`);
     lines.push("");
   }
 

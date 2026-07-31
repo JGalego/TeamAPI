@@ -95,7 +95,7 @@ export async function runDiff(patterns: string[], options: DiffOptions): Promise
   if (oldGraph.unresolved.length > 0) {
     console.error(
       `Warning: ${oldGraph.unresolved.length} unresolved reference(s) at ${options.against} — ` +
-        "some data may be missing from the \"before\" side.",
+        'some data may be missing from the "before" side.',
     );
   }
 

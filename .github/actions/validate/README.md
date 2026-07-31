@@ -30,19 +30,19 @@ jobs:
 
 ## Inputs
 
-| Input | Default | Description |
-|---|---|---|
-| `patterns` | `.` | File paths, globs, or a directory to auto-discover `teamapi.yml` under — passed straight through to `teamapi validate`/`teamapi render`. |
-| `render-scope` | `topology` | Diagram scope to preview: `topology` \| `hierarchy` \| `context-map` \| `org-hierarchy`. |
-| `render-team` | *(none)* | Team id to scope the preview to — required if `render-scope: hierarchy`. |
-| `comment` | `true` | Post (and keep updated) a PR comment with the result. Set `false` to only validate. |
-| `github-token` | `${{ github.token }}` | Token used to read/post the PR comment. |
+| Input          | Default               | Description                                                                                                                              |
+| -------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `patterns`     | `.`                   | File paths, globs, or a directory to auto-discover `teamapi.yml` under — passed straight through to `teamapi validate`/`teamapi render`. |
+| `render-scope` | `topology`            | Diagram scope to preview: `topology` \| `hierarchy` \| `context-map` \| `org-hierarchy`.                                                 |
+| `render-team`  | _(none)_              | Team id to scope the preview to — required if `render-scope: hierarchy`.                                                                 |
+| `comment`      | `true`                | Post (and keep updated) a PR comment with the result. Set `false` to only validate.                                                      |
+| `github-token` | `${{ github.token }}` | Token used to read/post the PR comment.                                                                                                  |
 
 ## Outputs
 
-| Output | Description |
-|---|---|
-| `success` | `'true'` if validation passed, `'false'` otherwise. |
+| Output    | Description                                                     |
+| --------- | --------------------------------------------------------------- |
+| `success` | `'true'` if validation passed, `'false'` otherwise.             |
 | `diagram` | The rendered Mermaid diagram text (empty if validation failed). |
 
 ## Behavior

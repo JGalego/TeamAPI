@@ -46,6 +46,7 @@ Subscribes to: ApplicantActivated, ChargeAuthorized
 ## How this team works
 
 ### Trunk-based development
+
 …
 ```
 
@@ -57,7 +58,7 @@ Of everything here, this is the AI integration with the widest reach, precisely 
 no runtime. No gateway to configure, no server to keep up, no adoption decision by anyone. The
 file is already the convention — any coding agent that opens the repository reads it.
 
-Compare [Paperclip](paperclip.md) or the MCP server: both are better at *governed* access, and
+Compare [Paperclip](paperclip.md) or the MCP server: both are better at _governed_ access, and
 both require someone to wire them up first.
 
 ## Nothing is summarised

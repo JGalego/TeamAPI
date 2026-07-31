@@ -31,10 +31,10 @@ Each one says who owns the repository and why:
 
 ## Two ways to name the owner
 
-| | |
-|---|---|
+|              |                                                                                                    |
+| ------------ | -------------------------------------------------------------------------------------------------- |
 | `--org acme` | `@acme/stream-checkout` — the same team slug `teamapi apply` provisions, so the two commands agree |
-| no `--org` | the members' `githubUsername` handles, which needs no org setup but drifts as people move |
+| no `--org`   | the members' `githubUsername` handles, which needs no org setup but drifts as people move          |
 
 Prefer `--org`. A team slug survives someone changing teams; a list of handles does not.
 

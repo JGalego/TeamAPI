@@ -46,4 +46,10 @@ export type Prompt = z.infer<typeof PromptSchema>;
 export const PromptsSchema = z
   .array(PromptSchema)
   .default([])
-  .superRefine((prompts, ctx) => checkUniqueIds(prompts.map((p) => p.id), ctx, "a team's prompts[]"));
+  .superRefine((prompts, ctx) =>
+    checkUniqueIds(
+      prompts.map((p) => p.id),
+      ctx,
+      "a team's prompts[]",
+    ),
+  );

@@ -92,12 +92,13 @@ describe("planGithubTeamsApply", () => {
 
   it("plans an update that adds and removes logins to match the desired set", async () => {
     const graph = makeGraph([
-      makeTeam("stream-billing", [{ id: "daniel-osei", name: "Daniel Osei", roleIds: [], githubUsername: "danielosei" }]),
+      makeTeam("stream-billing", [
+        { id: "daniel-osei", name: "Daniel Osei", roleIds: [], githubUsername: "danielosei" },
+      ]),
     ]);
-    const client = new FakeClient(
-      [{ slug: "stream-billing", name: "stream-billing", description: null }],
-      { "stream-billing": [{ login: "stale-user" }] },
-    );
+    const client = new FakeClient([{ slug: "stream-billing", name: "stream-billing", description: null }], {
+      "stream-billing": [{ login: "stale-user" }],
+    });
 
     const plan = await planGithubTeamsApply(graph, client, "meridian");
 
@@ -114,12 +115,13 @@ describe("planGithubTeamsApply", () => {
 
   it("plans a noop when the GitHub team's members already match", async () => {
     const graph = makeGraph([
-      makeTeam("stream-billing", [{ id: "daniel-osei", name: "Daniel Osei", roleIds: [], githubUsername: "danielosei" }]),
+      makeTeam("stream-billing", [
+        { id: "daniel-osei", name: "Daniel Osei", roleIds: [], githubUsername: "danielosei" },
+      ]),
     ]);
-    const client = new FakeClient(
-      [{ slug: "stream-billing", name: "stream-billing", description: null }],
-      { "stream-billing": [{ login: "danielosei" }] },
-    );
+    const client = new FakeClient([{ slug: "stream-billing", name: "stream-billing", description: null }], {
+      "stream-billing": [{ login: "danielosei" }],
+    });
 
     const plan = await planGithubTeamsApply(graph, client, "meridian");
     expect(plan.teams[0]!.action).toBe("noop");
@@ -128,7 +130,10 @@ describe("planGithubTeamsApply", () => {
 
 describe("formatApplyPlan", () => {
   it("renders a no-changes message when every team is a noop", () => {
-    const text = formatApplyPlan({ org: "meridian", teams: [{ teamId: "x", action: "noop", membersToAdd: [], membersToRemove: [], membersSkipped: [] }] });
+    const text = formatApplyPlan({
+      org: "meridian",
+      teams: [{ teamId: "x", action: "noop", membersToAdd: [], membersToRemove: [], membersSkipped: [] }],
+    });
     expect(text).toBe("No changes. GitHub teams already match the org graph.");
   });
 
@@ -181,7 +186,15 @@ describe("executeGithubTeamsApply", () => {
     const client = new FakeClient([], {});
     const plan = {
       org: "meridian",
-      teams: [{ teamId: "stream-billing", action: "update" as const, membersToAdd: [], membersToRemove: [], membersSkipped: [] }],
+      teams: [
+        {
+          teamId: "stream-billing",
+          action: "update" as const,
+          membersToAdd: [],
+          membersToRemove: [],
+          membersSkipped: [],
+        },
+      ],
     };
 
     await executeGithubTeamsApply(plan, graph, client);

@@ -33,4 +33,10 @@ export type AiSession = z.infer<typeof AiSessionSchema>;
 export const AiSessionsSchema = z
   .array(AiSessionSchema)
   .default([])
-  .superRefine((sessions, ctx) => checkUniqueIds(sessions.map((s) => s.id), ctx, "a team's sessions[]"));
+  .superRefine((sessions, ctx) =>
+    checkUniqueIds(
+      sessions.map((s) => s.id),
+      ctx,
+      "a team's sessions[]",
+    ),
+  );

@@ -68,4 +68,10 @@ export type Workflow = z.infer<typeof WorkflowSchema>;
 export const WorkflowsSchema = z
   .array(WorkflowSchema)
   .default([])
-  .superRefine((workflows, ctx) => checkUniqueIds(workflows.map((w) => w.id), ctx, "a team's workflows[]"));
+  .superRefine((workflows, ctx) =>
+    checkUniqueIds(
+      workflows.map((w) => w.id),
+      ctx,
+      "a team's workflows[]",
+    ),
+  );

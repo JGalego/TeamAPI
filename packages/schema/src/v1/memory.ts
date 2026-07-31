@@ -39,4 +39,10 @@ export type MemoryEntry = z.infer<typeof MemoryEntrySchema>;
 export const MemorySchema = z
   .array(MemoryEntrySchema)
   .default([])
-  .superRefine((entries, ctx) => checkUniqueIds(entries.map((e) => e.id), ctx, "a team's memory[]"));
+  .superRefine((entries, ctx) =>
+    checkUniqueIds(
+      entries.map((e) => e.id),
+      ctx,
+      "a team's memory[]",
+    ),
+  );

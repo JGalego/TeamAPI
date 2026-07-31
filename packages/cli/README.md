@@ -27,16 +27,16 @@ teamapi chat examples/acme-org --team stream-checkout --member diego-alves
 
 ## Commands
 
-| Command | Purpose |
-|---|---|
-| `teamapi validate <patterns...>` | Resolve every `$ref` transitively and report unresolved refs |
-| `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]` | Render a diagram |
-| `teamapi scaffold <id> --type <type> [--name <name>] --out <file>` | Generate a minimal, schema-valid document |
-| `teamapi generate crewai\|backstage <patterns...> [--team <id>] --out <dir>` | Generate CrewAI agent/task config or a Backstage `catalog-info.yaml` |
-| `teamapi diff <patterns...> --against <ref>` | Diff the resolved org graph against a git revision |
-| `teamapi serve-api <patterns...> [--port 3000]` | Start the read-only REST API |
-| `teamapi serve-mcp <patterns...>` | Start the MCP server |
-| `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]` | Chat as a team or team member (requires `ANTHROPIC_API_KEY`) |
+| Command                                                                                                                                     | Purpose                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `teamapi validate <patterns...>`                                                                                                            | Resolve every `$ref` transitively and report unresolved refs         |
+| `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]` | Render a diagram                                                     |
+| `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                          | Generate a minimal, schema-valid document                            |
+| `teamapi generate crewai\|backstage <patterns...> [--team <id>] --out <dir>`                                                                | Generate CrewAI agent/task config or a Backstage `catalog-info.yaml` |
+| `teamapi diff <patterns...> --against <ref>`                                                                                                | Diff the resolved org graph against a git revision                   |
+| `teamapi serve-api <patterns...> [--port 3000]`                                                                                             | Start the read-only REST API                                         |
+| `teamapi serve-mcp <patterns...>`                                                                                                           | Start the MCP server                                                 |
+| `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]`                                                           | Chat as a team or team member (requires `ANTHROPIC_API_KEY`)         |
 
 See the [main README](https://github.com/JGalego/TeamAPI#readme) for the full walkthrough,
 rendered diagrams, REST/MCP reference, and the extended spec.

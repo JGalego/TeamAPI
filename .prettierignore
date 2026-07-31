@@ -1,0 +1,14 @@
+# Build output and caches
+dist/
+.turbo/
+coverage/
+node_modules/
+*.tsbuildinfo
+.teamapi-cache/
+
+# Generated / machine-owned
+pnpm-lock.yaml
+
+# Hand-tuned HTML with inline <script>/<style>; Prettier's reflow buys little here
+# and makes the inline template literals harder to read.
+*.html

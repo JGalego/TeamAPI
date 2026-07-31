@@ -199,7 +199,12 @@ export function searchOrg(graph: OrgGraph, query: string): SearchResult[] {
       }
     }
     for (const prompt of team.doc.prompts) {
-      if (includes(prompt.name) || includes(prompt.description) || includes(prompt.template) || prompt.tags.some(includes)) {
+      if (
+        includes(prompt.name) ||
+        includes(prompt.description) ||
+        includes(prompt.template) ||
+        prompt.tags.some(includes)
+      ) {
         results.push({ kind: "prompt", teamId: team.id, resourceId: prompt.id, label: prompt.name });
       }
     }

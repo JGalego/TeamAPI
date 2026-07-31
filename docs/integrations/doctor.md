@@ -4,12 +4,12 @@ Every network integration here degrades **silently** rather than loudly.
 
 A rejected Slack token reads as an empty workspace, so every declared channel comes back
 `missing`. An Okta client that stops at page one makes everyone past the first batch look like a
-leaver — and that's a *blocking* finding, about people who never left. A PagerDuty key that can
+leaver — and that's a _blocking_ finding, about people who never left. A PagerDuty key that can
 see services but not escalation policies reports every service as paging nobody, and fails the
 build for all of them.
 
 Those are wrong answers, delivered confidently, and nothing downstream can tell the difference.
-So the first question anyone has when a drift report surprises them — *is my token even right?* —
+So the first question anyone has when a drift report surprises them — _is my token even right?_ —
 gets its own command.
 
 ```bash
@@ -34,12 +34,12 @@ Exit code is 1 if any check fails, so this works as a preflight step in CI.
 
 ## The checks
 
-| check | what it rules out |
-|---|---|
-| `authenticate` | a rejected token being read as an empty account |
-| the read | scopes that allow auth but not the list call |
-| shape | the fields the drift checks depend on being absent |
-| `pagination` | stopping at page one, which invents findings about everything after it |
+| check          | what it rules out                                                      |
+| -------------- | ---------------------------------------------------------------------- |
+| `authenticate` | a rejected token being read as an empty account                        |
+| the read       | scopes that allow auth but not the list call                           |
+| shape          | the fields the drift checks depend on being absent                     |
+| `pagination`   | stopping at page one, which invents findings about everything after it |
 
 Provider-specific shape checks earn their place by naming the consequence:
 

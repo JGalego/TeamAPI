@@ -39,7 +39,10 @@ describe("backstage generator — examples/acme-org", () => {
     const components = entities.filter((e) => e.kind === "Component");
     expect(components).toHaveLength(1);
     expect(components[0]).toMatchObject({
-      metadata: { name: "checkout-api", links: [{ url: "https://github.com/acme-example/checkout-api", title: "Repository" }] },
+      metadata: {
+        name: "checkout-api",
+        links: [{ url: "https://github.com/acme-example/checkout-api", title: "Repository" }],
+      },
       spec: { type: "service", lifecycle: "production", owner: "group:stream-checkout", system: "stream-checkout" },
     });
   });

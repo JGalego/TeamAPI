@@ -17,19 +17,19 @@ otel/collector.yaml
 
 ## The attributes
 
-| attribute | from |
-|---|---|
-| `service.name` | the service |
-| `service.namespace` | the owning team's id |
-| `teamapi.team` | team id |
-| `teamapi.team_name` | the team's display name |
-| `teamapi.topology` | stream-aligned, platform, complicated-subsystem, enabling |
-| `teamapi.channel` | the team's Slack channel — where an alert should go |
-| `teamapi.repository` | the service's repository |
+| attribute            | from                                                      |
+| -------------------- | --------------------------------------------------------- |
+| `service.name`       | the service                                               |
+| `service.namespace`  | the owning team's id                                      |
+| `teamapi.team`       | team id                                                   |
+| `teamapi.team_name`  | the team's display name                                   |
+| `teamapi.topology`   | stream-aligned, platform, complicated-subsystem, enabling |
+| `teamapi.channel`    | the team's Slack channel — where an alert should go       |
+| `teamapi.repository` | the service's repository                                  |
 
 `service.name` and `service.namespace` are the semantic-convention names. Everything else sits
-under a `teamapi.` prefix on purpose: OpenTelemetry has no standard attribute for *which team owns
-this*, and squatting in the reserved namespace is how you collide with a future spec revision.
+under a `teamapi.` prefix on purpose: OpenTelemetry has no standard attribute for _which team owns
+this_, and squatting in the reserved namespace is how you collide with a future spec revision.
 
 ## Two ways to apply it, because two different people own the levers
 

@@ -61,8 +61,17 @@ describe("runPagerDutyDrift", () => {
     const named = ["checkout-api", "payments-api", "ledger", "onboarding-api"];
     respond((url) =>
       url.includes("/escalation_policies")
-        ? page("escalation_policies", [{ id: "P1", name: "stream-checkout platform-payments stream-onboarding", escalation_rules: [{ targets: [{}] }] }])
-        : page("services", named.map((name, i) => ({ id: `S${i}`, name, escalation_policy: { id: "P1" } }))),
+        ? page("escalation_policies", [
+            {
+              id: "P1",
+              name: "stream-checkout platform-payments stream-onboarding",
+              escalation_rules: [{ targets: [{}] }],
+            },
+          ])
+        : page(
+            "services",
+            named.map((name, i) => ({ id: `S${i}`, name, escalation_policy: { id: "P1" } })),
+          ),
     );
 
     const code = await runPagerDutyDrift([ACME], { token: "t", url: "https://pd.test" });
@@ -106,7 +115,9 @@ describe("runOktaDrift", () => {
   it("exits 0 when the directory agrees with the spec", async () => {
     respond((url) => {
       if (url.includes("/groups/")) {
-        return { body: activeMembers(["diego.alves@acme.example", "yuki.tanaka@acme.example", "fatima.al-sayed@acme.example"]) };
+        return {
+          body: activeMembers(["diego.alves@acme.example", "yuki.tanaka@acme.example", "fatima.al-sayed@acme.example"]),
+        };
       }
       return { body: [{ id: "g1", profile: { name: "stream-checkout" } }] };
     });
@@ -135,7 +146,9 @@ describe("runOktaDrift", () => {
   it("passes --group-prefix through, so prefixed groups still match", async () => {
     respond((url) => {
       if (url.includes("/groups/")) {
-        return { body: activeMembers(["diego.alves@acme.example", "yuki.tanaka@acme.example", "fatima.al-sayed@acme.example"]) };
+        return {
+          body: activeMembers(["diego.alves@acme.example", "yuki.tanaka@acme.example", "fatima.al-sayed@acme.example"]),
+        };
       }
       return { body: [{ id: "g1", profile: { name: "eng-stream-checkout" } }] };
     });
@@ -196,11 +209,15 @@ describe("runSlackSync", () => {
   });
 
   it("exits 1 when Slack rejects the token, rather than reading it as an empty workspace", async () => {
-    vi.stubGlobal("fetch", async () => ({
-      ok: true,
-      status: 200,
-      json: async () => ({ ok: false, error: "invalid_auth" }),
-    }) as unknown as Response);
+    vi.stubGlobal(
+      "fetch",
+      async () =>
+        ({
+          ok: true,
+          status: 200,
+          json: async () => ({ ok: false, error: "invalid_auth" }),
+        }) as unknown as Response,
+    );
 
     expect(await runSlackSync([ACME], { token: "bad" })).toBe(1);
     expect(logs.join("\n")).toContain("invalid_auth");

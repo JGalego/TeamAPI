@@ -8,13 +8,7 @@ import type {
   Specification,
 } from "@jgalego/teamapi-schema";
 import type { OrgGraph, TeamId } from "../model/org-graph";
-import {
-  getTeam,
-  listMembers,
-  listServices,
-  type MemberEntry,
-  type ServiceEntry,
-} from "../model/queries";
+import { getTeam, listMembers, listServices, type MemberEntry, type ServiceEntry } from "../model/queries";
 import {
   listAllPlaybooks,
   listAllPolicies,
@@ -76,7 +70,11 @@ function tokenize(text: string): string[] {
   return [...new Set(tokens)];
 }
 
-function scoreText(fields: Array<string | undefined>, tags: readonly string[], goalTokens: string[]): { score: number; matchedTerms: string[] } {
+function scoreText(
+  fields: Array<string | undefined>,
+  tags: readonly string[],
+  goalTokens: string[],
+): { score: number; matchedTerms: string[] } {
   const haystack = [...fields, ...tags].filter(Boolean).join(" ").toLowerCase();
   const matchedTerms = goalTokens.filter((token) => haystack.includes(token));
   return { score: matchedTerms.length, matchedTerms };

@@ -20,13 +20,17 @@ afterEach(() => {
 });
 
 function ok(body: unknown) {
-  vi.stubGlobal("fetch", async () => ({
-    ok: true,
-    status: 200,
-    statusText: "OK",
-    headers: { get: () => null },
-    json: async () => body,
-  }) as unknown as Response);
+  vi.stubGlobal(
+    "fetch",
+    async () =>
+      ({
+        ok: true,
+        status: 200,
+        statusText: "OK",
+        headers: { get: () => null },
+        json: async () => body,
+      }) as unknown as Response,
+  );
 }
 
 describe("runDoctor", () => {

@@ -34,7 +34,9 @@ export async function knowledgeGraphRoutes(app: FastifyInstance): Promise<void> 
         },
         querystring: {
           type: "object",
-          properties: { depth: { type: "integer", minimum: 0, description: "Max hops from the starting node (default 2)" } },
+          properties: {
+            depth: { type: "integer", minimum: 0, description: "Max hops from the starting node (default 2)" },
+          },
         },
         response: { 404: errorResponseSchema },
       },

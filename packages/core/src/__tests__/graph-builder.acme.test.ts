@@ -43,14 +43,38 @@ describe("buildOrgGraph — examples/acme-org", () => {
 
     expect(reportsTo).toEqual(
       expect.arrayContaining([
-        { kind: "reports-to", fromTeam: "stream-checkout", fromRole: "tech-lead", toTeam: "platform-payments", toRole: "head-of-engineering" },
-        { kind: "reports-to", fromTeam: "stream-onboarding", fromRole: "tech-lead", toTeam: "platform-payments", toRole: "head-of-engineering" },
+        {
+          kind: "reports-to",
+          fromTeam: "stream-checkout",
+          fromRole: "tech-lead",
+          toTeam: "platform-payments",
+          toRole: "head-of-engineering",
+        },
+        {
+          kind: "reports-to",
+          fromTeam: "stream-onboarding",
+          fromRole: "tech-lead",
+          toTeam: "platform-payments",
+          toRole: "head-of-engineering",
+        },
       ]),
     );
     expect(alignsWith).toEqual(
       expect.arrayContaining([
-        { kind: "aligns-with", fromTeam: "stream-checkout", fromRole: "tech-lead", toTeam: "enabling-devex", toRole: "coach" },
-        { kind: "aligns-with", fromTeam: "stream-onboarding", fromRole: "tech-lead", toTeam: "enabling-devex", toRole: "coach" },
+        {
+          kind: "aligns-with",
+          fromTeam: "stream-checkout",
+          fromRole: "tech-lead",
+          toTeam: "enabling-devex",
+          toRole: "coach",
+        },
+        {
+          kind: "aligns-with",
+          fromTeam: "stream-onboarding",
+          fromRole: "tech-lead",
+          toTeam: "enabling-devex",
+          toRole: "coach",
+        },
       ]),
     );
     expect(graph.unresolved).toEqual([]);
