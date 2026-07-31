@@ -1,5 +1,43 @@
 # @jgalego/teamapi-schema
 
+## 0.5.0
+
+### Minor Changes
+
+- fa1ff63: Add an optional `cognitiveLoad.supervision` (1-10): the load of supervising AI agents — reviewing
+  what they produce, maintaining prompts, being the person everyone asks — which no role description
+  covers today.
+
+  It is deliberately **not** part of `total`, but it **is** one of the label's independent triggers,
+  on the same thresholds as `extraneous` (≥4 elevated, ≥7 overloaded). Those are two separate
+  decisions: the three Team Topologies types are what `total`'s thresholds are calibrated against, so
+  summing a fourth term would re-scale it for every team that adopted an agent — but the label has
+  never been a function of `total` alone, and a team drowning in agent review must not be able to
+  report "sustainable" on the strength of three modest other scores. A team that has not scored
+  `supervision` is unaffected: an absent value reads as 0.
+
+  The value reaches `/cognitive-load`, `get_team_cognitive_load` and `GET /teams/:id` (via a new
+  field on `CognitiveLoadDto`). It is kept out of `extraneous` because reviewing an agent's output is
+  often the work rather than avoidable friction around it.
+
+  `teamapi gaps` gains an `unscored-supervision` warning for teams that assess their cognitive load
+  and run active agents but leave the new field blank.
+
+- 1d96a38: Let `alignsWith[]` entries name what kind of informal tie they are, via an optional
+  `kind`: `aligns-with` (the default when omitted), `advises`, `learns-from` or
+  `community-of-practice`. These describe the network work actually travels along — who a role takes
+  advice from, who it learned a practice from, which community it belongs to — which the reporting
+  hierarchy never explains.
+
+  A discriminator on the existing `RoleRefSchema` rather than new arrays, so the whole `alignsWith`
+  resolution path is reused and a document that omits `kind` resolves and renders exactly as before.
+  Each kind becomes a `RoleGraphEdge` of the same name, drawn as a labelled dashed edge by
+  `--scope org-hierarchy` and mapped into the knowledge graph. `kind` is rejected on `reportsToRef`,
+  which is always formal reporting, rather than being silently ignored.
+
+  `GapsReport` gains `roleTies: { formal, informal }`, and `teamapi gaps` prints how many cross-team
+  role relationships the reporting lines explain when any of them aren't reporting lines.
+
 ## 0.4.1
 
 ### Patch Changes

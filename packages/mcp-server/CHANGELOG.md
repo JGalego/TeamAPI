@@ -1,5 +1,35 @@
 # @jgalego/teamapi-mcp-server
 
+## 0.4.0
+
+### Minor Changes
+
+- 2ec4c6c: Serve `teamapi gaps` over HTTP and MCP, and link agents to the humans accountable for them.
+
+  - **`GET /gaps`**, the **`get_org_gaps`** MCP tool, and a matching chat tool. `gaps` is a pure
+    function of the resolved graph with no token and no I/O — the same shape as `/cognitive-load` —
+    so unlike the drift checks there is no reason it should be CLI-only. An assistant asking "what is
+    nobody responsible for here?" can now compute the answer instead of waiting for a CI log.
+  - **`accountableFor`** (member → agent) in the knowledge graph, resolved from `agents[].ownerId`.
+    Emitted only when the id resolves to a declared member: a dangling `ownerId` is `gaps`'s blocking
+    `dangling-owner` finding, and drawing an edge to a person who isn't there would launder exactly
+    the false impression of accountability that finding exists to catch.
+  - The knowledge graph's role-edge relations gain `advises`/`learnsFrom`/`communityOfPractice`,
+    matching the informal `alignsWith[].kind` values.
+
+### Patch Changes
+
+- Updated dependencies [7ca7e0c]
+- Updated dependencies [dcbfdda]
+- Updated dependencies [e676027]
+- Updated dependencies [1f2a3a4]
+- Updated dependencies [fa1ff63]
+- Updated dependencies [2ec4c6c]
+- Updated dependencies [a7ecce1]
+- Updated dependencies [1d96a38]
+  - @jgalego/teamapi-core@0.7.0
+  - @jgalego/teamapi-schema@0.5.0
+
 ## 0.3.2
 
 ### Patch Changes

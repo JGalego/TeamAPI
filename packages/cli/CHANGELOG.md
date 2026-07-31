@@ -1,5 +1,60 @@
 # @jgalego/teamapi
 
+## 0.5.0
+
+### Minor Changes
+
+- e676027: Add `teamapi shadow-ai <patterns...> --scan <dir>`, which reports AI adoption found in repository
+  checkouts against what teams declare in `agents[]`: MCP configs, agent instruction files,
+  assistant config directories, LLM SDKs in manifests, and workflow steps that call a model. Local
+  and offline — it reads checkouts already on disk, with no clone, fetch or token.
+
+  Only `forbidden` (artifacts in a repo owned by a team whose policies forbid agents) exits non-zero;
+  undeclared usage warns. `scanForAiArtifacts`, `planShadowAi`, `formatShadowAi` and `repoNameFromUrl`
+  are exported from core, and `agentsForbidden` is now exported from the paperclip-drift module so
+  both checks share one definition of what a policy forbidding agents looks like.
+
+- 1f2a3a4: Add `teamapi gaps`, which reports accountability holes between teams rather than inside any one of
+  them: subscriptions to events nothing publishes, agents whose `ownerId` names nobody on the team,
+  vacant roles other teams report into, and one-sided collaborations. `planGaps`/`formatGaps` are
+  exported from core. Only `orphan-subscription` and `dangling-owner` exit non-zero, so it can gate a
+  required check without ordinary findings failing a build; `teamapi gaps examples/acme-org` reports
+  four warnings and exits 0.
+
+  Ships `examples/driftwood-org`, an org that validates cleanly but is deliberately built to fail the
+  new check. It is a second test fixture alongside `acme-org`, which `CONTRIBUTING.md` normally
+  discourages — a broken org can't live inside the one every other example renders from without
+  breaking those examples.
+
+- a7ecce1: `buildOrgHierarchyDiagram` takes an optional `{ includeAgents }`, exposed as
+  `teamapi render --scope org-hierarchy --with-agents`: each team's declared `agents[]` is drawn
+  hanging off the human whose `ownerId` names them, by a dotted "supervises" edge.
+
+  Agents appear as participants but never as boxes in the chart. An agent placed in the hierarchy
+  the way a person is would suggest accountability sits with it, when it never does — so an agent
+  with no resolvable owner gets no incoming edge and visibly floats, which is exactly what an unowned
+  agent is. Paused agents are labelled with their status rather than hidden.
+
+  Off by default, so every existing render — including the Mermaid committed in the README — is
+  byte-identical.
+
+### Patch Changes
+
+- Updated dependencies [7ca7e0c]
+- Updated dependencies [dcbfdda]
+- Updated dependencies [fefe0b2]
+- Updated dependencies [e676027]
+- Updated dependencies [1f2a3a4]
+- Updated dependencies [fa1ff63]
+- Updated dependencies [2ec4c6c]
+- Updated dependencies [a7ecce1]
+- Updated dependencies [1d96a38]
+  - @jgalego/teamapi-core@0.7.0
+  - @jgalego/teamapi-rest-api@0.5.0
+  - @jgalego/teamapi-chat@0.2.0
+  - @jgalego/teamapi-schema@0.5.0
+  - @jgalego/teamapi-mcp-server@0.4.0
+
 ## 0.4.0
 
 ### Minor Changes

@@ -1,5 +1,52 @@
 # @jgalego/teamapi-rest-api
 
+## 0.5.0
+
+### Minor Changes
+
+- 7ca7e0c: Surface `cognitiveLoad.supervision` on the three places that were still blind to it:
+
+  - **`teamapi diff`** tracks it as its own field on `CognitiveLoadSnapshot`. Because supervision
+    sits outside `total` by design, a team whose supervision load doubled without touching the other
+    three types previously reported no change at all — exactly the quiet growth the field exists to
+    expose.
+  - **The Port generator** emits `supervisionLoad` beside `cognitiveLoad`. Port scores and colours
+    numeric properties, so "who is carrying the most agent-supervision load" becomes a sortable
+    column instead of something you read four YAML files to learn.
+  - **The dashboard** shows it as a separate 🤖 chip rather than widening the load bar, so the bar
+    keeps meaning the same thing across teams that scored supervision and teams that didn't.
+    Distinguished by glyph and border, not colour alone.
+
+  `examples/acme-org` now also demonstrates an `alignsWith[].kind` (`learns-from` on Stream
+  Checkout's tech lead) alongside an undecorated entry on Stream Onboarding, so the canonical example
+  shows both the named relation and the default.
+
+- 2ec4c6c: Serve `teamapi gaps` over HTTP and MCP, and link agents to the humans accountable for them.
+
+  - **`GET /gaps`**, the **`get_org_gaps`** MCP tool, and a matching chat tool. `gaps` is a pure
+    function of the resolved graph with no token and no I/O — the same shape as `/cognitive-load` —
+    so unlike the drift checks there is no reason it should be CLI-only. An assistant asking "what is
+    nobody responsible for here?" can now compute the answer instead of waiting for a CI log.
+  - **`accountableFor`** (member → agent) in the knowledge graph, resolved from `agents[].ownerId`.
+    Emitted only when the id resolves to a declared member: a dangling `ownerId` is `gaps`'s blocking
+    `dangling-owner` finding, and drawing an edge to a person who isn't there would launder exactly
+    the false impression of accountability that finding exists to catch.
+  - The knowledge graph's role-edge relations gain `advises`/`learnsFrom`/`communityOfPractice`,
+    matching the informal `alignsWith[].kind` values.
+
+### Patch Changes
+
+- Updated dependencies [7ca7e0c]
+- Updated dependencies [dcbfdda]
+- Updated dependencies [e676027]
+- Updated dependencies [1f2a3a4]
+- Updated dependencies [fa1ff63]
+- Updated dependencies [2ec4c6c]
+- Updated dependencies [a7ecce1]
+- Updated dependencies [1d96a38]
+  - @jgalego/teamapi-core@0.7.0
+  - @jgalego/teamapi-schema@0.5.0
+
 ## 0.4.0
 
 ### Minor Changes
