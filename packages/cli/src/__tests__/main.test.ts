@@ -114,6 +114,16 @@ describe("createProgram — render", () => {
     expect(runRender).not.toHaveBeenCalled();
   });
 
+  it("passes --with-agents through, and leaves it undefined when absent", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "render", "org", "--scope", "org-hierarchy", "--with-agents"]);
+    expect(runRender).toHaveBeenCalledWith(["org"], expect.objectContaining({ withAgents: true }));
+
+    const second = freshProgram();
+    await second.program.parseAsync(["node", "teamapi", "render", "org", "--scope", "org-hierarchy"]);
+    expect(runRender).toHaveBeenLastCalledWith(["org"], expect.objectContaining({ withAgents: undefined }));
+  });
+
   it("rejects an invalid --format before ever calling runRender", async () => {
     const { program, stderr } = freshProgram();
     await expect(

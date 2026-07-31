@@ -18,6 +18,8 @@ export interface RenderOptions {
   format?: "mermaid" | "dot";
   team?: string;
   out?: string;
+  /** `--scope org-hierarchy` only: draw declared agents attached to the humans who own them. */
+  withAgents?: boolean;
 }
 
 export async function runRender(patterns: string[], options: RenderOptions): Promise<number> {
@@ -38,6 +40,10 @@ export async function runRender(patterns: string[], options: RenderOptions): Pro
     console.error("`--team` has no effect with `--scope org-hierarchy` (every team's hierarchy is always shown)");
     return 1;
   }
+  if (options.withAgents && options.scope !== "org-hierarchy") {
+    console.error("`--with-agents` only applies to `--scope org-hierarchy`");
+    return 1;
+  }
   // Same check, same message, for every scope that actually uses `--team` — `hierarchy` used to
   // throw this from deep inside `buildHierarchyDiagram` while `topology`/`context-map` silently
   // rendered an empty diagram instead; both now fail the same clean way up front.
@@ -53,7 +59,7 @@ export async function runRender(patterns: string[], options: RenderOptions): Pro
   if (options.scope === "hierarchy") {
     output = render(buildHierarchyDiagram(graph, options.team as string));
   } else if (options.scope === "org-hierarchy") {
-    output = render(buildOrgHierarchyDiagram(graph));
+    output = render(buildOrgHierarchyDiagram(graph, { includeAgents: options.withAgents }));
   } else if (options.scope === "context-map") {
     output = render(buildContextMapDiagram(graph, deriveContextMap(graph, options.team), options.team));
   } else {
