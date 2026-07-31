@@ -30,6 +30,9 @@ export type KnowledgeEdgeRelation =
   | "fills"
   | "reportsTo"
   | "alignsWith"
+  | "advises"
+  | "learnsFrom"
+  | "communityOfPractice"
   | "interaction"
   | "dependency"
   | "platform"
@@ -165,6 +168,9 @@ export function deriveKnowledgeGraph(graph: OrgGraph): KnowledgeGraph {
   const roleEdgeRelation: Record<(typeof graph.roleEdges)[number]["kind"], KnowledgeEdgeRelation> = {
     "reports-to": "reportsTo",
     "aligns-with": "alignsWith",
+    advises: "advises",
+    "learns-from": "learnsFrom",
+    "community-of-practice": "communityOfPractice",
   };
   for (const roleEdge of graph.roleEdges) {
     edges.push({

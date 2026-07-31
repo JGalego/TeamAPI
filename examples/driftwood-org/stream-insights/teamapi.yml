@@ -39,8 +39,11 @@ roles:
       roleId: head-of-data
       $ref: ../platform-data/teamapi.yml
     alignsWith:
+      # Nobody reports to the guild and it has no authority, but this is where the team's agent
+      # review practice actually came from. `kind` names the tie the reporting lines can't.
       - teamName: Enabling AI Guild
         roleId: guild-lead
+        kind: learns-from
         $ref: ../enabling-ai-guild/teamapi.yml
   - id: analytics-engineer
     name: Analytics Engineer

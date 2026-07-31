@@ -154,6 +154,20 @@ responsibilities:
 
 ### RoleRef
 
+`kind` (new, optional) says what sort of informal tie an `alignsWith[]` entry is:
+`aligns-with` (the default when omitted, and the original dotted-line meaning) | `advises` |
+`learns-from` | `community-of-practice`. These name the network work actually travels along —
+who a role takes advice from, who it learned a practice from, which community it belongs to —
+which the reporting hierarchy never explains, and which routinely exists for months before anyone
+draws a box for it.
+
+Each becomes a `RoleGraphEdge` of the matching kind, drawn as a labelled dashed edge by
+`--scope org-hierarchy` and surfaced in the knowledge graph. `teamapi gaps` reports how many
+cross-team role relationships the reporting lines explain, and how many they don't.
+
+`kind` is rejected on `reportsToRef`, which is always formal reporting, rather than being silently
+ignored.
+
 A reference to another team's role — same `$ref` convention as `Interaction`/`Dependency`.
 
 | Field      | Type   | Required | Description                                                             |

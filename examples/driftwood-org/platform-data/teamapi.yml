@@ -41,6 +41,13 @@ roles:
     responsibilities:
       - feature-store development
     reportsTo: head-of-data
+    alignsWith:
+      # With the manager seat empty, the only person giving this role technical direction sits on
+      # another team entirely and has no line to it on any chart.
+      - teamName: Enabling AI Guild
+        roleId: guild-lead
+        kind: advises
+        $ref: ../enabling-ai-guild/teamapi.yml
 members:
   # head-of-data is deliberately unfilled: the previous holder left four months ago and two other
   # teams still report into the seat.

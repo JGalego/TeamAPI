@@ -124,6 +124,11 @@ describe("planGaps", () => {
     expect(kinds(planGaps(await acme()).findings, "unscored-supervision")).toEqual([]);
   });
 
+  it("counts cross-team role ties by whether the reporting hierarchy explains them", async () => {
+    expect(planGaps(await acme()).roleTies).toEqual({ formal: 2, informal: 2 });
+    expect(planGaps(await driftwood()).roleTies).toEqual({ formal: 1, informal: 2 });
+  });
+
   it("finds both blocking kinds in the deliberately broken org", async () => {
     const report = planGaps(await driftwood());
     expect(
@@ -138,6 +143,15 @@ describe("planGaps", () => {
 describe("formatGaps", () => {
   it("says so plainly when there is nothing to report", async () => {
     expect(formatGaps(planGaps(await isolated()))).toBe("No gaps. 0 seam(s) checked, each with someone on both sides.");
+  });
+
+  it("stays silent about role ties when every one of them is a reporting line", async () => {
+    // A single team resolved on its own has no cross-team ties at all, informal or otherwise.
+    expect(formatGaps(planGaps(await isolated()))).not.toContain("Reporting lines explain");
+  });
+
+  it("reports how much of the cross-team role graph the hierarchy explains", async () => {
+    expect(formatGaps(planGaps(await acme()))).toContain("Reporting lines explain 2 of 4 cross-team role relationship");
   });
 
   it("prefixes each kind with its glyph and ends with a counted summary", async () => {
