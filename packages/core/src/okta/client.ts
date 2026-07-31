@@ -59,7 +59,7 @@ export class OktaClient {
         headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
       });
       if (!res.ok) throw new Error(`Okta returned ${res.status} ${res.statusText} for ${next}`);
-      const body = (await res.json()) as unknown;
+      const body = await res.json();
       if (!Array.isArray(body)) throw new Error(`Unexpected response from ${next}: expected an array`);
       out.push(...(body as T[]));
       next = nextLink(res.headers.get("link"));

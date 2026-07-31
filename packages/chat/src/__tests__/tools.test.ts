@@ -21,6 +21,17 @@ const EXPECTED_TOOL_NAMES = [
   "get_org_cognitive_load_report",
 ];
 
+/**
+ * Every tool in the array declares its own `run` input type, so `Array.find` has no way to narrow
+ * to one of them. Widening once here keeps that concession in a single place instead of at each
+ * call site — `tools.ts` itself stays fully typed.
+ */
+function toolNamed(tools: ReturnType<typeof buildChatTools>, name: string) {
+  const tool = tools.find((t) => t.name === name);
+  expect(tool, `expected a ${name} tool`).toBeDefined();
+  return tool as unknown as { run: (input: object) => Promise<string> };
+}
+
 describe("buildChatTools — examples/acme-org", () => {
   it("builds one tool per org-graph operation, matching the MCP tool set", async () => {
     const graph = await buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
@@ -31,10 +42,7 @@ describe("buildChatTools — examples/acme-org", () => {
 
   it("find_service_owner resolves a real service to its owning team", async () => {
     const graph = await buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
-    // Each tool in the array has its own `run` input type, so `Array.find` can't narrow it —
-    // cast to `any` here purely for the test call; `tools.ts` itself is fully typed.
-    const tools = buildChatTools(graph) as any[];
-    const findServiceOwner = tools.find((t) => t.name === "find_service_owner");
+    const findServiceOwner = toolNamed(buildChatTools(graph), "find_service_owner");
 
     const result = await findServiceOwner.run({ serviceName: "checkout-api" });
     expect(result).toContain("stream-checkout");
@@ -42,8 +50,7 @@ describe("buildChatTools — examples/acme-org", () => {
 
   it("get_team reports an unknown team id as an error string rather than throwing", async () => {
     const graph = await buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
-    const tools = buildChatTools(graph) as any[];
-    const getTeam = tools.find((t) => t.name === "get_team");
+    const getTeam = toolNamed(buildChatTools(graph), "get_team");
 
     const result = await getTeam.run({ teamId: "does-not-exist" });
     expect(result).toContain("Error");
@@ -52,8 +59,7 @@ describe("buildChatTools — examples/acme-org", () => {
   it("invokes onToolCall with the tool name, input, and output — for --debug", async () => {
     const graph = await buildOrgGraph({ seedUris: [CHECKOUT_SEED] });
     const calls: Array<{ name: string; input: unknown; output: string }> = [];
-    const tools = buildChatTools(graph, { onToolCall: (call) => calls.push(call) }) as any[];
-    const getTeam = tools.find((t) => t.name === "get_team");
+    const getTeam = toolNamed(buildChatTools(graph, { onToolCall: (call) => calls.push(call) }), "get_team");
 
     await getTeam.run({ teamId: "stream-checkout" });
 

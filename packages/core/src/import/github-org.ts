@@ -34,7 +34,9 @@ export async function importGithubOrg(
         const profile = await client.getUser(member.login).catch(() => undefined);
         return {
           id: member.login.toLowerCase(),
-          name: profile?.name || member.login,
+          // GitHub returns "" (not null) for a profile with no display name set, so an empty
+          // name has to fall back to the login the same way a missing profile does.
+          name: profile?.name?.trim() ? profile.name : member.login,
           ...(profile?.email ? { contact: profile.email } : {}),
           githubUsername: member.login,
           roleIds: [],

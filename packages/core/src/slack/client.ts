@@ -70,7 +70,12 @@ export class SlackClient {
         limit: String(pageSize),
         ...(cursor ? { cursor } : {}),
       });
-      for (const c of page.channels) channels.push({ id: c.id, name: c.name, topic: c.topic?.value || undefined });
+      for (const c of page.channels) {
+        // Slack sends topic.value as "" for a channel with no topic; treat that as absent
+        // rather than as a topic that happens to be blank.
+        const topic = c.topic?.value;
+        channels.push({ id: c.id, name: c.name, topic: topic === "" ? undefined : topic });
+      }
       cursor = page.response_metadata?.next_cursor ?? "";
     } while (cursor);
     return channels;
