@@ -45,8 +45,12 @@ export interface PaperclipDriftReport {
 }
 
 /** A team whose policies forbid agents outright. Recognised by a policy id or description that
- * denies agents, e.g. acme-org's `no-agents-on-applicant-pii`. */
-function agentsForbidden(graph: OrgGraph, teamId: TeamId): string | null {
+ * denies agents, e.g. acme-org's `no-agents-on-applicant-pii`.
+ *
+ * Exported because `shadow-ai` asks the same question of a different input: this one governs
+ * agents running in Paperclip, that one governs AI artifacts committed to the team's repos, and
+ * a team that has forbidden agents has forbidden both. */
+export function agentsForbidden(graph: OrgGraph, teamId: TeamId): string | null {
   for (const policy of graph.teams.get(teamId)?.doc.policies ?? []) {
     const haystack = `${policy.id} ${policy.name} ${policy.description ?? ""}`.toLowerCase();
     if (/no[- ]agents?|agents?[- ]forbidden|no ai agent/.test(haystack)) {

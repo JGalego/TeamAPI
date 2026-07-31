@@ -69,4 +69,34 @@ describe("deriveContextBundle", () => {
     const bundle = deriveContextBundle(graph, { goal: "oauth security api", limit: 1 });
     expect(bundle.steeringDocuments.length).toBeLessThanOrEqual(1);
   });
+
+  describe("seams", () => {
+    it("names the boundary when a goal's entries span two teams, with how they interact", () => {
+      const bundle = deriveContextBundle(graph, { goal: "Implement OAuth" });
+      expect(bundle.seams).toEqual([
+        { teams: ["platform-payments", "stream-checkout"], mode: "x-as-a-service", undeclared: false },
+      ]);
+    });
+
+    it("stays empty when everything came from one team", () => {
+      const bundle = deriveContextBundle(graph, { goal: "zzz-no-match-zzz-completely-unrelated" });
+      expect(bundle.seams).toEqual([]);
+    });
+
+    it("leaves mode undefined for teams linked only by a dependency, without calling it undeclared", () => {
+      const bundle = deriveContextBundle(graph, { goal: "agents and conways law" });
+      const seam = bundle.seams.find(
+        (s) => s.teams.includes("stream-onboarding") && s.teams.includes("platform-payments"),
+      );
+      expect(seam).toEqual({ teams: ["platform-payments", "stream-onboarding"], undeclared: false });
+    });
+
+    it("flags a seam neither team has written down", async () => {
+      const driftwood = await buildOrgGraph({
+        seedUris: [path.resolve(__dirname, "../../../../examples/driftwood-org/stream-insights/teamapi.yml")],
+      });
+      const bundle = deriveContextBundle(driftwood, { goal: "agents ownership guild practice" });
+      expect(bundle.seams).toContainEqual({ teams: ["enabling-ai-guild", "platform-data"], undeclared: true });
+    });
+  });
 });

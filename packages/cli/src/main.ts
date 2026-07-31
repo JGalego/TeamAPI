@@ -4,6 +4,8 @@ import { join } from "node:path";
 import { Argument, Command, InvalidArgumentError } from "commander";
 import { DEFAULT_CHAT_MODEL } from "@jgalego/teamapi-chat";
 import { runValidate } from "./commands/validate";
+import { runGaps } from "./commands/gaps";
+import { runShadowAi } from "./commands/shadow-ai";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runGenerate } from "./commands/generate";
@@ -52,6 +54,23 @@ export function createProgram(): Command {
       process.exitCode = await runValidate(patterns);
     });
 
+  program
+    .command("gaps")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Report accountability holes between teams — unowned event contracts, vacant seats, unowned agents")
+    .action(async (patterns: string[]) => {
+      process.exitCode = await runGaps(patterns);
+    });
+
+  program
+    .command("shadow-ai")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Report AI adoption found in repositories against what teams declare in agents[] (read-only)")
+    .requiredOption("--scan <dir>", "directory whose immediate subdirectories are repository checkouts")
+    .action(async (patterns: string[], opts: { scan: string }) => {
+      process.exitCode = await runShadowAi(patterns, { scan: opts.scan });
+    });
+
   const renderCommand = program
     .command("render")
     .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
@@ -68,14 +87,21 @@ export function createProgram(): Command {
     )
     .option("--team <id>", "scope to one team id")
     .option("--out <file>", "write to a file instead of stdout")
-    .action(async (patterns: string[], opts: { scope: string; format: string; team?: string; out?: string }) => {
-      process.exitCode = await runRender(patterns, {
-        scope: opts.scope as "topology" | "hierarchy" | "context-map" | "org-hierarchy",
-        format: opts.format as "mermaid" | "dot",
-        team: opts.team,
-        out: opts.out,
-      });
-    });
+    .option("--with-agents", "org-hierarchy only: draw declared agents attached to the humans who own them")
+    .action(
+      async (
+        patterns: string[],
+        opts: { scope: string; format: string; team?: string; out?: string; withAgents?: boolean },
+      ) => {
+        process.exitCode = await runRender(patterns, {
+          scope: opts.scope as "topology" | "hierarchy" | "context-map" | "org-hierarchy",
+          format: opts.format as "mermaid" | "dot",
+          team: opts.team,
+          out: opts.out,
+          withAgents: opts.withAgents,
+        });
+      },
+    );
 
   const scaffoldCommand = program
     .command("scaffold")

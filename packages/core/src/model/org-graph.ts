@@ -31,7 +31,10 @@ export type GraphEdge =
  * team documents the same way `GraphEdge` resolves team-level `$ref`s. Kept separate from
  * `GraphEdge` because it's a finer-grained (role, not team) relationship. */
 export interface RoleGraphEdge {
-  kind: "reports-to" | "aligns-with";
+  /** `reports-to` is the formal hierarchy. The rest come from `alignsWith[].kind` and describe the
+   * informal network — who advises whom, who learns a practice from whom, which community of
+   * practice a role belongs to — which the reporting lines never explain. */
+  kind: "reports-to" | "aligns-with" | "advises" | "learns-from" | "community-of-practice";
   fromTeam: TeamId;
   fromRole: string;
   toTeam: TeamId;

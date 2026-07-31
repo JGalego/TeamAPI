@@ -43,6 +43,7 @@ describe("MCP tools", () => {
         "search_org",
         "get_org_graph",
         "get_org_cognitive_load_report",
+        "get_org_gaps",
       ]),
     );
   });
@@ -214,6 +215,14 @@ describe("MCP tools", () => {
     expect(body.teams).toHaveLength(4);
     expect(body.edges.length).toBeGreaterThan(0);
     expect(body.roleEdges.length).toBeGreaterThan(0);
+  });
+
+  it("get_org_gaps reports the holes between teams without blocking on the healthy fixture", async () => {
+    const result = await client.callTool({ name: "get_org_gaps", arguments: {} });
+    const body = JSON.parse(textOf(result));
+    expect(body.findings.some((f: { severity: string }) => f.severity === "blocking")).toBe(false);
+    expect(body.findings.map((f: { kind: string }) => f.kind)).toContain("vacant-load-bearing");
+    expect(body.roleTies).toEqual({ formal: 2, informal: 2 });
   });
 
   it("get_org_cognitive_load_report sorts every team's assessment by total", async () => {

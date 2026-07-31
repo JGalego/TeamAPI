@@ -13,6 +13,9 @@ export interface CognitiveLoadDto {
   intrinsic: number;
   extraneous: number;
   germane: number;
+  /** Load from supervising AI agents. Absent unless the team scored it, and deliberately not part
+   * of `total` — see `CognitiveLoadAssessmentSchema`. */
+  supervision?: number;
   total: number;
   label: CognitiveLoadLabel;
   notes?: string;
@@ -56,6 +59,7 @@ export function toTeamDetailDto(team: ResolvedTeam): TeamDetailDto {
           intrinsic: cognitiveLoad.assessment.intrinsic,
           extraneous: cognitiveLoad.assessment.extraneous,
           germane: cognitiveLoad.assessment.germane,
+          supervision: cognitiveLoad.assessment.supervision,
           total: cognitiveLoad.total,
           label: cognitiveLoad.label,
           notes: cognitiveLoad.assessment.notes,

@@ -48,6 +48,8 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
 - [🕰️ Org history](#org-history)
+- [🕳️ Gaps](#gaps)
+- [🫥 Shadow AI](#shadow-ai)
 - [🔁 CI integration](#ci-integration)
 - [🔗 Paperclip](#paperclip)
 - [💬 Slack](#slack)
@@ -91,7 +93,7 @@ teamapi serve-mcp examples/acme-org     # point Claude Desktop/Code at this comm
 
 Every example in this README runs against **ACME Org** ([`examples/acme-org`](examples/acme-org)), a small fictional e-commerce company: Platform Payments runs the `payments-api` and `ledger` services everyone else depends on, Stream Checkout owns the cart and checkout flow, Stream Onboarding handles sign-up and KYC, and Enabling DevEx coaches the other three on testing and delivery practices.
 
-Four more fictional-but-recognizable orgs ship alongside it, each modeled after a real-world team topology:
+Five more fictional-but-recognizable orgs ship alongside it — four modeled after a real-world team topology, and one modeled after a real-world failure mode:
 
 | Example                                                  | Modeled after                        | Shape                                                                                                                           |
 | -------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
@@ -99,8 +101,9 @@ Four more fictional-but-recognizable orgs ship alongside it, each modeled after 
 | [`examples/meridian-pay-org`](examples/meridian-pay-org) | Stripe-style payments infrastructure | A billing stream team, a ledger/payments platform team, and a `complicated-subsystem` fraud-scoring team it can't safely absorb |
 | [`examples/cartwell-org`](examples/cartwell-org)         | Amazon-style marketplace             | Two-pizza, single-threaded-owner teams (Search, Fulfillment) plus a seller-enablement team                                      |
 | [`examples/wavelength-org`](examples/wavelength-org)     | Spotify-style squads/chapters        | A playlists squad, an audio-platform team, and a cross-squad chapter-coaching team                                              |
+| [`examples/driftwood-org`](examples/driftwood-org)       | An org whose AI outran its org chart | Deliberately broken: an orphaned event contract, agents owned by someone who left, a vacant seat two teams report into          |
 
-They work with every command in this README — swap in the path, e.g. `teamapi render examples/meridian-pay-org --scope topology`.
+They work with every command in this README — swap in the path, e.g. `teamapi render examples/meridian-pay-org --scope topology`. Driftwood is the exception worth knowing about: it validates cleanly like the rest, but it's built to fail [`teamapi gaps`](#gaps), so it's the one to point a new check at when you want to see findings rather than a clean report.
 
 <a id="ai-native"></a>
 
@@ -127,6 +130,8 @@ Every section is optional, so documents written before they existed keep validat
 
 **Context bundles**: `POST /context` (or the `get_context_bundle` MCP tool) takes a goal — `{ "goal": "Implement OAuth" }`, optionally scoped to one `teamId` — and returns just the entries relevant to it from across those sections, plus the scoped team's related teams, members, and services. Ranking is keyword overlap, and each hit carries the `matchedTerms` behind it rather than an opaque similarity score. It's the one call that orients an assistant on a task without walking the whole graph.
 
+It also returns `seams[]` — every pair of teams the matched entries span, with the interaction mode declared between them, and `undeclared: true` when neither team declares an edge to the other. A bundle otherwise reads as if the goal belongs to whichever team was scoped, when the highest-scoring entries routinely straddle a boundary. An undeclared seam deserves more caution than a declared one, not less: the work is about to cross a line nobody wrote down.
+
 **The knowledge graph** (`GET /knowledge-graph`, `GET /knowledge-graph/:nodeId/traverse`, or the `get_knowledge_graph`/`traverse_knowledge_graph` MCP tools) links every team, person, agent, and document by ownership, role, team topology, and resolved cross-team `$ref` edges, for visualization or traversal tooling to consume.
 
 Each section gets the same read-only REST shape — `GET /<plural>`, `GET /teams/:id/<plural>`, `GET /teams/:id/<plural>/:resourceId`, e.g. `/teams/platform-payments/prompts/code-review` — plus a matching `list_*`/`get_*` MCP tool pair, and all of them are covered by `GET /search?q=`. `POST /teams/:id/prompts/:promptId/render` (or `render_prompt`) fills a prompt's `{{variable}}` placeholders. Field-by-field reference: [`docs/spec/teamapi-extended-v1.md`](docs/spec/teamapi-extended-v1.md).
@@ -135,7 +140,7 @@ Each section gets the same read-only REST shape — `GET /<plural>`, `GET /teams
 
 ## 📊 Diagrams
 
-`teamapi render <patterns> --scope <scope>` renders the resolved org graph as Mermaid or DOT, where `<scope>` is `topology`, `context-map`, `hierarchy` (needs `--team <id>`), or `org-hierarchy`. Add `--format dot` for Graphviz, or `--out <file>` to write to disk instead of stdout. The diagrams below are ACME Org's.
+`teamapi render <patterns> --scope <scope>` renders the resolved org graph as Mermaid or DOT, where `<scope>` is `topology`, `context-map`, `hierarchy` (needs `--team <id>`), or `org-hierarchy`. Add `--format dot` for Graphviz, `--out <file>` to write to disk instead of stdout, or `--with-agents` to include declared agents in `org-hierarchy`. The diagrams below are ACME Org's.
 
 <a id="team-interaction-organigram"></a>
 
@@ -194,7 +199,11 @@ flowchart TD
 
 ### 🏢 Org-wide role hierarchy: `--scope org-hierarchy`
 
-The same reporting lines, zoomed out to the whole company, one box per team. A solid arrow is formal reporting (`reportsTo`/`reportsToRef`, same-team or cross-team); a dashed one is `alignsWith`, for matrix relationships like a community-of-practice lead a role coordinates with but doesn't report to.
+The same reporting lines, zoomed out to the whole company, one box per team. A solid arrow is formal reporting (`reportsTo`/`reportsToRef`, same-team or cross-team); a dashed one is `alignsWith`, for the ties the hierarchy doesn't draw.
+
+Add `--with-agents` to draw each team's declared `agents[]` too, hanging off the human whose `ownerId` names them by a dotted "supervises" edge. Agents are drawn as participants but never as boxes in the chart — an agent placed in the hierarchy the way a person is would imply accountability sits with it, when it never does. An agent nobody owns gets no incoming edge and visibly floats, which is exactly what it is.
+
+Each `alignsWith[]` entry takes an optional `kind` — `aligns-with` (the default), `advises`, `learns-from`, or `community-of-practice` — naming the informal network work actually travels along. Those relationships tend to exist for months before anyone draws a box for them, so `teamapi gaps` also reports how many cross-team role relationships the reporting lines explain, and how many they don't.
 
 ```mermaid
 flowchart TD
@@ -223,7 +232,7 @@ flowchart TD
   stream_checkout__tech_lead --> stream_checkout__frontend_engineer
   stream_onboarding__tech_lead --> stream_onboarding__engineer
   platform_payments__head_of_engineering --> stream_checkout__tech_lead
-  stream_checkout__tech_lead -.->|"aligns with"| enabling_devex__coach
+  stream_checkout__tech_lead -.->|"learns from"| enabling_devex__coach
   platform_payments__head_of_engineering --> stream_onboarding__tech_lead
   stream_onboarding__tech_lead -.->|"aligns with"| enabling_devex__coach
   classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;
@@ -245,13 +254,14 @@ flowchart TD
 | `GET /diagrams/topology`, `/diagrams/hierarchy/:teamId`, `/diagrams/org-hierarchy` | Diagram data                                                                                                                                                                   |
 | `GET /context-map`                                                                 | DDD context map                                                                                                                                                                |
 | `GET /cognitive-load`, `/cognitive-load/:teamId`                                   | Cognitive load assessments                                                                                                                                                     |
+| `GET /gaps`                                                                        | [Accountability holes between teams](#gaps)                                                                                                                                    |
 | `GET /<domain>`, `/teams/:id/<domain>`, `/teams/:id/<domain>/:resourceId`          | Any [AI-native section](#ai-native): `/agents`, `/memory`, `/specifications`, `/steering`, `/prompts`, `/playbooks`, `/policies`, `/knowledge-base`, `/workflows`, `/sessions` |
 | `POST /teams/:id/prompts/:promptId/render`                                         | Fill a prompt's `{{variable}}` placeholders                                                                                                                                    |
 | `POST /context`                                                                    | [Context bundle](#ai-native) for a stated goal                                                                                                                                 |
 | `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse`                        | [Knowledge graph](#ai-native) traversal                                                                                                                                        |
 | `GET /health`                                                                      | Health check                                                                                                                                                                   |
 
-**Example:** `curl http://127.0.0.1:3000/cognitive-load`
+**Example:** `curl http://127.0.0.1:3000/cognitive-load` — note `supervision`, the optional load of supervising a team's AI agents. It stays out of `total` (whose thresholds are calibrated against the three Team Topologies types), but it's one of the label's independent triggers, on the same thresholds as `extraneous` — a team drowning in agent review shouldn't be able to report "sustainable" on the strength of three modest other scores. A team that hasn't scored it is unaffected.
 
 ```json
 [
@@ -263,7 +273,8 @@ flowchart TD
       "intrinsic": 7,
       "extraneous": 5,
       "germane": 6,
-      "notes": "PCI compliance scope adds real intrinsic complexity; onboarding docs need work."
+      "supervision": 6,
+      "notes": "PCI compliance scope adds real intrinsic complexity; onboarding docs need work. Supervising the agent fleet costs about a day a week across the team and appears on nobody's role description."
     }
   },
   {
@@ -295,7 +306,7 @@ flowchart TD
 
 ## 🖥️ Dashboard
 
-The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — static HTML/CSS/JS fetching the REST API you already have running, no separate process or build step. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded, never color alone), free-text search, and a tabbed diagram viewer (`topology` / `org-hierarchy` / `context-map`) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — team list, cognitive load, and search keep working.
+The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — static HTML/CSS/JS fetching the REST API you already have running, no separate process or build step. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded, never color alone — with a separate 🤖 chip for supervision load, kept out of the bar so its width means the same thing for every team), free-text search, and a tabbed diagram viewer (`topology` / `org-hierarchy` / `context-map`) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — team list, cognitive load, and search keep working.
 
 ```bash
 teamapi serve-api examples/acme-org --port 3000
@@ -310,7 +321,7 @@ open http://127.0.0.1:3000/dashboard
 
 `teamapi serve-mcp examples/acme-org` starts an MCP server you can point Claude Desktop or Claude Code at, then ask about ACME Org like you'd ask a colleague — "who owns checkout-api?", "which team's overloaded?" — no query language needed.
 
-The core tools are `list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, and `get_org_cognitive_load_report`. Each [AI-native section](#ai-native) adds a `list_*`/`get_*` pair — `list_agents`/`get_agent`, `list_prompts`/`get_prompt`, and so on — alongside `render_prompt`, `get_context_bundle`, `get_knowledge_graph`, and `traverse_knowledge_graph`.
+The core tools are `list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, `get_org_cognitive_load_report`, and `get_org_gaps`. Each [AI-native section](#ai-native) adds a `list_*`/`get_*` pair — `list_agents`/`get_agent`, `list_prompts`/`get_prompt`, and so on — alongside `render_prompt`, `get_context_bundle`, `get_knowledge_graph`, and `traverse_knowledge_graph`.
 
 **Example:** an assistant calling `find_service_owner` with `{ "serviceName": "checkout-api" }`
 
@@ -540,7 +551,7 @@ Of every AI integration here this one has the widest reach, precisely because it
 
 `teamapi generate port examples/acme-org --out ./port` emits a [Port](https://www.getport.io/) catalog as `blueprints.json` (apply once) and `entities.json` (apply on every change): a `teamapi_team` per team, a `teamapi_service` per service related to its owner, and a `teamapi_person` per member.
 
-It overlaps almost entirely with the Backstage target, with one exception that matters — **cognitive load**. Port scores and colours numeric properties, so a team's self-assessed load becomes something you can sort by, threshold and alert on. Backstage's entity model has nowhere to put it, so that target drops the most actionable number in the document. Details in [`docs/integrations/port.md`](docs/integrations/port.md).
+It overlaps almost entirely with the Backstage target, with one exception that matters — **cognitive load**. Port scores and colours numeric properties, so a team's self-assessed load becomes something you can sort by, threshold and alert on. Backstage's entity model has nowhere to put it, so that target drops the most actionable number in the document. `supervisionLoad` is emitted as its own property alongside `cognitiveLoad`, since it's deliberately not part of the total — which makes "who is carrying the most agent-supervision load" a sortable column rather than a thing you'd have to go read four YAML files to learn. Details in [`docs/integrations/port.md`](docs/integrations/port.md).
 
 <a id="opentelemetry"></a>
 
@@ -593,7 +604,9 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | Command                                                                                                                                                     | Purpose                                                                                                                                                                                                                                  |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `teamapi validate <patterns...>`                                                                                                                            | Resolve every `$ref` transitively and report unresolved refs                                                                                                                                                                             |
-| `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--out <file>]`                 | Render a diagram                                                                                                                                                                                                                         |
+| `teamapi gaps <patterns...>`                                                                                                                                | Report [accountability holes between teams](#gaps) — unowned event contracts, vacant seats, unowned agents                                                                                                                               |
+| `teamapi shadow-ai <patterns...> --scan <dir>`                                                                                                              | Report [AI adoption found in repositories](#shadow-ai) against what teams declare in `agents[]`                                                                                                                                          |
+| `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--with-agents] [--out <file>]` | Render a diagram                                                                                                                                                                                                                         |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                          | Generate a minimal, schema-valid document                                                                                                                                                                                                |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
 | `teamapi diff <patterns...> --against <ref>`                                                                                                                | Diff the resolved org graph against a git revision                                                                                                                                                                                       |
@@ -632,6 +645,47 @@ Role edges:
 
 When nothing has changed, it prints a single line rather than an empty report. Either way it exits 0 — this is an inspection tool, not a validation gate (see [CI integration](#ci-integration) for that).
 
+<a id="gaps"></a>
+
+## 🕳️ Gaps
+
+Every other check here compares the spec to an outside system. This one compares it to itself, because the holes it looks for are invisible from any single `teamapi.yml` — each document is individually valid, and the gap only appears once the graph is resolved. A service subscribing to an event nobody publishes reads as complete from inside the subscriber. A vacant seat reads as ordinary from inside the team that declared it; it's the two _other_ teams reporting into it that make the vacancy load-bearing.
+
+```bash
+teamapi gaps examples/acme-org
+```
+
+```text
+- unconsumed-event: 'ledger' publishes 'LedgerEntryPosted', which no declared service subscribes to
+- unconsumed-event: 'checkout-api' publishes 'OrderPlaced', which no declared service subscribes to
+? vacant-load-bearing: 'head-of-engineering' on platform-payments is vacant, but stream-checkout, stream-onboarding report(s) into it
+~ unacknowledged: stream-checkout declares a collaboration with stream-onboarding, which declares nothing back
+
+4 finding(s), 0 blocking; 9 seam(s) checked.
+```
+
+Only `orphan-subscription` and `dangling-owner` exit non-zero, and they share a shape: the declaration _looks_ complete and isn't. An agent whose `ownerId` resolves to nobody presents to every downstream consumer — `AGENTS.md`, the context bundle, a generated crew — exactly like an agent with a real human behind it, which makes it strictly worse than an agent with no owner at all. Only `collaboration` is expected to be mutual; `x-as-a-service` is deliberately one-directional, so consuming a platform is never reported. Pure, offline, no token — so unlike the drift checks it's also served over HTTP as `GET /gaps` and as the `get_org_gaps` MCP tool, which is what lets an assistant answer "what is nobody responsible for here?" without being handed a report. Details in [`docs/integrations/gaps.md`](docs/integrations/gaps.md).
+
+<a id="shadow-ai"></a>
+
+## 🫥 Shadow AI
+
+[Paperclip drift](#paperclip) answers "which agents are running that nothing declares" — for one runtime, behind one gateway. Most shadow AI never reaches a runtime. It's a `.mcp.json` somebody committed during a crunch, an SDK added to a manifest, a workflow step that calls a model. None of those needed anyone's approval, which is why they spread faster than the process meant to sanction them — and all of them are checked into git, so they can be read off the same source of truth as everything else.
+
+```bash
+teamapi shadow-ai examples/acme-org --scan ~/src
+```
+
+```text
++ undeclared: 'checkout-api' carries AI artifacts (CLAUDE.md, package.json (openai)) but stream-checkout declares no agents[]
+? unowned: 'legacy-batch' carries AI artifacts (.github/workflows/ai.yml (anthropics/claude-code-action@v1)) but no team declares the repository
+! forbidden: 'onboarding-api' carries AI artifacts (.mcp.json) but stream-onboarding's policy 'no-agents-on-applicant-pii' forbids agents
+
+3 finding(s), 1 blocking; 1 repo(s) matched, 1 quiet.
+```
+
+`--scan` reads repository checkouts already on disk — no clone, no fetch, no token. Only `forbidden` exits non-zero: undeclared usage is a conversation, but a team that wrote down "no agents on this code" in review and has one anyway is not a documentation problem. The report counts `quiet` repos separately and names that number when it finds nothing, because this detects _declaration_, not use — a clean result over an empty tree must not read like a clean bill of health. Details in [`docs/integrations/shadow-ai.md`](docs/integrations/shadow-ai.md).
+
 <a id="ci-integration"></a>
 
 ## 🔁 CI integration
@@ -655,9 +709,10 @@ jobs:
         with:
           patterns: org
           render-scope: topology
+          check-gaps: true # also fail on a blocking `teamapi gaps` finding
 ```
 
-It installs `@jgalego/teamapi` and runs `teamapi validate`, then posts a single PR comment with the result — kept up to date on later pushes, and carrying a live-rendered Mermaid preview when validation passes. The job fails when validation fails, so it can gate a required check. This repo dogfoods it against [`examples/acme-org`](examples/acme-org); see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml) and the action's [inputs and outputs](.github/actions/validate/README.md).
+It installs `@jgalego/teamapi` and runs `teamapi validate`, then posts a single PR comment with the result — kept up to date on later pushes, and carrying a live-rendered Mermaid preview when validation passes. The job fails when validation fails, so it can gate a required check; `check-gaps: true` additionally runs [`teamapi gaps`](#gaps) after validation passes and fails on a blocking finding (warnings print but never fail). This repo dogfoods it against [`examples/acme-org`](examples/acme-org); see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml) and the action's [inputs and outputs](.github/actions/validate/README.md).
 
 <a id="paperclip"></a>
 

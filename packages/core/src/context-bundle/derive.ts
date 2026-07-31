@@ -38,6 +38,24 @@ export interface ScoredEntry<T> {
   item: T;
 }
 
+/**
+ * Two teams whose knowledge this goal draws on at once.
+ *
+ * A context bundle otherwise reads as if the goal belongs to whichever team was scoped. But the
+ * entries that scored highest routinely span teams, and that is where the risk is: the work is
+ * about to cross a boundary. Naming the seam — and how the two sides declared their relationship,
+ * or that they declared nothing — tells an assistant who else has a stake before it starts, rather
+ * than after someone notices.
+ */
+export interface SeamEntry {
+  teams: [TeamId, TeamId];
+  /** The Team Topologies interaction mode declared between them, if either declared one. */
+  mode?: string;
+  /** True when neither team declares any edge to the other. The goal spans a boundary nobody has
+   * written down, which is worth more caution than a declared one, not less. */
+  undeclared: boolean;
+}
+
 export interface ContextBundle {
   goal: string;
   teamId?: TeamId;
@@ -54,6 +72,8 @@ export interface ContextBundle {
   playbooks: ScoredEntry<Playbook>[];
   services: ServiceEntry[];
   members: MemberEntry[];
+  /** Boundaries this goal's matched entries straddle. Empty when everything came from one team. */
+  seams: SeamEntry[];
 }
 
 const DEFAULT_LIMIT = 5;
@@ -139,7 +159,7 @@ export function deriveContextBundle(graph: OrgGraph, request: ContextBundleReque
     ? resolveEffectiveSteering(graph, teamId).map((item) => ({ teamId, item }))
     : listAllSteeringAcrossOrg(graph);
 
-  return {
+  const bundle: Omit<ContextBundle, "seams"> = {
     goal: request.goal,
     teamId,
     team: team ? toTeamSummaryDto(team) : undefined,
@@ -154,6 +174,45 @@ export function deriveContextBundle(graph: OrgGraph, request: ContextBundleReque
     services: teamId ? listServices(graph).filter((s) => s.teamId === teamId) : [],
     members: teamId ? listMembers(graph, teamId) : [],
   };
+
+  return { ...bundle, seams: deriveSeams(graph, bundle) };
+}
+
+/**
+ * Every pair of teams the ranked entries touch, with the relationship the graph declares between
+ * them. Derived from data the bundle already computed — each `ScoredEntry` carries its `teamId` —
+ * so this costs one pass over the results and no extra lookups.
+ */
+function deriveSeams(graph: OrgGraph, bundle: Omit<ContextBundle, "seams">): SeamEntry[] {
+  const contributing = [
+    ...bundle.specifications,
+    ...bundle.steeringDocuments,
+    ...bundle.policies,
+    ...bundle.memory,
+    ...bundle.knowledgeBase,
+    ...bundle.prompts,
+    ...bundle.playbooks,
+  ].map((entry) => entry.teamId);
+
+  const teams = [...new Set(contributing)].sort();
+  if (teams.length < 2) return [];
+
+  const seams: SeamEntry[] = [];
+  for (let i = 0; i < teams.length; i++) {
+    for (let j = i + 1; j < teams.length; j++) {
+      const [a, b] = [teams[i]!, teams[j]!];
+      const between = graph.edges.filter(
+        (edge) => (edge.from === a && edge.to === b) || (edge.from === b && edge.to === a),
+      );
+      const interaction = between.find((edge) => edge.kind === "interaction");
+      seams.push({
+        teams: [a, b],
+        mode: interaction?.kind === "interaction" ? interaction.mode : undefined,
+        undeclared: between.length === 0,
+      });
+    }
+  }
+  return seams;
 }
 
 function listAllSteeringAcrossOrg(graph: OrgGraph): ResourceEntry<SteeringDocument>[] {

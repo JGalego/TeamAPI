@@ -154,6 +154,20 @@ responsibilities:
 
 ### RoleRef
 
+`kind` (new, optional) says what sort of informal tie an `alignsWith[]` entry is:
+`aligns-with` (the default when omitted, and the original dotted-line meaning) | `advises` |
+`learns-from` | `community-of-practice`. These name the network work actually travels along —
+who a role takes advice from, who it learned a practice from, which community it belongs to —
+which the reporting hierarchy never explains, and which routinely exists for months before anyone
+draws a box for it.
+
+Each becomes a `RoleGraphEdge` of the matching kind, drawn as a labelled dashed edge by
+`--scope org-hierarchy` and surfaced in the knowledge graph. `teamapi gaps` reports how many
+cross-team role relationships the reporting lines explain, and how many they don't.
+
+`kind` is rejected on `reportsToRef`, which is always formal reporting, rather than being silently
+ignored.
+
 A reference to another team's role — same `$ref` convention as `Interaction`/`Dependency`.
 
 | Field      | Type   | Required | Description                                                             |
@@ -178,17 +192,43 @@ A reference to another team's role — same `$ref` convention as `Interaction`/`
 Inspired by [Team-Cognitive-Load-Assessment](https://github.com/TeamTopologies/Team-Cognitive-Load-Assessment):
 a 1-10 self-assessment across the three load types from _Team Topologies_.
 
-| Field        | Type          | Required |
-| ------------ | ------------- | -------- |
-| `intrinsic`  | number (1-10) | Yes      |
-| `extraneous` | number (1-10) | Yes      |
-| `germane`    | number (1-10) | Yes      |
-| `notes`      | string        | No       |
-| `assessedOn` | string        | No       |
+| Field         | Type          | Required |
+| ------------- | ------------- | -------- |
+| `intrinsic`   | number (1-10) | Yes      |
+| `extraneous`  | number (1-10) | Yes      |
+| `germane`     | number (1-10) | Yes      |
+| `supervision` | number (1-10) | No       |
+| `notes`       | string        | No       |
+| `assessedOn`  | string        | No       |
 
 `@jgalego/teamapi-core`'s `scoreCognitiveLoad` derives a `sustainable | elevated | overloaded` label,
 weighting `extraneous` load more heavily than the total score — Team Topologies treats extraneous
 (avoidable overhead) as the load type teams should actively minimize.
+
+`supervision` (new) is the load of supervising AI agents: reviewing what they produce, maintaining
+their prompts, being the person everyone asks. It is **not** part of `total`, but it **is** one of
+the label's independent triggers, on the same thresholds as `extraneous` (≥4 elevated, ≥7
+overloaded).
+
+Those are two separate decisions. The three types above come from _Team Topologies_ and the
+thresholds are calibrated against their sum, so summing a fourth term would re-scale `total` for
+every team that adopted an agent. But the label has never been a function of `total` alone — a high
+`extraneous` score alone is already sufficient — and supervision joins it there, because a team
+drowning in agent review must not be able to report "sustainable" on the strength of three modest
+other scores. A team that has not scored `supervision` is unaffected: an absent value reads as 0.
+
+It is not folded into `extraneous` either, because reviewing an agent's output is frequently the
+work itself rather than avoidable friction around it.
+
+`teamapi gaps` reports an `unscored-supervision` warning for a team that assesses its cognitive
+load and runs active `agents[]` but leaves this blank — the load exists whether or not anyone
+scored it.
+
+Because it sits outside `total`, `teamapi diff` tracks it as its own field: a team whose
+supervision load doubles without touching the other three types would otherwise show up as no
+change at all, which is exactly the quiet growth this field exists to expose. The Port generator
+emits it as `supervisionLoad`, a sortable number beside `cognitiveLoad`, and the dashboard shows it
+as a separate chip rather than widening the load bar.
 
 ## Services and bounded contexts
 
@@ -304,6 +344,14 @@ not called out below (`capabilities`, `tags`, `reviewers`, etc.) is a plain stri
 `get_context_bundle` MCP tool) assembles the specifications, steering documents, policies, memory,
 knowledge base entries, prompts, and playbooks most relevant to a stated `goal`, plus (when
 `teamId` is given) that team's related teams, members, and services.
+
+It also returns `seams[]`: every pair of teams the matched entries span, with the interaction
+`mode` declared between them, and `undeclared: true` when neither team declares any edge to the
+other. A bundle otherwise reads as if the goal belongs to whichever team was scoped, when in
+practice the highest-scoring entries routinely straddle a boundary — which is where the risk is.
+An undeclared seam deserves more caution than a declared one, not less: the work is about to cross
+a line nobody has written down. Derived from the `teamId` each scored entry already carries, so it
+costs one pass and no extra lookups.
 
 Relevance is a heuristic: `goal` is tokenized (lowercased, alphanumeric runs of length >= 3), and
 each candidate resource is scored by how many of those tokens appear in its text fields/tags —

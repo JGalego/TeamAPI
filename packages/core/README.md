@@ -34,6 +34,13 @@ console.log(toMermaid(buildTopologyDiagram(graph)));
   `findServiceOwner`, `listRoles`, `listMembers`, `searchOrg` (`model/queries`).
 - **Cognitive load**: `scoreCognitiveLoad`, `orgWideCognitiveLoadReport`
   (`cognitive-load/score`).
+- **Gaps**: `planGaps`, `formatGaps` (`gaps/plan`) — the accountability holes _between_ teams,
+  which are invisible from any single `teamapi.yml` and only appear once the graph is resolved.
+  Pure: no I/O, no network.
+- **Shadow AI**: `scanForAiArtifacts` (`shadow-ai/scan`) reads repository checkouts already on
+  disk for MCP configs, agent instruction files, LLM SDKs in manifests and workflow steps that
+  call a model; `planShadowAi`/`formatShadowAi`/`repoNameFromUrl` (`shadow-ai/plan`) reconcile
+  what it found against what teams declare in `agents[]`.
 - **DDD context mapping**: `deriveContextMap`, `MODE_TO_PATTERN_HEURISTIC`
   (`context-map/derive`, `context-map/patterns`).
 - **Diagrams**: `buildTopologyDiagram`, `buildHierarchyDiagram`, `buildOrgHierarchyDiagram`,

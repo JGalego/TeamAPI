@@ -55,7 +55,7 @@ exports[`diagram generation — examples/acme-org > renders the org-wide role hi
   "stream-checkout__tech-lead" -> "stream-checkout__frontend-engineer";
   "stream-onboarding__tech-lead" -> "stream-onboarding__engineer";
   "platform-payments__head-of-engineering" -> "stream-checkout__tech-lead";
-  "stream-checkout__tech-lead" -> "enabling-devex__coach" [label="aligns with", style=dashed];
+  "stream-checkout__tech-lead" -> "enabling-devex__coach" [label="learns from", style=dashed];
   "platform-payments__head-of-engineering" -> "stream-onboarding__tech-lead";
   "stream-onboarding__tech-lead" -> "enabling-devex__coach" [label="aligns with", style=dashed];
 }"
@@ -88,7 +88,7 @@ exports[`diagram generation — examples/acme-org > renders the org-wide role hi
   stream_checkout__tech_lead --> stream_checkout__frontend_engineer
   stream_onboarding__tech_lead --> stream_onboarding__engineer
   platform_payments__head_of_engineering --> stream_checkout__tech_lead
-  stream_checkout__tech_lead -.->|"aligns with"| enabling_devex__coach
+  stream_checkout__tech_lead -.->|"learns from"| enabling_devex__coach
   platform_payments__head_of_engineering --> stream_onboarding__tech_lead
   stream_onboarding__tech_lead -.->|"aligns with"| enabling_devex__coach
   classDef default fill:#ede9fe,stroke:#7c3aed,stroke-width:1px,color:#1e1b4b;"

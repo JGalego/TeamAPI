@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RefSchema, RoleKindSchema, SlugSchema } from "./primitives";
+import { RefSchema, RoleKindSchema, RoleRelationSchema, SlugSchema } from "./primitives";
 
 /** A reference to another team's role, by team document `$ref` plus that team's `roles[].id`.
  * `teamName` mirrors `Interaction`/`Dependency`'s convention of keeping a human-readable label
@@ -7,6 +7,10 @@ import { RefSchema, RoleKindSchema, SlugSchema } from "./primitives";
 export const RoleRefSchema = RefSchema.extend({
   teamName: z.string().min(1),
   roleId: SlugSchema,
+  /** Only meaningful inside `alignsWith[]`, where it says what kind of informal relationship this
+   * is. Defaults to `aligns-with`. Meaningless on `reportsToRef`, which is always formal
+   * reporting, and rejected there rather than silently ignored. */
+  kind: RoleRelationSchema.optional(),
 }).passthrough();
 export type RoleRef = z.infer<typeof RoleRefSchema>;
 
@@ -52,7 +56,8 @@ export const RoleSchema = z
      * exactly one manager, same-team or not, and setting both is rejected below. */
     reportsToRef: RoleRefSchema.optional(),
     /** Dotted-line / matrix relationships that aren't formal reporting — e.g. a community of
-     * practice lead a role coordinates with, same-team or cross-team. */
+     * practice lead a role coordinates with, same-team or cross-team. Each entry's optional
+     * `kind` says which sort of informal tie it is; omitting it means `aligns-with`. */
     alignsWith: z.array(RoleRefSchema).default([]),
   })
   .passthrough()
@@ -62,6 +67,13 @@ export const RoleSchema = z
         code: z.ZodIssueCode.custom,
         message: "reportsTo and reportsToRef are mutually exclusive: a role reports to exactly one manager",
         path: ["reportsToRef"],
+      });
+    }
+    if (role.reportsToRef?.kind !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "kind belongs on alignsWith[] entries: reportsToRef is always formal reporting",
+        path: ["reportsToRef", "kind"],
       });
     }
   });
