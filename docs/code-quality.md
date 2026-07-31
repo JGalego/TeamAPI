@@ -44,6 +44,20 @@ have rewritten 8,945 lines on adoption instead of 863 — real changes drowning 
 HTML is excluded (`.prettierignore`). The two hand-tuned pages carry inline `<script>` and
 `<style>`, and reflowing them churns thousands of lines for no readability gain.
 
+### Keeping blame readable
+
+`.git-blame-ignore-revs` lists commits that only moved whitespace, so `git blame` reports whoever
+last changed a line's content rather than whoever last reflowed it. GitHub honours it automatically;
+locally the `prepare` script sets `blame.ignoreRevsFile` for you.
+
+Add a revision only if it is purely mechanical. A commit that also changes behaviour must never be
+listed — blame would skip past the real author of that behaviour.
+
+Worth knowing what it is currently worth: the Prettier adoption commit is attributed only 70 lines
+repo-wide, all of them closing brackets or blank lines the reflow created, so ignoring it
+reattributes nothing yet. That is the `printWidth` choice paying off. The file exists so the habit
+and the config are in place for the next mechanical sweep, which may not be as cheap.
+
 ## Lint
 
 ESLint with **type-aware** rules (`recommendedTypeChecked`), configured in `eslint.config.mjs`.

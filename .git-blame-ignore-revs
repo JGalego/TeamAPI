@@ -1,0 +1,23 @@
+# Commits that only moved whitespace around. `git blame` skips these and reports the commit that
+# last changed a line's *content*, which is almost always the one you were looking for.
+#
+# GitHub honours this file automatically in its blame view. Locally it needs one config, which the
+# root `prepare` script sets on `pnpm install`:
+#
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# Only add a revision here if it is purely mechanical — a formatter run, a rename, an indentation
+# change. A commit that also changes behaviour must never be listed: blame would then skip past
+# the real author of that behaviour and point somewhere misleading.
+#
+# Entries need the full 40-character SHA; git rejects abbreviated ones.
+
+# Add Prettier and EditorConfig, and format the codebase.
+#
+# Measured: this reformat is attributed only 70 lines repo-wide, and every one of them is a closing
+# bracket or a blank line that the reflow genuinely created — so ignoring it reattributes nothing
+# today. That is the width-120 decision paying off rather than a reason to drop the entry: at
+# Prettier's default 80 the same commit would have rewritten 8,945 lines and swallowed real
+# authorship wholesale. The entry is here so the file, the local config, and the habit are already
+# in place for the next mechanical sweep, which will not be as cheap.
+6641836f6815cb6a14baf62791b024dd63d8161d
