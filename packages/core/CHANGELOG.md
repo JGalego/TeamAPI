@@ -1,5 +1,126 @@
 # @jgalego/teamapi-core
 
+## 0.7.0
+
+### Minor Changes
+
+- 7ca7e0c: Surface `cognitiveLoad.supervision` on the three places that were still blind to it:
+
+  - **`teamapi diff`** tracks it as its own field on `CognitiveLoadSnapshot`. Because supervision
+    sits outside `total` by design, a team whose supervision load doubled without touching the other
+    three types previously reported no change at all — exactly the quiet growth the field exists to
+    expose.
+  - **The Port generator** emits `supervisionLoad` beside `cognitiveLoad`. Port scores and colours
+    numeric properties, so "who is carrying the most agent-supervision load" becomes a sortable
+    column instead of something you read four YAML files to learn.
+  - **The dashboard** shows it as a separate 🤖 chip rather than widening the load bar, so the bar
+    keeps meaning the same thing across teams that scored supervision and teams that didn't.
+    Distinguished by glyph and border, not colour alone.
+
+  `examples/acme-org` now also demonstrates an `alignsWith[].kind` (`learns-from` on Stream
+  Checkout's tech lead) alongside an undecorated entry on Stream Onboarding, so the canonical example
+  shows both the named relation and the default.
+
+- dcbfdda: `deriveContextBundle` now returns `seams[]`: every pair of teams the matched entries span, with the
+  interaction `mode` declared between them and `undeclared: true` when neither team declares any edge
+  to the other.
+
+  A bundle otherwise reads as if the goal belongs to whichever team was scoped, when in practice the
+  highest-scoring entries routinely straddle a boundary — which is where the risk is. Naming the seam
+  tells an assistant who else has a stake before it starts rather than after someone notices, and an
+  undeclared seam deserves more caution than a declared one, not less.
+
+  Purely additive, and derived from the `teamId` each `ScoredEntry` already carries, so it costs one
+  pass and no extra lookups. `POST /context` and the `get_context_bundle` MCP tool pass it through
+  unchanged.
+
+- e676027: Add `teamapi shadow-ai <patterns...> --scan <dir>`, which reports AI adoption found in repository
+  checkouts against what teams declare in `agents[]`: MCP configs, agent instruction files,
+  assistant config directories, LLM SDKs in manifests, and workflow steps that call a model. Local
+  and offline — it reads checkouts already on disk, with no clone, fetch or token.
+
+  Only `forbidden` (artifacts in a repo owned by a team whose policies forbid agents) exits non-zero;
+  undeclared usage warns. `scanForAiArtifacts`, `planShadowAi`, `formatShadowAi` and `repoNameFromUrl`
+  are exported from core, and `agentsForbidden` is now exported from the paperclip-drift module so
+  both checks share one definition of what a policy forbidding agents looks like.
+
+- 1f2a3a4: Add `teamapi gaps`, which reports accountability holes between teams rather than inside any one of
+  them: subscriptions to events nothing publishes, agents whose `ownerId` names nobody on the team,
+  vacant roles other teams report into, and one-sided collaborations. `planGaps`/`formatGaps` are
+  exported from core. Only `orphan-subscription` and `dangling-owner` exit non-zero, so it can gate a
+  required check without ordinary findings failing a build; `teamapi gaps examples/acme-org` reports
+  four warnings and exits 0.
+
+  Ships `examples/driftwood-org`, an org that validates cleanly but is deliberately built to fail the
+  new check. It is a second test fixture alongside `acme-org`, which `CONTRIBUTING.md` normally
+  discourages — a broken org can't live inside the one every other example renders from without
+  breaking those examples.
+
+- fa1ff63: Add an optional `cognitiveLoad.supervision` (1-10): the load of supervising AI agents — reviewing
+  what they produce, maintaining prompts, being the person everyone asks — which no role description
+  covers today.
+
+  It is deliberately **not** part of `total`, but it **is** one of the label's independent triggers,
+  on the same thresholds as `extraneous` (≥4 elevated, ≥7 overloaded). Those are two separate
+  decisions: the three Team Topologies types are what `total`'s thresholds are calibrated against, so
+  summing a fourth term would re-scale it for every team that adopted an agent — but the label has
+  never been a function of `total` alone, and a team drowning in agent review must not be able to
+  report "sustainable" on the strength of three modest other scores. A team that has not scored
+  `supervision` is unaffected: an absent value reads as 0.
+
+  The value reaches `/cognitive-load`, `get_team_cognitive_load` and `GET /teams/:id` (via a new
+  field on `CognitiveLoadDto`). It is kept out of `extraneous` because reviewing an agent's output is
+  often the work rather than avoidable friction around it.
+
+  `teamapi gaps` gains an `unscored-supervision` warning for teams that assess their cognitive load
+  and run active agents but leave the new field blank.
+
+- 2ec4c6c: Serve `teamapi gaps` over HTTP and MCP, and link agents to the humans accountable for them.
+
+  - **`GET /gaps`**, the **`get_org_gaps`** MCP tool, and a matching chat tool. `gaps` is a pure
+    function of the resolved graph with no token and no I/O — the same shape as `/cognitive-load` —
+    so unlike the drift checks there is no reason it should be CLI-only. An assistant asking "what is
+    nobody responsible for here?" can now compute the answer instead of waiting for a CI log.
+  - **`accountableFor`** (member → agent) in the knowledge graph, resolved from `agents[].ownerId`.
+    Emitted only when the id resolves to a declared member: a dangling `ownerId` is `gaps`'s blocking
+    `dangling-owner` finding, and drawing an edge to a person who isn't there would launder exactly
+    the false impression of accountability that finding exists to catch.
+  - The knowledge graph's role-edge relations gain `advises`/`learnsFrom`/`communityOfPractice`,
+    matching the informal `alignsWith[].kind` values.
+
+- a7ecce1: `buildOrgHierarchyDiagram` takes an optional `{ includeAgents }`, exposed as
+  `teamapi render --scope org-hierarchy --with-agents`: each team's declared `agents[]` is drawn
+  hanging off the human whose `ownerId` names them, by a dotted "supervises" edge.
+
+  Agents appear as participants but never as boxes in the chart. An agent placed in the hierarchy
+  the way a person is would suggest accountability sits with it, when it never does — so an agent
+  with no resolvable owner gets no incoming edge and visibly floats, which is exactly what an unowned
+  agent is. Paused agents are labelled with their status rather than hidden.
+
+  Off by default, so every existing render — including the Mermaid committed in the README — is
+  byte-identical.
+
+- 1d96a38: Let `alignsWith[]` entries name what kind of informal tie they are, via an optional
+  `kind`: `aligns-with` (the default when omitted), `advises`, `learns-from` or
+  `community-of-practice`. These describe the network work actually travels along — who a role takes
+  advice from, who it learned a practice from, which community it belongs to — which the reporting
+  hierarchy never explains.
+
+  A discriminator on the existing `RoleRefSchema` rather than new arrays, so the whole `alignsWith`
+  resolution path is reused and a document that omits `kind` resolves and renders exactly as before.
+  Each kind becomes a `RoleGraphEdge` of the same name, drawn as a labelled dashed edge by
+  `--scope org-hierarchy` and mapped into the knowledge graph. `kind` is rejected on `reportsToRef`,
+  which is always formal reporting, rather than being silently ignored.
+
+  `GapsReport` gains `roleTies: { formal, informal }`, and `teamapi gaps` prints how many cross-team
+  role relationships the reporting lines explain when any of them aren't reporting lines.
+
+### Patch Changes
+
+- Updated dependencies [fa1ff63]
+- Updated dependencies [1d96a38]
+  - @jgalego/teamapi-schema@0.5.0
+
 ## 0.6.0
 
 ### Minor Changes
