@@ -283,6 +283,19 @@ describe("REST API", () => {
     expect(res.headers.location).toBe("/docs");
   });
 
+  it("GET /gaps reports the holes between teams, with nothing blocking in the fixture", async () => {
+    const res = await app.inject({ method: "GET", url: "/gaps" });
+    expect(res.statusCode).toBe(200);
+    const body: {
+      findings: { kind: string; severity: string }[];
+      matched: number;
+      roleTies: { formal: number; informal: number };
+    } = res.json();
+    expect(body.findings.some((f) => f.severity === "blocking")).toBe(false);
+    expect(body.findings.map((f) => f.kind)).toContain("vacant-load-bearing");
+    expect(body.roleTies).toEqual({ formal: 2, informal: 2 });
+  });
+
   it("GET /dashboard serves the org dashboard page", async () => {
     const res = await app.inject({ method: "GET", url: "/dashboard" });
     expect(res.statusCode).toBe(200);
