@@ -90,12 +90,16 @@ them apart means `validate` stays a hard gate on syntax while `gaps` can report 
 without blocking anyone's build.
 
 It is also pure: no network, no token, no filesystem beyond reading the documents themselves. The
-whole check is a function of the resolved graph.
+whole check is a function of the resolved graph — which is why, unlike the drift checks, it is also
+served as `GET /gaps` and the `get_org_gaps` MCP tool. An assistant asking "what is nobody
+responsible for here?" can compute the answer itself rather than waiting for someone to paste a
+CI log.
 
 ## Suggested loop
 
 1. Run `teamapi gaps` in CI on every pull request that touches a `teamapi.yml`, as a required check.
-   Only the two blocking kinds will fail it.
+   Only the two blocking kinds will fail it. The bundled action does this for you with
+   `check-gaps: true` — see [CI integration](../../README.md#ci-integration).
 2. Triage the warnings in the team's regular review — each one names a specific seam and the teams
    on either side of it.
 3. When a warning is a deliberate choice (an event with only external consumers, say), record it as

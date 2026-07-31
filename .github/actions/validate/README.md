@@ -35,6 +35,7 @@ jobs:
 | `patterns`     | `.`                   | File paths, globs, or a directory to auto-discover `teamapi.yml` under — passed straight through to `teamapi validate`/`teamapi render`. |
 | `render-scope` | `topology`            | Diagram scope to preview: `topology` \| `hierarchy` \| `context-map` \| `org-hierarchy`.                                                 |
 | `render-team`  | _(none)_              | Team id to scope the preview to — required if `render-scope: hierarchy`.                                                                 |
+| `check-gaps`   | `false`               | Also run `teamapi gaps` and fail the job on a blocking finding. Warnings print but never fail.                                           |
 | `comment`      | `true`                | Post (and keep updated) a PR comment with the result. Set `false` to only validate.                                                      |
 | `github-token` | `${{ github.token }}` | Token used to read/post the PR comment.                                                                                                  |
 
@@ -50,5 +51,6 @@ jobs:
 - The job **fails** (non-zero exit) if `teamapi validate` reports any unresolved reference, so this can gate a required check.
 - The PR comment is idempotent: pushing more commits to the same PR updates the existing comment (matched via an HTML marker) instead of piling up new ones.
 - On validation failure, the comment shows the `teamapi validate` output only — no diagram preview is rendered, since the graph is by definition incomplete.
+- With `check-gaps: true`, the gaps check runs only after validation passes: it reads the resolved graph, so an unresolvable `$ref` would make it report holes that are really just missing documents.
 
 See [`action.yml`](action.yml) for the full implementation.
