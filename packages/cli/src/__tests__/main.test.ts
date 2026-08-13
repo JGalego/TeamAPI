@@ -14,6 +14,7 @@ const {
   runTopology,
   runRender,
   runScaffold,
+  runInit,
   runSchema,
   runGenerate,
   runDiff,
@@ -34,6 +35,7 @@ const {
   runTopology: vi.fn(async () => 0),
   runRender: vi.fn(async () => 0),
   runScaffold: vi.fn(async () => 0),
+  runInit: vi.fn(async () => 0),
   runSchema: vi.fn(async () => 0),
   runGenerate: vi.fn(async () => 0),
   runDiff: vi.fn(async () => 0),
@@ -55,6 +57,7 @@ vi.mock("../commands/policy", () => ({ runPolicy }));
 vi.mock("../commands/topology", () => ({ runTopology }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
+vi.mock("../commands/init", () => ({ runInit }));
 vi.mock("../commands/schema", () => ({ runSchema }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
 vi.mock("../commands/diff", () => ({ runDiff }));
@@ -659,5 +662,35 @@ describe("createProgram — topology", () => {
     const { program, stderr } = freshProgram();
     await expect(program.parseAsync(["node", "teamapi", "topology", "org", "--format", "xml"])).rejects.toThrow();
     expect(stderr.join("")).toContain("Allowed choices are text, json, sarif");
+  });
+});
+
+describe("createProgram — init", () => {
+  it("defaults to the current directory and the teams/ layout", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "init"]);
+    expect(runInit).toHaveBeenCalledWith({ dir: ".", teamsDir: "teams", teams: undefined, force: undefined });
+  });
+
+  it("passes a directory, --teams-dir, repeated --team and --force through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync([
+      "node",
+      "teamapi",
+      "init",
+      "new-org",
+      "--teams-dir",
+      "org",
+      "--team",
+      "checkout",
+      "billing",
+      "--force",
+    ]);
+    expect(runInit).toHaveBeenCalledWith({
+      dir: "new-org",
+      teamsDir: "org",
+      teams: ["checkout", "billing"],
+      force: true,
+    });
   });
 });

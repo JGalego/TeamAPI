@@ -11,6 +11,7 @@ import { runPolicy } from "./commands/policy";
 import { runTopology } from "./commands/topology";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
+import { runInit } from "./commands/init";
 import { runSchema } from "./commands/schema";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
@@ -171,6 +172,17 @@ export function createProgram(): Command {
         });
       },
     );
+
+  program
+    .command("init")
+    .description("Scaffold a new org repository: config, CI workflow, editor settings, and first teams")
+    .argument("[dir]", "directory to initialise", ".")
+    .option("--teams-dir <dir>", "directory the team documents live in", "teams")
+    .option("--team <id...>", "team ids to scaffold (default: one stream-aligned, one platform)")
+    .option("--force", "overwrite files that already exist")
+    .action(async (dir: string, opts: { teamsDir: string; team?: string[]; force?: boolean }) => {
+      process.exitCode = await runInit({ dir, teamsDir: opts.teamsDir, teams: opts.team, force: opts.force });
+    });
 
   const scaffoldCommand = program
     .command("scaffold")

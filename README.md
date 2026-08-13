@@ -84,7 +84,17 @@ pnpm install
 pnpm build
 ```
 
-Try it against the sample org bundled with this repo, [`examples/acme-org`](examples/acme-org):
+Start your own org repository:
+
+```bash
+teamapi init my-org
+cd my-org
+teamapi validate      # no arguments needed — teamapi.config.yml says where to look
+```
+
+That writes a `teamapi.config.yml`, a CI workflow, VS Code settings binding the documents to the [published schema](#editor-support), a README, and a first stream-aligned and platform team. Every command in this README then works in that directory with no arguments.
+
+Or try it against the sample org bundled with this repo, [`examples/acme-org`](examples/acme-org):
 
 ```bash
 teamapi validate examples/acme-org
@@ -670,6 +680,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi policy <patterns...>`                                                                                                                                                     | Check [declared policies](#policy) against the org graph, and report the ones nothing enforces                                                                                                                                           |
 | `teamapi shadow-ai <patterns...> --scan <dir>`                                                                                                                                     | Report [AI adoption found in repositories](#shadow-ai) against what teams declare in `agents[]`                                                                                                                                          |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--with-agents] [--out <file>]`                        | Render a diagram                                                                                                                                                                                                                         |
+| `teamapi init [dir] [--teams-dir <dir>] [--team <id...>] [--force]`                                                                                                                | Scaffold a whole org repository: config, CI, editor settings, first teams                                                                                                                                                                |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                                                 | Generate a minimal, schema-valid document                                                                                                                                                                                                |
 | `teamapi schema [--out <file>]`                                                                                                                                                    | Print the [JSON Schema](#editor-support) for the document format                                                                                                                                                                         |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>`                        | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
