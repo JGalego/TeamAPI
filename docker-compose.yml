@@ -1,0 +1,57 @@
+# A running Team API in one command:
+#
+#   TEAMAPI_DOCS=./examples/acme-org docker compose up api
+#
+# `api` is the long-lived service. `mcp` is not a server you leave running — MCP over stdio is a
+# subprocess an assistant spawns — so it is declared with `profiles:` to keep it out of `up`, and
+# documented below as a `run` target instead.
+
+services:
+  api:
+    build:
+      context: .
+      # Named so `docker compose build` and a plain `docker build .` produce the same image rather
+      # than the runtime stage silently differing between the two.
+      target: runtime
+    image: teamapi:local
+    command:
+      - serve-api
+      - /data
+      - --host
+      - 0.0.0.0
+      - --port
+      - "3000"
+      # Streamable HTTP MCP on the same port, so an assistant can reach the org graph over the
+      # network without a second container or a stdio subprocess.
+      - --mcp
+      # The documents are a read-only bind mount, so a filesystem watch is the only reload trigger
+      # that would work here — and inotify does not cross every bind-mount implementation. The
+      # endpoint works everywhere and is what a deploy hook can call.
+      - --reload-endpoint
+    environment:
+      # Set this and every route except /health and /slack/* requires `Authorization: Bearer`.
+      # Left empty, the server refuses to bind 0.0.0.0 unless you also add --allow-anonymous —
+      # publishing this port with neither would serve every member's contact details to the network.
+      TEAMAPI_API_TOKEN: ${TEAMAPI_API_TOKEN:?set TEAMAPI_API_TOKEN, or add --allow-anonymous to the command}
+    ports:
+      - "${TEAMAPI_PORT:-3000}:3000"
+    volumes:
+      # Read-only: the API has no write path of its own, and the documents belong to git.
+      - ${TEAMAPI_DOCS:-./examples/acme-org}:/data:ro
+    restart: unless-stopped
+
+  # docker compose run --rm -T mcp
+  #
+  # Runs one MCP server over stdio and exits with the client. `-T` matters: without it Compose
+  # allocates a TTY and the protocol stream gets line-edited into nonsense.
+  mcp:
+    profiles: ["tools"]
+    build:
+      context: .
+      target: runtime
+    image: teamapi:local
+    command: ["serve-mcp", "/data"]
+    stdin_open: true
+    tty: false
+    volumes:
+      - ${TEAMAPI_DOCS:-./examples/acme-org}:/data:ro

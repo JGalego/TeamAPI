@@ -35,6 +35,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
   - [🏢 Org-wide role hierarchy](#org-wide-role-hierarchy)
 - [🔌 REST API](#rest-api)
 - [🖥️ Dashboard](#dashboard)
+- [🐳 Docker](#docker)
 - [🤖 MCP tools](#mcp-tools)
   - [🌐 One endpoint for the whole org](#mcp-http)
 - [💬 Chat](#chat)
@@ -398,6 +399,28 @@ open http://127.0.0.1:3000/dashboard
 ```
 
 ![Searching the dashboard for "oauth" and "architecture" surfaces steering docs, prompts, ADRs, sessions, a specification, an AI agent, and a memory entry — all through the same search box.](docs/assets/dashboard-demo.gif)
+
+<a id="docker"></a>
+
+## 🐳 Docker
+
+`Dockerfile` builds the whole toolchain into one image whose entrypoint is the `teamapi` CLI, so every subcommand is available and `serve-api` is just the default:
+
+```bash
+docker build -t teamapi .
+docker run --rm -p 3000:3000 \
+  -v "$PWD/examples/acme-org:/data:ro" \
+  -e TEAMAPI_API_TOKEN=$(openssl rand -hex 32) \
+  teamapi
+```
+
+No org documents are baked in — they're mounted at `/data`, because they're your source of truth and live in your git repository, not in someone else's image. The mount is read-only for the same reason.
+
+The token isn't decoration. Inside a container every useful bind is non-loopback, and `serve-api` [refuses that without a credential](#rest-api) — so the refusal fires on the first `docker run` rather than after the org chart has been on the network for a month. `--allow-anonymous` is still there for the case where a trusted network really is the intent.
+
+`docker compose up api` runs the same thing with MCP over Streamable HTTP on the same port and `POST /reload` mounted for a deploy hook to call. Reload-by-endpoint rather than `--watch`, because inotify doesn't propagate across every bind-mount implementation and a filesystem watch is the one trigger that might quietly never fire.
+
+Full deployment notes — health checks, one-shot commands, published images — are in [`docs/deployment.md`](docs/deployment.md).
 
 <a id="mcp-tools"></a>
 

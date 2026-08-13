@@ -1,0 +1,24 @@
+# Anything the build regenerates, plus anything that would invalidate the dependency layer for a
+# reason that has nothing to do with dependencies.
+node_modules
+**/node_modules
+dist
+**/dist
+*.tsbuildinfo
+**/*.tsbuildinfo
+.turbo
+**/.turbo
+coverage
+**/coverage
+.teamapi-cache
+
+.git
+.github
+.githooks
+.changeset
+
+docs
+site
+Dockerfile
+.dockerignore
+docker-compose.yml
