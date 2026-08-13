@@ -48,6 +48,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
   - [🤖 Machine-readable output](#machine-readable)
+  - [🔀 Versions and migration](#migrate)
   - [🧹 Formatting](#fmt)
   - [⚙️ Project config](#config)
   - [⚔️ Name conflicts](#name-conflicts)
@@ -683,6 +684,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--with-agents] [--out <file>]`                        | Render a diagram                                                                                                                                                                                                                         |
 | `teamapi init [dir] [--teams-dir <dir>] [--team <id...>] [--force]`                                                                                                                | Scaffold a whole org repository: config, CI, editor settings, first teams                                                                                                                                                                |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                                                 | Generate a minimal, schema-valid document                                                                                                                                                                                                |
+| `teamapi migrate [patterns...] [--check]`                                                                                                                                          | [Bring documents to the latest version](#migrate), and explain the ones it can't                                                                                                                                                         |
 | `teamapi fmt [patterns...] [--check]`                                                                                                                                              | [Canonical formatting](#fmt) for Team API documents                                                                                                                                                                                      |
 | `teamapi schema [--out <file>]`                                                                                                                                                    | Print the [JSON Schema](#editor-support) for the document format                                                                                                                                                                         |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>`                        | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
@@ -731,6 +733,31 @@ That turns every finding into an inline annotation on the pull request diff and 
 Paths are emitted relative to the working directory, because SARIF consumers resolve them against the repository root — an absolute path from a CI runner matches no file in the repository and the annotation silently disappears. Severity maps to SARIF's levels on the same line the exit codes draw: `blocking` becomes `error`, `warning` stays `warning`, `info` becomes `note`.
 
 The output format never changes an exit code.
+
+<a id="migrate"></a>
+
+### 🔀 Versions and migration
+
+```bash
+teamapi migrate          # bring documents up to the latest teamApiVersion
+teamapi migrate --check  # report what needs attention, exit non-zero
+```
+
+There is one version today, so there is nothing to migrate _yet_ — which is exactly when the mechanism needs to exist. A format with one version and no migration path doesn't have a migration problem; it has one scheduled for the day the second version ships, by which point documents are spread across every repository in the org and whatever gets built under that pressure becomes the permanent answer.
+
+What it does before there are any migrations is tell four situations apart that the schema cannot:
+
+```text
+! future/teamapi.yml: This document declares 2.0.0, which is newer than this build understands (1.0.0). Upgrade @jgalego/teamapi rather than changing the document.
+! none/teamapi.yml: No teamApiVersion. Add `teamApiVersion: "1.0.0"` — the field is what tells tooling which schema this document follows.
+! old/teamapi.yml: No migration path from 0.9.0 to 1.0.0 is registered in this build.
+
+0 file(s) would be migrated, 3 need attention, 1 already current.
+```
+
+To the schema all three of those are `teamApiVersion: Invalid literal value, expected "1.0.0"` — true, and unable to distinguish "your documents are older than your toolchain" from "your documents are newer than your toolchain". Those need opposite actions from whoever reads the error, so `teamapi validate` now gives the version-aware message too, not just `migrate`.
+
+Versions compare numerically rather than lexically, so a format that ever reaches double digits doesn't start telling people their new documents are old.
 
 <a id="fmt"></a>
 

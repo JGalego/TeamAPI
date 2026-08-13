@@ -1,4 +1,4 @@
-import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
+import { assessVersion, TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { formatZodError } from "../validate/format-errors";
 import { LoaderRegistry } from "./loaders";
 import type { GraphEdge, OrgGraph, ResolvedTeam, RoleGraphEdge, UnresolvedRef } from "../model/org-graph";
@@ -22,6 +22,14 @@ interface PendingRoleEdge {
   fromTeam: string;
   fromRole: string;
   toRoleId: string;
+}
+
+/** The version-specific explanation for a document the schema rejected, when the reason it was
+ * rejected is its `teamApiVersion` rather than anything else about it. */
+function versionAdvice(raw: unknown): string | undefined {
+  if (raw === null || typeof raw !== "object" || Array.isArray(raw)) return undefined;
+  const assessment = assessVersion(raw as Record<string, unknown>);
+  return assessment.status === "current" ? undefined : assessment.advice;
 }
 
 /**
@@ -66,7 +74,11 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
 
     const parsed = TeamApiDocumentSchema.safeParse(loaded.raw);
     if (!parsed.success) {
-      const reason = formatZodError(parsed.error);
+      // A version mismatch produces `teamApiVersion: Invalid literal value, expected "1.0.0"`,
+      // which is true and useless: it reads identically whether the document predates this build
+      // or postdates it, and those need opposite responses from the reader — edit the file, or
+      // upgrade the toolchain. Ask the version machinery, which can tell them apart.
+      const reason = versionAdvice(loaded.raw) ?? formatZodError(parsed.error);
       unresolved.push({ fromUri: uri, ref: uri, reason });
       if (!allowPartial) throw new Error(`Invalid Team API document at ${uri}: ${reason}`);
       continue;

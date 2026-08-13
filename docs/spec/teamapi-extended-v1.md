@@ -15,12 +15,21 @@ distinct from the upstream `teamapi:` field, so tooling that understands only th
 tooling that understands this extension never mistake one document for the other.
 
 **Versioning and migration.** `teamApiVersion` is a closed set validated against a registry of
-supported versions (`SCHEMA_REGISTRY` in `packages/schema/src/index.ts`), currently just
+supported versions (`SCHEMA_REGISTRY` in `packages/schema/src/registry.ts`), currently just
 `"1.0.0"`. A document declaring an unsupported version fails validation rather than being parsed
 against the wrong schema. There is no `1.x` deprecation policy yet, since no second version has
 shipped — when one does, expect it to be additive (new optional fields) where possible, with a
 breaking change reflected as a new registry entry rather than silently changing `"1.0.0"`'s
 meaning out from under existing documents.
+
+The migration mechanism exists ahead of any migrations: `MIGRATIONS` in
+`packages/schema/src/migrate.ts` is an ordered chain a document walks toward
+`LATEST_TEAM_API_VERSION`, and `teamapi migrate` runs it. It is empty today, deliberately — a
+placeholder migration would be one real documents could hit. What it provides before a second
+version exists is diagnosis: `assessVersion` distinguishes a document that is _behind_ this build
+(migratable, or with no registered path) from one _ahead_ of it (the toolchain needs upgrading,
+not the document) from one carrying no version at all. Those read identically to the schema, which
+can only report `Invalid literal value, expected "1.0.0"`, and they need opposite responses.
 
 ## File format and layout
 

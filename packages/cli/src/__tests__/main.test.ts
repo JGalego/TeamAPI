@@ -16,6 +16,7 @@ const {
   runScaffold,
   runInit,
   runFmt,
+  runMigrate,
   runSchema,
   runGenerate,
   runDiff,
@@ -38,6 +39,7 @@ const {
   runScaffold: vi.fn(async () => 0),
   runInit: vi.fn(async () => 0),
   runFmt: vi.fn(async () => 0),
+  runMigrate: vi.fn(async () => 0),
   runSchema: vi.fn(async () => 0),
   runGenerate: vi.fn(async () => 0),
   runDiff: vi.fn(async () => 0),
@@ -61,6 +63,7 @@ vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/init", () => ({ runInit }));
 vi.mock("../commands/fmt", () => ({ runFmt }));
+vi.mock("../commands/migrate", () => ({ runMigrate }));
 vi.mock("../commands/schema", () => ({ runSchema }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
 vi.mock("../commands/diff", () => ({ runDiff }));
@@ -709,5 +712,19 @@ describe("createProgram — fmt", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "fmt", "org", "--check"]);
     expect(runFmt).toHaveBeenCalledWith(["org"], expect.objectContaining({ check: true }));
+  });
+});
+
+describe("createProgram — migrate", () => {
+  it("defaults to writing, with patterns from the config", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "migrate"]);
+    expect(runMigrate).toHaveBeenCalledWith([], { check: undefined, config: undefined, noConfig: false });
+  });
+
+  it("passes --check through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "migrate", "org", "--check"]);
+    expect(runMigrate).toHaveBeenCalledWith(["org"], expect.objectContaining({ check: true }));
   });
 });

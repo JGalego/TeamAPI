@@ -13,6 +13,7 @@ import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runInit } from "./commands/init";
 import { runFmt } from "./commands/fmt";
+import { runMigrate } from "./commands/migrate";
 import { runSchema } from "./commands/schema";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
@@ -212,6 +213,18 @@ export function createProgram(): Command {
     .option("--no-config", "ignore any config file")
     .action(async (patterns: string[], opts: { check?: boolean; config?: string | boolean }) => {
       process.exitCode = await runFmt(patterns, { check: opts.check, ...configFlags(opts) });
+    });
+
+  const migrateCommand = program
+    .command("migrate")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
+    .description("Bring documents up to the latest teamApiVersion, and explain the ones that cannot be")
+    .option("--check", "report what would change and exit non-zero, without writing");
+  migrateCommand
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
+    .action(async (patterns: string[], opts: { check?: boolean; config?: string | boolean }) => {
+      process.exitCode = await runMigrate(patterns, { check: opts.check, ...configFlags(opts) });
     });
 
   program
