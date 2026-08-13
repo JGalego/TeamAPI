@@ -218,3 +218,27 @@ describe("POST /reload", () => {
     expect(called).toBe(1);
   });
 });
+
+describe("POST /mcp", () => {
+  it("does not exist unless a handler was supplied", async () => {
+    // The API stays read-only by default; MCP is a capability the caller opts into.
+    const app = await buildServer(store);
+    expect((await app.inject({ method: "POST", url: "/mcp" })).statusCode).toBe(404);
+  });
+
+  it("is covered by the bearer token like every other route", async () => {
+    let called = 0;
+    const app = await buildServer(store, {
+      apiToken: TOKEN,
+      mcpHandler: async (_req, res) => {
+        called++;
+        res.statusCode = 200;
+        res.end("{}");
+      },
+    });
+
+    expect((await app.inject({ method: "POST", url: "/mcp", payload: {} })).statusCode).toBe(401);
+    // An unauthenticated request must not reach the handler at all.
+    expect(called).toBe(0);
+  });
+});

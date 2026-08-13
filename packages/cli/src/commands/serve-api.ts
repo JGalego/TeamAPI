@@ -1,5 +1,6 @@
 import { OrgGraphStore, watchOrgGraph } from "@jgalego/teamapi-core";
 import { buildServer } from "@jgalego/teamapi-rest-api";
+import { createMcpHttpHandler } from "@jgalego/teamapi-mcp-server";
 import { expandSeeds } from "../seeds";
 import { resolveWatchRoots } from "../watch-seeds";
 import { warnUnresolved } from "../warn-unresolved";
@@ -18,6 +19,8 @@ export interface ServeApiOptions extends ConfigAwareOptions {
   watch?: boolean;
   /** Mount `POST /reload` even without `--watch`, for a webhook-driven refresh. */
   reloadEndpoint?: boolean;
+  /** Also serve MCP over Streamable HTTP at `POST /mcp`. */
+  mcp?: boolean;
 }
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
@@ -92,6 +95,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
     corsOrigins: corsOrigin,
     rateLimitPerMinute: rateLimit,
     reload: watcher ? () => watcher.reload() : undefined,
+    mcpHandler: options.mcp ? createMcpHttpHandler(store) : undefined,
   });
 
   // The Unix idiom for "re-read your configuration" — the one trigger that needs neither a
@@ -103,6 +107,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
 
   console.log(`REST API listening on http://${host}:${port}`);
   console.log(token ? "Authentication: bearer token required" : "Authentication: none (loopback only)");
+  if (options.mcp) console.log(`MCP (Streamable HTTP): http://${host}:${port}/mcp`);
   if (watcher) {
     console.log(
       options.watch

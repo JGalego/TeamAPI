@@ -384,6 +384,7 @@ export function createProgram(): Command {
     .option("--allow-anonymous", "serve a non-loopback address with no token (this exposes the org graph)")
     .option("--watch", "re-resolve the graph when a team document changes")
     .option("--reload-endpoint", "mount POST /reload without watching the filesystem")
+    .option("--mcp", "also serve MCP over Streamable HTTP at POST /mcp")
     .option("--config <file>", "path to teamapi.config.yml")
     .option("--no-config", "ignore any config file")
     .action(
@@ -398,6 +399,7 @@ export function createProgram(): Command {
           allowAnonymous?: boolean;
           watch?: boolean;
           reloadEndpoint?: boolean;
+          mcp?: boolean;
           config?: string | boolean;
         },
       ) => {
@@ -410,6 +412,7 @@ export function createProgram(): Command {
           allowAnonymous: opts.allowAnonymous,
           watch: opts.watch,
           reloadEndpoint: opts.reloadEndpoint,
+          mcp: opts.mcp,
           ...configFlags(opts),
         });
       },

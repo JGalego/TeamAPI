@@ -23,6 +23,7 @@ import { contextRoutes } from "./routes/context";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph";
 import { slackRoutes } from "./routes/slack";
 import { reloadRoutes } from "./routes/reload";
+import { mcpRoutes, type McpRequestHandler } from "./routes/mcp";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -39,6 +40,9 @@ export interface BuildServerOptions {
   rateLimitPerMinute?: number;
   /** When supplied, mounts `POST /reload` and calls this to re-resolve the graph. */
   reload?: () => Promise<void>;
+  /** When supplied, mounts `POST /mcp` and routes it to this handler. Injected so this package
+   * stays free of an MCP dependency; the CLI, which depends on both, supplies it. */
+  mcpHandler?: McpRequestHandler;
 }
 
 // Read at runtime (not imported as a TS module) so this keeps working both from `dist/` in the
@@ -106,6 +110,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Sessions", description: "AI collaboration session history" },
         { name: "Context", description: "Context bundle assembly for AI assistants" },
         { name: "Knowledge Graph", description: "Cross-resource graph traversal and visualization" },
+        { name: "MCP", description: "Model Context Protocol over Streamable HTTP" },
         { name: "Health", description: "Liveness check" },
       ],
     },
@@ -135,6 +140,9 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   const slackSigningSecret = options.slackSigningSecret ?? process.env.SLACK_SIGNING_SECRET;
   if (slackSigningSecret) {
     await app.register(slackRoutes, { signingSecret: slackSigningSecret });
+  }
+  if (options.mcpHandler) {
+    await app.register(mcpRoutes, { handler: options.mcpHandler });
   }
   await app.register(dashboardRoutes);
 
