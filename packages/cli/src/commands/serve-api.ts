@@ -3,8 +3,9 @@ import { buildServer } from "@jgalego/teamapi-rest-api";
 import { expandSeeds } from "../seeds";
 import { resolveWatchRoots } from "../watch-seeds";
 import { warnUnresolved } from "../warn-unresolved";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface ServeApiOptions {
+export interface ServeApiOptions extends ConfigAwareOptions {
   port?: number;
   host?: string;
   /** Bearer token every request must carry. Defaults to `TEAMAPI_API_TOKEN`. */
@@ -45,12 +46,19 @@ export function checkExposure(host: string, token: string | undefined, allowAnon
 }
 
 export async function runServeApi(patterns: string[], options: ServeApiOptions): Promise<void> {
-  const seeds = await expandSeeds(patterns);
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) throw new Error(input.error);
+  if (input.patterns.length === 0) throw new Error(NO_PATTERNS_MESSAGE);
+
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    throw new Error(`No files matched: ${patterns.join(", ")}`);
+    throw new Error(`No files matched: ${input.patterns.join(", ")}`);
   }
 
-  const host = options.host ?? "127.0.0.1";
+  // CLI flag, then config, then the built-in default. The token is the exception: it is read from
+  // the environment and never from the config file, which lives in the repository.
+  const serve = input.config.defaults.serve;
+  const host = options.host ?? serve.host ?? "127.0.0.1";
   const token = options.token ?? process.env.TEAMAPI_API_TOKEN;
 
   const refusal = checkExposure(host, token, options.allowAnonymous ?? false);
@@ -60,6 +68,9 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
   await store.load();
   warnUnresolved(store.current);
 
+  const corsOrigin = options.corsOrigin ?? serve.corsOrigin;
+  const rateLimit = options.rateLimit ?? serve.rateLimit;
+
   const watcher =
     options.watch || options.reloadEndpoint
       ? watchOrgGraph({
@@ -67,8 +78,8 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
           // No roots when only `--reload-endpoint` was asked for: the endpoint reloads on demand,
           // and installing filesystem watches nobody asked for would be a surprise on a server
           // whose documents are deployed rather than edited in place.
-          watchPaths: options.watch ? await resolveWatchRoots(patterns) : [],
-          resolveSeeds: () => expandSeeds(patterns),
+          watchPaths: options.watch ? await resolveWatchRoots(input.patterns) : [],
+          resolveSeeds: () => expandSeeds(input.patterns),
           onReload: (graph) =>
             console.log(`Reloaded: ${graph.teams.size} team(s), ${graph.unresolved.length} unresolved reference(s).`),
           onError: (error) => console.error(`Reload failed, still serving the last good graph: ${error.message}`),
@@ -78,8 +89,8 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
   const app = await buildServer(store, {
     logger: true,
     apiToken: token,
-    corsOrigins: options.corsOrigin,
-    rateLimitPerMinute: options.rateLimit,
+    corsOrigins: corsOrigin,
+    rateLimitPerMinute: rateLimit,
     reload: watcher ? () => watcher.reload() : undefined,
   });
 
@@ -87,7 +98,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
   // filesystem watch nor an open port, and that every process supervisor already knows how to send.
   if (watcher) process.on("SIGHUP", () => void watcher.reload());
 
-  const port = options.port ?? 3000;
+  const port = options.port ?? serve.port ?? 3000;
   await app.listen({ port, host });
 
   console.log(`REST API listening on http://${host}:${port}`);

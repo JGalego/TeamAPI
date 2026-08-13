@@ -48,6 +48,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
   - [🤖 Machine-readable output](#machine-readable)
+  - [⚙️ Project config](#config)
   - [⚔️ Name conflicts](#name-conflicts)
 - [✍️ Editor support](#editor-support)
 - [🕰️ Org history](#org-history)
@@ -717,6 +718,53 @@ That turns every finding into an inline annotation on the pull request diff and 
 Paths are emitted relative to the working directory, because SARIF consumers resolve them against the repository root — an absolute path from a CI runner matches no file in the repository and the annotation silently disappears. Severity maps to SARIF's levels on the same line the exit codes draw: `blocking` becomes `error`, `warning` stays `warning`, `info` becomes `note`.
 
 The output format never changes an exit code.
+
+<a id="config"></a>
+
+### ⚙️ Project config
+
+`teamapi.config.yml`, found by walking up from the working directory the way git finds `.git`, so it applies from a repo root, a team's own directory, or a CI checkout one level down:
+
+```yaml
+# Seeds to use when the command line names none.
+patterns:
+  - org
+
+# Flags that are constant for this org, and were otherwise retyped on every invocation.
+defaults:
+  github:
+    org: acme
+  okta:
+    url: https://acme.okta.com
+    groupPrefix: team-
+  serve:
+    port: 8080
+    corsOrigin: [https://intranet.acme.example]
+    rateLimit: 120
+
+gaps: # severity overrides and waivers — see above
+  severity:
+    unconsumed-event: "off"
+
+topology: # thresholds and severity overrides
+  maxTeamSize: 7
+```
+
+With `patterns:` set, the commands you run dozens of times a day lose their argument entirely:
+
+```bash
+teamapi gaps          # instead of: teamapi gaps org/**/teamapi.yml
+teamapi topology
+teamapi serve-api
+```
+
+A command line that names patterns wins and does **not** merge with the config's — naming patterns is being explicit about scope, and quietly adding the org's default set would resolve teams you didn't ask about. Same precedence for every flag: CLI, then config, then the built-in default.
+
+**There is no `token:` anywhere in this schema, and there won't be.** This file lives in your repository, and the most common way a secret leaks is a config format that made somewhere convenient to put one. Every command already reads its token from an environment variable. The schema rejects the key outright rather than ignoring it.
+
+Parsing is strict throughout: an unknown key, a misspelled section, an unknown gap or topology kind, an out-of-range port — all errors. A `waviers:` typo that quietly does nothing while you believe a rule is in force is worse than no config at all.
+
+`--config <file>` points at a specific file; `--no-config` ignores any.
 
 <a id="name-conflicts"></a>
 

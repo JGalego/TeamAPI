@@ -7,8 +7,9 @@ import {
 } from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface PagerDutyDriftOptions {
+export interface PagerDutyDriftOptions extends ConfigAwareOptions {
   token?: string;
   url?: string;
 }
@@ -17,9 +18,21 @@ export interface PagerDutyDriftOptions {
  * non-zero only for a declared service that escalates to nobody, so this can gate a required
  * check without ordinary drift failing the build. */
 export async function runPagerDutyDrift(patterns: string[], options: PagerDutyDriftOptions): Promise<number> {
-  const seeds = await expandSeeds(patterns);
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) {
+    console.error(input.error);
+    return 1;
+  }
+  if (input.patterns.length === 0) {
+    console.error(NO_PATTERNS_MESSAGE);
+    return 1;
+  }
+
+  const url = options.url ?? input.config.defaults.pagerduty.url;
+
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    console.error(`No files matched: ${patterns.join(", ")}`);
+    console.error(`No files matched: ${input.patterns.join(", ")}`);
     return 1;
   }
 
@@ -34,7 +47,7 @@ export async function runPagerDutyDrift(patterns: string[], options: PagerDutyDr
 
   let services: PagerDutyService[];
   try {
-    services = await new PagerDutyClient({ token, baseUrl: options.url }).listServices();
+    services = await new PagerDutyClient({ token, baseUrl: url }).listServices();
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err));
     return 1;

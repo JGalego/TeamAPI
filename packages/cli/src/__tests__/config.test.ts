@@ -2,7 +2,7 @@ import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { ConfigError, EMPTY_CONFIG, findConfigFile, loadConfig } from "../config";
+import { ConfigError, EMPTY_CONFIG, findConfigFile, loadConfig, resolvePatterns } from "../config";
 
 let tmpDir: string;
 
@@ -159,6 +159,75 @@ topology:
 
   it("rejects a zero threshold, which would report every team", async () => {
     const file = await writeConfig("topology:\n  maxTeamSize: 0\n");
+    await expect(loadConfig({ explicitPath: file })).rejects.toThrow(ConfigError);
+  });
+});
+
+describe("resolvePatterns", () => {
+  it("prefers the command line", () => {
+    const config = { ...EMPTY_CONFIG, patterns: ["from-config"] };
+    expect(resolvePatterns(["from-cli"], config)).toEqual(["from-cli"]);
+  });
+
+  it("falls back to the config", () => {
+    const config = { ...EMPTY_CONFIG, patterns: ["from-config"] };
+    expect(resolvePatterns([], config)).toEqual(["from-config"]);
+  });
+
+  it("does not merge the two", () => {
+    // A command line naming patterns is being explicit about scope; quietly adding the org's
+    // default set would resolve teams the caller did not ask about.
+    const config = { ...EMPTY_CONFIG, patterns: ["a", "b"] };
+    expect(resolvePatterns(["c"], config)).toEqual(["c"]);
+  });
+
+  it("is empty when neither supplies anything", () => {
+    expect(resolvePatterns([], EMPTY_CONFIG)).toEqual([]);
+  });
+});
+
+describe("loadConfig — patterns and defaults", () => {
+  it("parses patterns and per-command defaults", async () => {
+    const file = await writeConfig(`
+patterns: [org]
+defaults:
+  github:
+    org: acme
+  okta:
+    url: https://acme.okta.com
+    groupPrefix: team-
+  serve:
+    port: 8080
+    host: 0.0.0.0
+    corsOrigin: [https://intranet.test]
+    rateLimit: 120
+`);
+    const { config } = await loadConfig({ explicitPath: file });
+    expect(config.patterns).toEqual(["org"]);
+    expect(config.defaults.github.org).toBe("acme");
+    expect(config.defaults.okta).toEqual({ url: "https://acme.okta.com", groupPrefix: "team-" });
+    expect(config.defaults.serve).toEqual({
+      port: 8080,
+      host: "0.0.0.0",
+      corsOrigin: ["https://intranet.test"],
+      rateLimit: 120,
+    });
+  });
+
+  it("rejects a token anywhere in defaults", async () => {
+    // The file lives in the repository. The schema refusing the key is what keeps it from
+    // becoming somewhere convenient to put a secret.
+    const file = await writeConfig("defaults:\n  github:\n    org: acme\n    token: ghp_secret\n");
+    await expect(loadConfig({ explicitPath: file })).rejects.toThrow(ConfigError);
+  });
+
+  it("rejects an unknown defaults section", async () => {
+    const file = await writeConfig("defaults:\n  gitlab:\n    org: acme\n");
+    await expect(loadConfig({ explicitPath: file })).rejects.toThrow(ConfigError);
+  });
+
+  it("rejects an out-of-range port", async () => {
+    const file = await writeConfig("defaults:\n  serve:\n    port: 99999\n");
     await expect(loadConfig({ explicitPath: file })).rejects.toThrow(ConfigError);
   });
 });

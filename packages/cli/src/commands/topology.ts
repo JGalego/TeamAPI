@@ -9,12 +9,10 @@ import {
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
-import { ConfigError, EMPTY_CONFIG, loadConfig } from "../config";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface TopologyOptions {
+export interface TopologyOptions extends ConfigAwareOptions {
   format?: ReportFormat;
-  config?: string;
-  noConfig?: boolean;
 }
 
 const TOPOLOGY_RULES: { id: TopologyKind; description: string }[] = [
@@ -40,23 +38,20 @@ function sourceFor(graph: OrgGraph, teamId: string): string | undefined {
 export async function runTopology(patterns: string[], options: TopologyOptions = {}): Promise<number> {
   const format = options.format ?? "text";
 
-  let config;
-  let sourcePath: string | undefined;
-  try {
-    ({ config, sourcePath } = options.noConfig
-      ? { config: EMPTY_CONFIG, sourcePath: undefined }
-      : await loadConfig({ explicitPath: options.config }));
-  } catch (error) {
-    if (error instanceof ConfigError) {
-      console.error(error.message);
-      return 1;
-    }
-    throw error;
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) {
+    console.error(input.error);
+    return 1;
+  }
+  const { config, sourcePath } = input;
+  if (input.patterns.length === 0) {
+    console.error(NO_PATTERNS_MESSAGE);
+    return 1;
   }
 
-  const seeds = await expandSeeds(patterns);
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    console.error(`No files matched: ${patterns.join(", ")}`);
+    console.error(`No files matched: ${input.patterns.join(", ")}`);
     return 1;
   }
 

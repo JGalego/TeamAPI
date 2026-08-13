@@ -11,14 +11,10 @@ import {
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
-import { ConfigError, loadConfig } from "../config";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface GapsOptions {
+export interface GapsOptions extends ConfigAwareOptions {
   format?: ReportFormat;
-  /** Path to a config file, instead of discovering one by walking up from the cwd. */
-  config?: string;
-  /** Ignore any config file: report every finding at its declared severity. */
-  noConfig?: boolean;
 }
 
 const GAP_RULES: { id: GapKind; description: string }[] = [
@@ -43,23 +39,20 @@ function sourceFor(graph: OrgGraph, teamId: string): string | undefined {
 export async function runGaps(patterns: string[], options: GapsOptions = {}): Promise<number> {
   const format = options.format ?? "text";
 
-  let config;
-  let sourcePath: string | undefined;
-  try {
-    ({ config, sourcePath } = options.noConfig
-      ? { config: { gaps: { severity: {}, waivers: [] } }, sourcePath: undefined }
-      : await loadConfig({ explicitPath: options.config }));
-  } catch (error) {
-    if (error instanceof ConfigError) {
-      console.error(error.message);
-      return 1;
-    }
-    throw error;
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) {
+    console.error(input.error);
+    return 1;
+  }
+  const { config, sourcePath } = input;
+  if (input.patterns.length === 0) {
+    console.error(NO_PATTERNS_MESSAGE);
+    return 1;
   }
 
-  const seeds = await expandSeeds(patterns);
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    console.error(`No files matched: ${patterns.join(", ")}`);
+    console.error(`No files matched: ${input.patterns.join(", ")}`);
     return 1;
   }
 

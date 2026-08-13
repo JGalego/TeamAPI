@@ -53,6 +53,18 @@ function reportFormatOption(command: Command): Option {
   return command.createOption("--format <format>", "text | json | sarif").choices(REPORT_FORMATS).default("text");
 }
 
+/**
+ * Untangles Commander's `--config <file>` / `--no-config` pair, which it models as one key: a
+ * string for the former and `false` for the latter. Declared once because reading `false` as a
+ * filename is a mistake worth making zero times.
+ */
+function configFlags(opts: { config?: string | boolean }): { config?: string; noConfig: boolean } {
+  return {
+    config: typeof opts.config === "string" ? opts.config : undefined,
+    noConfig: opts.config === false,
+  };
+}
+
 const RENDER_SCOPES = ["topology", "hierarchy", "context-map", "org-hierarchy"] as const;
 const RENDER_FORMATS = ["mermaid", "dot"] as const;
 const TEAM_TYPES = ["stream-aligned", "platform", "complicated-subsystem", "enabling"] as const;
@@ -67,17 +79,19 @@ export function createProgram(): Command {
 
   const validateCommand = program
     .command("validate")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Validate and resolve one or more Team API documents (and everything they $ref)");
   validateCommand
     .addOption(reportFormatOption(validateCommand))
-    .action(async (patterns: string[], opts: { format: ReportFormat }) => {
-      process.exitCode = await runValidate(patterns, { format: opts.format });
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
+    .action(async (patterns: string[], opts: { format: ReportFormat; config?: string | boolean }) => {
+      process.exitCode = await runValidate(patterns, { format: opts.format, ...configFlags(opts) });
     });
 
   const gapsCommand = program
     .command("gaps")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Report accountability holes between teams — unowned event contracts, vacant seats, unowned agents");
   gapsCommand
     .addOption(reportFormatOption(gapsCommand))
@@ -86,53 +100,49 @@ export function createProgram(): Command {
     .action(async (patterns: string[], opts: { format: ReportFormat; config?: string | boolean }) => {
       // Commander models `--no-config` by setting the same `config` key to `false`, so the two
       // flags have to be untangled here rather than read as separate options.
-      process.exitCode = await runGaps(patterns, {
-        format: opts.format,
-        config: typeof opts.config === "string" ? opts.config : undefined,
-        noConfig: opts.config === false,
-      });
+      process.exitCode = await runGaps(patterns, { format: opts.format, ...configFlags(opts) });
     });
 
   const policyCommand = program
     .command("policy")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Check declared policies[] against the org graph, and report the ones nothing enforces");
   policyCommand
     .addOption(reportFormatOption(policyCommand))
-    .action(async (patterns: string[], opts: { format: ReportFormat }) => {
-      process.exitCode = await runPolicy(patterns, { format: opts.format });
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
+    .action(async (patterns: string[], opts: { format: ReportFormat; config?: string | boolean }) => {
+      process.exitCode = await runPolicy(patterns, { format: opts.format, ...configFlags(opts) });
     });
 
   const topologyCommand = program
     .command("topology")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Report Team Topologies design smells — overrunning collaborations, oversized teams, inverted flow");
   topologyCommand
     .addOption(reportFormatOption(topologyCommand))
     .option("--config <file>", "config file with thresholds and severity overrides")
     .option("--no-config", "ignore any config file and use the default thresholds")
     .action(async (patterns: string[], opts: { format: ReportFormat; config?: string | boolean }) => {
-      process.exitCode = await runTopology(patterns, {
-        format: opts.format,
-        config: typeof opts.config === "string" ? opts.config : undefined,
-        noConfig: opts.config === false,
-      });
+      process.exitCode = await runTopology(patterns, { format: opts.format, ...configFlags(opts) });
     });
 
   const shadowAiCommand = program
     .command("shadow-ai")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Report AI adoption found in repositories against what teams declare in agents[] (read-only)")
     .requiredOption("--scan <dir>", "directory whose immediate subdirectories are repository checkouts");
   shadowAiCommand
     .addOption(reportFormatOption(shadowAiCommand))
-    .action(async (patterns: string[], opts: { scan: string; format: ReportFormat }) => {
-      process.exitCode = await runShadowAi(patterns, { scan: opts.scan, format: opts.format });
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
+    .action(async (patterns: string[], opts: { scan: string; format: ReportFormat; config?: string | boolean }) => {
+      process.exitCode = await runShadowAi(patterns, { scan: opts.scan, format: opts.format, ...configFlags(opts) });
     });
 
   const renderCommand = program
     .command("render")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Render an organigram / role-hierarchy / context-map diagram");
   renderCommand
     .addOption(
@@ -200,7 +210,7 @@ export function createProgram(): Command {
         .createArgument("<target>", "crewai | backstage | paperclip | codeowners | agents-md | port | otel")
         .choices(GENERATE_TARGETS),
     )
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .option("--company <name>", 'company name for the paperclip target (default: "Agent Company")')
     .option("--org <org>", "GitHub org for the codeowners target, so owners read @org/team-id")
     .action(
@@ -221,7 +231,7 @@ export function createProgram(): Command {
 
   program
     .command("diff")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Diff the resolved org graph against a git revision (requires running inside a git repository)")
     .requiredOption("--against <ref>", "git revision to diff against, e.g. HEAD, main, a tag, or a commit sha")
     .addOption(new Option("--format <format>", "text | json").choices(["text", "json"]).default("text"))
@@ -231,12 +241,12 @@ export function createProgram(): Command {
 
   program
     .command("apply")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Reconcile GitHub teams/memberships with the resolved org graph (prints a plan; --yes to execute it)")
-    .requiredOption("--org <org>", "GitHub organization login to reconcile")
+    .option("--org <org>", "GitHub organization login to reconcile (defaults to defaults.github.org)")
     .option("--token <token>", "GitHub token (defaults to GITHUB_TOKEN/GH_TOKEN env var)")
     .option("--yes", "execute the plan instead of just printing it")
-    .action(async (patterns: string[], opts: { org: string; token?: string; yes?: boolean }) => {
+    .action(async (patterns: string[], opts: { org?: string; token?: string; yes?: boolean }) => {
       process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
     });
 
@@ -279,10 +289,10 @@ export function createProgram(): Command {
     .command("okta-drift")
     .description("Report where declared members and an Okta directory group disagree (read-only)")
     .argument("<patterns...>", "teamapi.yml paths or globs")
-    .requiredOption("--url <url>", "Okta org URL, e.g. https://acme.okta.com")
+    .option("--url <url>", "Okta org URL, e.g. https://acme.okta.com (defaults to defaults.okta.url)")
     .option("--token <token>", "Okta API token (defaults to OKTA_TOKEN)")
     .option("--group-prefix <prefix>", "strip this prefix from group names before matching team ids")
-    .action(async (patterns: string[], opts: { url: string; token?: string; groupPrefix?: string }) => {
+    .action(async (patterns: string[], opts: { url?: string; token?: string; groupPrefix?: string }) => {
       process.exitCode = await runOktaDrift(patterns, {
         url: opts.url,
         token: opts.token,
@@ -302,12 +312,12 @@ export function createProgram(): Command {
 
   program
     .command("paperclip-drift")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Report drift between the org graph and a running Paperclip company (read-only)")
-    .requiredOption("--url <url>", "Paperclip base URL, e.g. http://localhost:3000")
-    .requiredOption("--company <id>", "Paperclip company id to check")
+    .option("--url <url>", "Paperclip base URL (defaults to defaults.paperclip.url)")
+    .option("--company <id>", "Paperclip company id (defaults to defaults.paperclip.company)")
     .option("--token <token>", "Paperclip token (defaults to PAPERCLIP_API_KEY env var)")
-    .action(async (patterns: string[], opts: { url: string; company: string; token?: string }) => {
+    .action(async (patterns: string[], opts: { url?: string; company?: string; token?: string }) => {
       process.exitCode = await runPaperclipDrift(patterns, opts);
     });
 
@@ -326,7 +336,7 @@ export function createProgram(): Command {
 
   program
     .command("serve-api")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Start the read-only REST API over the resolved org graph")
     .option("--port <port>", "port to listen on", parsePort, 3000)
     .option("--host <host>", "address to bind (non-loopback requires --token or --allow-anonymous)", "127.0.0.1")
@@ -336,6 +346,8 @@ export function createProgram(): Command {
     .option("--allow-anonymous", "serve a non-loopback address with no token (this exposes the org graph)")
     .option("--watch", "re-resolve the graph when a team document changes")
     .option("--reload-endpoint", "mount POST /reload without watching the filesystem")
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
     .action(
       async (
         patterns: string[],
@@ -348,6 +360,7 @@ export function createProgram(): Command {
           allowAnonymous?: boolean;
           watch?: boolean;
           reloadEndpoint?: boolean;
+          config?: string | boolean;
         },
       ) => {
         await runServeApi(patterns, {
@@ -359,22 +372,25 @@ export function createProgram(): Command {
           allowAnonymous: opts.allowAnonymous,
           watch: opts.watch,
           reloadEndpoint: opts.reloadEndpoint,
+          ...configFlags(opts),
         });
       },
     );
 
   program
     .command("serve-mcp")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description("Start the MCP server (stdio transport) over the resolved org graph")
     .option("--watch", "re-resolve the graph when a team document changes")
-    .action(async (patterns: string[], opts: { watch?: boolean }) => {
-      await runServeMcp(patterns, { watch: opts.watch });
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
+    .action(async (patterns: string[], opts: { watch?: boolean; config?: string | boolean }) => {
+      await runServeMcp(patterns, { watch: opts.watch, ...configFlags(opts) });
     });
 
   program
     .command("chat")
-    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
     .description(
       "Chat as a team or a team member, backed by a live tool-use loop over the org graph (requires ANTHROPIC_API_KEY)",
     )

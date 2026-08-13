@@ -8,8 +8,9 @@ import {
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface ShadowAiOptions {
+export interface ShadowAiOptions extends ConfigAwareOptions {
   /** Directory whose immediate subdirectories are repository checkouts. */
   scan: string;
   format?: ReportFormat;
@@ -27,9 +28,20 @@ const SHADOW_AI_RULES = [
  * undeclared usage is a conversation, a policy breach is a gate. */
 export async function runShadowAi(patterns: string[], options: ShadowAiOptions): Promise<number> {
   const format = options.format ?? "text";
-  const seeds = await expandSeeds(patterns);
+
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) {
+    console.error(input.error);
+    return 1;
+  }
+  if (input.patterns.length === 0) {
+    console.error(NO_PATTERNS_MESSAGE);
+    return 1;
+  }
+
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    console.error(`No files matched: ${patterns.join(", ")}`);
+    console.error(`No files matched: ${input.patterns.join(", ")}`);
     return 1;
   }
 

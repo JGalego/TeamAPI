@@ -7,9 +7,10 @@ import {
 } from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface ApplyOptions {
-  org: string;
+export interface ApplyOptions extends ConfigAwareOptions {
+  org?: string;
   token?: string;
   yes?: boolean;
 }
@@ -20,9 +21,25 @@ export interface ApplyOptions {
  * `terraform plan`/`apply` split, since this is the one command in the toolchain that writes to
  * a system outside the repo. */
 export async function runApply(patterns: string[], options: ApplyOptions): Promise<number> {
-  const seeds = await expandSeeds(patterns);
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) {
+    console.error(input.error);
+    return 1;
+  }
+  if (input.patterns.length === 0) {
+    console.error(NO_PATTERNS_MESSAGE);
+    return 1;
+  }
+
+  const org = options.org ?? input.config.defaults.github.org;
+  if (!org) {
+    console.error("A GitHub organization is required: pass --org or set `defaults.github.org` in teamapi.config.yml.");
+    return 1;
+  }
+
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    console.error(`No files matched: ${patterns.join(", ")}`);
+    console.error(`No files matched: ${input.patterns.join(", ")}`);
     return 1;
   }
 
@@ -39,7 +56,7 @@ export async function runApply(patterns: string[], options: ApplyOptions): Promi
 
   let plan;
   try {
-    plan = await planGithubTeamsApply(graph, client, options.org);
+    plan = await planGithubTeamsApply(graph, client, org);
   } catch (err) {
     console.error(err instanceof Error ? err.message : String(err));
     return 1;

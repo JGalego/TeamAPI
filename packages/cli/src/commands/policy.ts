@@ -2,8 +2,9 @@ import { buildOrgGraph, checkPolicies, formatPolicyReport, type OrgGraph } from 
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface PolicyOptions {
+export interface PolicyOptions extends ConfigAwareOptions {
   format?: ReportFormat;
 }
 
@@ -28,9 +29,20 @@ function sourceFor(graph: OrgGraph, teamId: string): string | undefined {
  */
 export async function runPolicy(patterns: string[], options: PolicyOptions = {}): Promise<number> {
   const format = options.format ?? "text";
-  const seeds = await expandSeeds(patterns);
+
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) {
+    console.error(input.error);
+    return 1;
+  }
+  if (input.patterns.length === 0) {
+    console.error(NO_PATTERNS_MESSAGE);
+    return 1;
+  }
+
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    console.error(`No files matched: ${patterns.join(", ")}`);
+    console.error(`No files matched: ${input.patterns.join(", ")}`);
     return 1;
   }
 

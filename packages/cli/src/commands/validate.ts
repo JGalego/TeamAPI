@@ -7,8 +7,9 @@ import {
 } from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 import { printReport, type ReportFormat } from "../report-format";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface ValidateOptions {
+export interface ValidateOptions extends ConfigAwareOptions {
   format?: ReportFormat;
 }
 
@@ -57,9 +58,20 @@ function printText(report: ValidateReport, seedCount: number): void {
 
 export async function runValidate(patterns: string[], options: ValidateOptions = {}): Promise<number> {
   const format = options.format ?? "text";
-  const seeds = await expandSeeds(patterns);
+
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) {
+    console.error(input.error);
+    return 1;
+  }
+  if (input.patterns.length === 0) {
+    console.error(NO_PATTERNS_MESSAGE);
+    return 1;
+  }
+
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    console.error(`No files matched: ${patterns.join(", ")}`);
+    console.error(`No files matched: ${input.patterns.join(", ")}`);
     return 1;
   }
 

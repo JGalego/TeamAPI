@@ -4,17 +4,22 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { expandSeeds } from "../seeds";
 import { resolveWatchRoots } from "../watch-seeds";
 import { warnUnresolved } from "../warn-unresolved";
+import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
 
-export interface ServeMcpOptions {
+export interface ServeMcpOptions extends ConfigAwareOptions {
   /** Re-resolve the graph when a watched document changes. */
   watch?: boolean;
 }
 
 /** Note: never write to stdout here — it's the MCP protocol channel. Status goes to stderr only. */
 export async function runServeMcp(patterns: string[], options: ServeMcpOptions = {}): Promise<void> {
-  const seeds = await expandSeeds(patterns);
+  const input = await resolveInput(patterns, options);
+  if (isConfigFailure(input)) throw new Error(input.error);
+  if (input.patterns.length === 0) throw new Error(NO_PATTERNS_MESSAGE);
+
+  const seeds = await expandSeeds(input.patterns);
   if (seeds.length === 0) {
-    throw new Error(`No files matched: ${patterns.join(", ")}`);
+    throw new Error(`No files matched: ${input.patterns.join(", ")}`);
   }
 
   const store = new OrgGraphStore({ seedUris: seeds, allowPartial: true });
@@ -27,8 +32,8 @@ export async function runServeMcp(patterns: string[], options: ServeMcpOptions =
   const watcher = options.watch
     ? watchOrgGraph({
         store,
-        watchPaths: await resolveWatchRoots(patterns),
-        resolveSeeds: () => expandSeeds(patterns),
+        watchPaths: await resolveWatchRoots(input.patterns),
+        resolveSeeds: () => expandSeeds(input.patterns),
         onReload: (graph) => console.error(`Reloaded: ${graph.teams.size} team(s).`),
         onError: (error) => console.error(`Reload failed, still serving the last good graph: ${error.message}`),
       })

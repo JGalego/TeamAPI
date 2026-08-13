@@ -195,13 +195,19 @@ describe("createProgram — policy", () => {
   it("passes the patterns straight through", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "policy", "examples/acme-org"]);
-    expect(runPolicy).toHaveBeenCalledWith(["examples/acme-org"], { format: "text" });
+    expect(runPolicy).toHaveBeenCalledWith(["examples/acme-org"], {
+      format: "text",
+      config: undefined,
+      noConfig: false,
+    });
   });
 
-  it("requires at least one pattern", async () => {
+  it("accepts no patterns, leaving the config file to supply them", async () => {
     const { program } = freshProgram();
-    await expect(program.parseAsync(["node", "teamapi", "policy"])).rejects.toThrow();
-    expect(runPolicy).not.toHaveBeenCalled();
+    await program.parseAsync(["node", "teamapi", "policy"]);
+    // Commander no longer rejects this; whether there are patterns to work on is decided by
+    // `runPolicy`, which is the only layer that has read the config.
+    expect(runPolicy).toHaveBeenCalledWith([], expect.objectContaining({ format: "text" }));
   });
 });
 
@@ -437,10 +443,10 @@ describe("createProgram — diff", () => {
 });
 
 describe("createProgram — apply", () => {
-  it("requires --org", async () => {
+  it("accepts no --org, leaving defaults.github.org to supply it", async () => {
     const { program } = freshProgram();
-    await expect(program.parseAsync(["node", "teamapi", "apply", "some/path"])).rejects.toThrow();
-    expect(runApply).not.toHaveBeenCalled();
+    await program.parseAsync(["node", "teamapi", "apply", "some/path"]);
+    expect(runApply).toHaveBeenCalledWith(["some/path"], expect.objectContaining({ org: undefined }));
   });
 
   it("passes patterns, --org, --token, and --yes through to runApply", async () => {
@@ -529,10 +535,10 @@ describe("createProgram — pagerduty-drift", () => {
 });
 
 describe("createProgram — okta-drift", () => {
-  it("requires --url", async () => {
+  it("accepts no --url, leaving defaults.okta.url to supply it", async () => {
     const { program } = freshProgram();
-    await expect(program.parseAsync(["node", "teamapi", "okta-drift", "some/path"])).rejects.toThrow();
-    expect(runOktaDrift).not.toHaveBeenCalled();
+    await program.parseAsync(["node", "teamapi", "okta-drift", "some/path"]);
+    expect(runOktaDrift).toHaveBeenCalledWith(["some/path"], expect.objectContaining({ url: undefined }));
   });
 
   it("passes --url, --token and --group-prefix through", async () => {
@@ -590,7 +596,7 @@ describe("createProgram — validate", () => {
   it("passes patterns straight through to runValidate", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "validate", "a", "b"]);
-    expect(runValidate).toHaveBeenCalledWith(["a", "b"], { format: "text" });
+    expect(runValidate).toHaveBeenCalledWith(["a", "b"], { format: "text", config: undefined, noConfig: false });
   });
 });
 
@@ -601,9 +607,10 @@ describe("createProgram — gaps", () => {
     expect(runGaps).toHaveBeenCalledWith(["a", "b"], { format: "text", config: undefined, noConfig: false });
   });
 
-  it("requires at least one pattern", async () => {
+  it("accepts no patterns, leaving the config file to supply them", async () => {
     const { program } = freshProgram();
-    await expect(program.parseAsync(["node", "teamapi", "gaps"])).rejects.toThrow();
+    await program.parseAsync(["node", "teamapi", "gaps"]);
+    expect(runGaps).toHaveBeenCalledWith([], expect.objectContaining({ format: "text" }));
   });
 });
 
@@ -611,7 +618,12 @@ describe("createProgram — shadow-ai", () => {
   it("passes patterns and --scan through to runShadowAi", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "shadow-ai", "org", "--scan", "./repos"]);
-    expect(runShadowAi).toHaveBeenCalledWith(["org"], { scan: "./repos", format: "text" });
+    expect(runShadowAi).toHaveBeenCalledWith(["org"], {
+      scan: "./repos",
+      format: "text",
+      config: undefined,
+      noConfig: false,
+    });
   });
 
   it("requires --scan", async () => {
