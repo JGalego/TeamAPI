@@ -595,7 +595,7 @@ describe("createProgram — gaps", () => {
   it("passes patterns straight through to runGaps", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "gaps", "a", "b"]);
-    expect(runGaps).toHaveBeenCalledWith(["a", "b"], { format: "text" });
+    expect(runGaps).toHaveBeenCalledWith(["a", "b"], { format: "text", config: undefined, noConfig: false });
   });
 
   it("requires at least one pattern", async () => {
@@ -614,5 +614,21 @@ describe("createProgram — shadow-ai", () => {
   it("requires --scan", async () => {
     const { program } = freshProgram();
     await expect(program.parseAsync(["node", "teamapi", "shadow-ai", "org"])).rejects.toThrow();
+  });
+});
+
+describe("createProgram — gaps config flags", () => {
+  it("passes --config through as a path", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "gaps", "org", "--config", "custom.yml"]);
+    expect(runGaps).toHaveBeenCalledWith(["org"], expect.objectContaining({ config: "custom.yml", noConfig: false }));
+  });
+
+  it("turns --no-config into noConfig, not into a config path of 'false'", async () => {
+    // Commander writes both flags to the same key; untangling them wrongly would make
+    // `--no-config` look like `--config false` and try to read a file by that name.
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "gaps", "org", "--no-config"]);
+    expect(runGaps).toHaveBeenCalledWith(["org"], expect.objectContaining({ config: undefined, noConfig: true }));
   });
 });

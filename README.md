@@ -51,6 +51,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [✍️ Editor support](#editor-support)
 - [🕰️ Org history](#org-history)
 - [🕳️ Gaps](#gaps)
+  - [🧾 Severity overrides and waivers](#gap-rules)
 - [📋 Policy](#policy)
 - [🫥 Shadow AI](#shadow-ai)
 - [🔁 CI integration](#ci-integration)
@@ -785,6 +786,44 @@ teamapi gaps examples/acme-org
 ```
 
 Only `orphan-subscription` and `dangling-owner` exit non-zero, and they share a shape: the declaration _looks_ complete and isn't. An agent whose `ownerId` resolves to nobody presents to every downstream consumer — `AGENTS.md`, the context bundle, a generated crew — exactly like an agent with a real human behind it, which makes it strictly worse than an agent with no owner at all. Only `collaboration` is expected to be mutual; `x-as-a-service` is deliberately one-directional, so consuming a platform is never reported. Pure, offline, no token — so unlike the drift checks it's also served over HTTP as `GET /gaps` and as the `get_org_gaps` MCP tool, which is what lets an assistant answer "what is nobody responsible for here?" without being handed a report. Details in [`docs/integrations/gaps.md`](docs/integrations/gaps.md).
+
+<a id="gap-rules"></a>
+
+### 🧾 Severity overrides and waivers
+
+Run `teamapi gaps` against an org that has existed for years and it reports the whole accumulated history at once. A check that goes red on the day it's switched on — dozens of findings, none of them today's fault — gets switched back off. So there's a way to say "we know, not now" that's narrower than disabling the check, in a `teamapi.config.yml` found by walking up from the working directory:
+
+```yaml
+gaps:
+  severity:
+    # This org treats every published event as a public contract; nobody consuming one is fine.
+    unconsumed-event: "off"
+    orphan-subscription: warning # graded down from blocking
+  waivers:
+    - kind: dangling-owner
+      teamId: platform-data
+      subject: pipeline-reviewer
+      reason: Dana left; replacement owner named in Q3 planning
+      expires: "2026-12-31"
+```
+
+The two do different jobs. **`severity`** re-grades a whole kind, permanently — the org saying this class of thing is, or isn't, a gate for us. **Waivers** exempt one specific finding, temporarily, with a reason.
+
+```text
+= waived dangling-owner: agent 'pipeline-reviewer' is owned by 'dana-whitfield', who is not a member of platform-data (Dana left; replacement owner named in Q3 planning, until 2026-12-31)
+! expired waiver for orphan-subscription: expired 2026-05-31, 1 finding(s) reported again
+
+! orphan-subscription: 'feature-store' subscribes to 'ModelTrained', which no declared service publishes
+...
+```
+
+Waivers **expire**, because an exemption that doesn't is a deletion with extra steps — and the whole point of writing the reason down is that somebody reads it again later. A lapsed waiver doesn't quietly start failing the build either: it's reported as its own line, so the team learns the exemption ran out rather than discovering it through a red build with no explanation.
+
+`reason` is mandatory. A waiver without one is indistinguishable, six months later, from one added to make a build pass.
+
+Waivers that match nothing are reported too (`- unused waiver … matched nothing, delete it`), so the file doesn't silently accumulate exemptions for gaps that were fixed years ago. And an unknown gap kind is an **error**, not a shrug — a `waviers:` typo that does nothing while the org believes a rule is in force is worse than no config at all.
+
+`--config <file>` points at a specific file; `--no-config` ignores any and reports everything at its declared severity.
 
 <a id="policy"></a>
 

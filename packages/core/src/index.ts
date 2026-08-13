@@ -8,6 +8,7 @@ export * from "./resolve/watch";
 export * from "./validate/format-errors";
 export * from "./cognitive-load/score";
 export * from "./gaps/plan";
+export * from "./gaps/rules";
 export * from "./policy/check";
 export * from "./report/sarif";
 export * from "./shadow-ai/scan";

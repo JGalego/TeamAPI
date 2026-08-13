@@ -80,8 +80,16 @@ export function createProgram(): Command {
     .description("Report accountability holes between teams — unowned event contracts, vacant seats, unowned agents");
   gapsCommand
     .addOption(reportFormatOption(gapsCommand))
-    .action(async (patterns: string[], opts: { format: ReportFormat }) => {
-      process.exitCode = await runGaps(patterns, { format: opts.format });
+    .option("--config <file>", "config file with severity overrides and waivers (default: nearest teamapi.config.yml)")
+    .option("--no-config", "ignore any config file and report every finding at its declared severity")
+    .action(async (patterns: string[], opts: { format: ReportFormat; config?: string | boolean }) => {
+      // Commander models `--no-config` by setting the same `config` key to `false`, so the two
+      // flags have to be untangled here rather than read as separate options.
+      process.exitCode = await runGaps(patterns, {
+        format: opts.format,
+        config: typeof opts.config === "string" ? opts.config : undefined,
+        noConfig: opts.config === false,
+      });
     });
 
   const policyCommand = program

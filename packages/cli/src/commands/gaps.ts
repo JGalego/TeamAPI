@@ -1,10 +1,24 @@
-import { buildOrgGraph, formatGaps, planGaps, type GapKind, type OrgGraph } from "@jgalego/teamapi-core";
+import {
+  applyGapRules,
+  buildOrgGraph,
+  formatGapRuleEffects,
+  formatGaps,
+  hasBlockingGaps,
+  planGaps,
+  type GapKind,
+  type OrgGraph,
+} from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
+import { ConfigError, loadConfig } from "../config";
 
 export interface GapsOptions {
   format?: ReportFormat;
+  /** Path to a config file, instead of discovering one by walking up from the cwd. */
+  config?: string;
+  /** Ignore any config file: report every finding at its declared severity. */
+  noConfig?: boolean;
 }
 
 const GAP_RULES: { id: GapKind; description: string }[] = [
@@ -22,11 +36,27 @@ function sourceFor(graph: OrgGraph, teamId: string): string | undefined {
   return graph.teams.get(teamId)?.sourceUri;
 }
 
-/** Reports the accountability holes between teams. Exits non-zero only on the two findings where
- * the declaration looks complete and isn't — a subscription to an event nobody publishes, and an
- * agent owned by somebody who isn't on the team. */
+/**
+ * Reports the accountability holes between teams, after applying any configured severity
+ * overrides and waivers. Exits non-zero on a blocking finding that no live waiver excused.
+ */
 export async function runGaps(patterns: string[], options: GapsOptions = {}): Promise<number> {
   const format = options.format ?? "text";
+
+  let config;
+  let sourcePath: string | undefined;
+  try {
+    ({ config, sourcePath } = options.noConfig
+      ? { config: { gaps: { severity: {}, waivers: [] } }, sourcePath: undefined }
+      : await loadConfig({ explicitPath: options.config }));
+  } catch (error) {
+    if (error instanceof ConfigError) {
+      console.error(error.message);
+      return 1;
+    }
+    throw error;
+  }
+
   const seeds = await expandSeeds(patterns);
   if (seeds.length === 0) {
     console.error(`No files matched: ${patterns.join(", ")}`);
@@ -38,11 +68,19 @@ export async function runGaps(patterns: string[], options: GapsOptions = {}): Pr
   // document unparseable for the consumer the format exists for.
   if (format === "text") warnUnresolved(graph);
 
-  const report = planGaps(graph);
+  const report = applyGapRules(planGaps(graph), config.gaps);
+
   printReport({
     format,
     report,
-    text: () => formatGaps(report),
+    text: () => {
+      const effects = formatGapRuleEffects(report);
+      const base = formatGaps(report);
+      if (!effects) return base;
+      // Waivers and lapsed exemptions go above the summary line, so the counts at the bottom stay
+      // the last thing read.
+      return sourcePath ? `${effects}\n\n${base}\n(gap rules from ${sourcePath})` : `${effects}\n\n${base}`;
+    },
     toolName: "teamapi gaps",
     rules: GAP_RULES,
     findings: report.findings.map((finding) => ({
@@ -53,5 +91,6 @@ export async function runGaps(patterns: string[], options: GapsOptions = {}): Pr
     })),
     baseDir: process.cwd(),
   });
-  return report.findings.some((f) => f.severity === "blocking") ? 1 : 0;
+
+  return hasBlockingGaps(report) ? 1 : 0;
 }
