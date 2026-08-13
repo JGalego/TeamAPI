@@ -2,25 +2,56 @@ name: Team API Preview
 
 on:
   pull_request:
+    # Every example org, not just acme-org. The narrow filter meant a PR that broke
+    # examples/wavelength-org got a green "Team API Preview" — because the workflow never ran.
     paths:
-      - "examples/acme-org/**/teamapi.yml"
+      - "examples/**/teamapi.yml"
+      - ".github/actions/validate/**"
+      - ".github/workflows/teamapi-preview.yml"
 
 permissions:
   pull-requests: write
 
+# One group for the whole run, matrix included: a new push should cancel the previous preview of
+# every org, not leave five stale jobs running against a commit nobody is looking at any more.
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
-  preview:
+  # Discovered rather than listed, so an example org added tomorrow is previewed tomorrow. A
+  # hard-coded matrix is how the last four came to be uncovered.
+  discover:
     runs-on: ubuntu-latest
+    outputs:
+      orgs: ${{ steps.list.outputs.orgs }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: List example orgs
+        id: list
+        run: |
+          ORGS=$(find examples -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort | jq -R . | jq -sc .)
+          echo "orgs=$ORGS" >> "$GITHUB_OUTPUT"
+          echo "Previewing: $ORGS"
+
+  preview:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      # One org's invalid document should not hide whether the other five are fine.
+      fail-fast: false
+      matrix:
+        org: ${{ fromJSON(needs.discover.outputs.orgs) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Validate and preview examples/acme-org
+      - name: Validate and preview examples/${{ matrix.org }}
         uses: ./.github/actions/validate
         with:
-          patterns: examples/acme-org
+          patterns: examples/${{ matrix.org }}
           render-scope: org-hierarchy
+          # Only acme-org posts a comment. Six diagram comments on a one-line change to one
+          # example would be noise, and the job still fails visibly for the other five.
+          comment: ${{ matrix.org == 'acme-org' }}
