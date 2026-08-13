@@ -10,6 +10,7 @@ const {
   runValidate,
   runGaps,
   runShadowAi,
+  runPolicy,
   runRender,
   runScaffold,
   runSchema,
@@ -28,6 +29,7 @@ const {
   runValidate: vi.fn(async () => 0),
   runGaps: vi.fn(async () => 0),
   runShadowAi: vi.fn(async () => 0),
+  runPolicy: vi.fn(async () => 0),
   runRender: vi.fn(async () => 0),
   runScaffold: vi.fn(async () => 0),
   runSchema: vi.fn(async () => 0),
@@ -47,6 +49,7 @@ const {
 vi.mock("../commands/validate", () => ({ runValidate }));
 vi.mock("../commands/gaps", () => ({ runGaps }));
 vi.mock("../commands/shadow-ai", () => ({ runShadowAi }));
+vi.mock("../commands/policy", () => ({ runPolicy }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/schema", () => ({ runSchema }));
@@ -182,6 +185,20 @@ describe("createProgram — scaffold", () => {
       name: undefined,
       out: "out.yml",
     });
+  });
+});
+
+describe("createProgram — policy", () => {
+  it("passes the patterns straight through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "policy", "examples/acme-org"]);
+    expect(runPolicy).toHaveBeenCalledWith(["examples/acme-org"]);
+  });
+
+  it("requires at least one pattern", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "policy"])).rejects.toThrow();
+    expect(runPolicy).not.toHaveBeenCalled();
   });
 });
 

@@ -28,6 +28,13 @@ inputs:
       explicit decision rather than a surprise red build.
     required: false
     default: "false"
+  check-policies:
+    description: >-
+      Also run `teamapi policy` and fail the job on a blocking finding — a violated blocking
+      policy, or a blocking policy that nothing enforces. Rules delegated to an external enforcer
+      via `enforcedBy` never fail the job. Off by default, for the same reason `check-gaps` is.
+    required: false
+    default: "false"
   comment:
     description: "Post (and keep updated on later pushes) a PR comment with the result"
     required: false
@@ -82,6 +89,14 @@ runs:
       if: inputs.check-gaps == 'true' && steps.validate.outputs.success == 'true'
       shell: bash
       run: teamapi gaps ${{ inputs.patterns }}
+
+    # Same ordering argument as the gaps step above: policy rules are evaluated against the
+    # resolved graph, so an unresolvable `$ref` would make a team look non-compliant when its
+    # document simply wasn't reachable.
+    - name: Check declared policies
+      if: inputs.check-policies == 'true' && steps.validate.outputs.success == 'true'
+      shell: bash
+      run: teamapi policy ${{ inputs.patterns }}
 
     - name: Render preview diagram
       id: render

@@ -50,6 +50,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [✍️ Editor support](#editor-support)
 - [🕰️ Org history](#org-history)
 - [🕳️ Gaps](#gaps)
+- [📋 Policy](#policy)
 - [🫥 Shadow AI](#shadow-ai)
 - [🔁 CI integration](#ci-integration)
 - [🔗 Paperclip](#paperclip)
@@ -606,6 +607,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `teamapi validate <patterns...>`                                                                                                                            | Resolve every `$ref` transitively and report unresolved refs                                                                                                                                                                             |
 | `teamapi gaps <patterns...>`                                                                                                                                | Report [accountability holes between teams](#gaps) — unowned event contracts, vacant seats, unowned agents                                                                                                                               |
+| `teamapi policy <patterns...>`                                                                                                                              | Check [declared policies](#policy) against the org graph, and report the ones nothing enforces                                                                                                                                           |
 | `teamapi shadow-ai <patterns...> --scan <dir>`                                                                                                              | Report [AI adoption found in repositories](#shadow-ai) against what teams declare in `agents[]`                                                                                                                                          |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--with-agents] [--out <file>]` | Render a diagram                                                                                                                                                                                                                         |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                          | Generate a minimal, schema-valid document                                                                                                                                                                                                |
@@ -695,6 +697,57 @@ teamapi gaps examples/acme-org
 ```
 
 Only `orphan-subscription` and `dangling-owner` exit non-zero, and they share a shape: the declaration _looks_ complete and isn't. An agent whose `ownerId` resolves to nobody presents to every downstream consumer — `AGENTS.md`, the context bundle, a generated crew — exactly like an agent with a real human behind it, which makes it strictly worse than an agent with no owner at all. Only `collaboration` is expected to be mutual; `x-as-a-service` is deliberately one-directional, so consuming a platform is never reported. Pure, offline, no token — so unlike the drift checks it's also served over HTTP as `GET /gaps` and as the `get_org_gaps` MCP tool, which is what lets an assistant answer "what is nobody responsible for here?" without being handed a report. Details in [`docs/integrations/gaps.md`](docs/integrations/gaps.md).
+
+<a id="policy"></a>
+
+## 📋 Policy
+
+`policies[]` has always been documented as governance for _external_ automation to enforce, and for rules like `min_approvals` that stays true — it's a fact about a branch protection rule, not about this graph, and nothing here can honestly decide it. But plenty of declared policies are statements about the org's own shape ("no agents on this team", "every service names a repository"), and those the graph answers completely, offline, with no credentials.
+
+```bash
+teamapi policy examples/acme-org
+```
+
+```text
+~ delegated [info] platform-payments / pr-requires-two-approvals / min_approvals: not checkable from the org graph; enforced by github-actions:pr-gate
+
+1/1 rule(s) checked here pass; 2 rule(s) declared in total.
+1 finding(s), 0 blocking.
+```
+
+Every rule lands in one of five outcomes:
+
+| Outcome         | Meaning                                                                     |
+| --------------- | --------------------------------------------------------------------------- |
+| `satisfied`     | A built-in evaluator ran and the team complies                              |
+| `violated`      | A built-in evaluator ran and the team does not                              |
+| `delegated`     | No evaluator here, but `enforcedBy` names the automation that does check it |
+| `unenforced`    | No evaluator here **and** no `enforcedBy` — nothing, anywhere, checks this  |
+| `misconfigured` | An evaluator exists, but the rule's `value` is the wrong shape for it       |
+
+`unenforced` is the outcome this command exists for. A policy nobody enforces is indistinguishable, inside the document, from one that is: same `severity: blocking`, same confident prose. It reads as governance and behaves as a comment. That's the same argument [gaps](#gaps) makes about an agent whose `ownerId` names nobody — the missing enforcement isn't the problem, the declaration implying it exists is. So an unenforced policy is reported at the severity it claims for itself, and a blocking one exits non-zero.
+
+`delegated` never fails a build: naming an external enforcer is the right thing to do, not a finding. It's reported at `info` and deliberately kept out of the "checked here pass" ratio, so that number never implies this tool verified something it didn't. `misconfigured` stays at `warning` even on a blocking policy — a typo in a document isn't evidence a team is out of compliance.
+
+The rule keys with built-in evaluators:
+
+| Key                                | Value    | Checks                                                        |
+| ---------------------------------- | -------- | ------------------------------------------------------------- |
+| `agents_allowed`                   | boolean  | `false` forbids the team from running active agents           |
+| `max_agents`                       | number   | Active agent count is at or below the limit                   |
+| `agents_require_owner`             | boolean  | Every agent's `ownerId` resolves to a member of the team      |
+| `allowed_agent_providers`          | string[] | Active agents only use approved providers                     |
+| `max_cognitive_load`               | number   | The three-type total is at or below the limit                 |
+| `max_supervision_load`             | number   | `cognitiveLoad.supervision` is at or below the limit          |
+| `required_steering_categories`     | string[] | Effective steering (including inherited) covers each category |
+| `required_playbook_categories`     | string[] | The team declares a playbook in each category                 |
+| `services_require_repository`      | boolean  | Every service names a `repository`                            |
+| `services_require_bounded_context` | boolean  | Every service declares a `boundedContext`                     |
+| `max_dependencies`                 | number   | Outgoing dependency count is at or below the limit            |
+
+The set is deliberately small, and every key on it is _fully_ decidable from the graph. A rule that can only be half-checked here is worse than one that's honestly delegated: a partial check reporting "satisfied" is how a policy stops being read.
+
+Wire it into CI with `check-policies: true` on the [bundled action](#ci-integration).
 
 <a id="shadow-ai"></a>
 

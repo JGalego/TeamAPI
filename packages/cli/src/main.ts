@@ -6,6 +6,7 @@ import { DEFAULT_CHAT_MODEL } from "@jgalego/teamapi-chat";
 import { runValidate } from "./commands/validate";
 import { runGaps } from "./commands/gaps";
 import { runShadowAi } from "./commands/shadow-ai";
+import { runPolicy } from "./commands/policy";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runSchema } from "./commands/schema";
@@ -61,6 +62,14 @@ export function createProgram(): Command {
     .description("Report accountability holes between teams — unowned event contracts, vacant seats, unowned agents")
     .action(async (patterns: string[]) => {
       process.exitCode = await runGaps(patterns);
+    });
+
+  program
+    .command("policy")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Check declared policies[] against the org graph, and report the ones nothing enforces")
+    .action(async (patterns: string[]) => {
+      process.exitCode = await runPolicy(patterns);
     });
 
   program

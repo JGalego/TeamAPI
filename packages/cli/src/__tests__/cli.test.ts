@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { TEAM_API_SCHEMA_MODELINE, TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { runValidate } from "../commands/validate";
 import { runGaps } from "../commands/gaps";
+import { runPolicy } from "../commands/policy";
 import { runShadowAi } from "../commands/shadow-ai";
 import { runRender } from "../commands/render";
 import { runScaffold } from "../commands/scaffold";
@@ -56,6 +57,63 @@ describe("teamapi gaps", () => {
   it("exits 1 when no files match", async () => {
     const code = await runGaps([path.join(tmpDir, "*.yml")]);
     expect(code).toBe(1);
+  });
+});
+
+describe("teamapi policy", () => {
+  it("exits 0 for the example org — one rule delegated, one satisfied, nothing violated", async () => {
+    expect(await runPolicy([ACME_GLOB])).toBe(0);
+  });
+
+  it("exits 1 when a blocking policy is violated", async () => {
+    const file = path.join(tmpDir, "teamapi.yml");
+    await fs.writeFile(
+      file,
+      YAML.dump({
+        teamApiVersion: "1.0.0",
+        id: "team-a",
+        info: { name: "Team A", type: "stream-aligned" },
+        agents: [{ id: "helper", name: "Helper", provider: "anthropic", role: "reviewer" }],
+        policies: [
+          {
+            id: "no-agents",
+            name: "No agents",
+            category: "security",
+            severity: "blocking",
+            rules: [{ key: "agents_allowed", value: false }],
+          },
+        ],
+      }),
+      "utf-8",
+    );
+    expect(await runPolicy([file])).toBe(1);
+  });
+
+  it("exits 1 for a blocking policy nothing enforces", async () => {
+    const file = path.join(tmpDir, "teamapi.yml");
+    await fs.writeFile(
+      file,
+      YAML.dump({
+        teamApiVersion: "1.0.0",
+        id: "team-a",
+        info: { name: "Team A", type: "stream-aligned" },
+        policies: [
+          {
+            id: "two-approvals",
+            name: "Two approvals",
+            category: "required-approvals",
+            severity: "blocking",
+            rules: [{ key: "min_approvals", value: 2 }],
+          },
+        ],
+      }),
+      "utf-8",
+    );
+    expect(await runPolicy([file])).toBe(1);
+  });
+
+  it("exits 1 when no files match", async () => {
+    expect(await runPolicy([path.join(tmpDir, "*.yml")])).toBe(1);
   });
 });
 
