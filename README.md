@@ -276,6 +276,7 @@ flowchart TD
 | `GET /context-map`                                                                 | DDD context map                                                                                                                                                                |
 | `GET /cognitive-load`, `/cognitive-load/:teamId`                                   | Cognitive load assessments                                                                                                                                                     |
 | `GET /gaps`                                                                        | [Accountability holes between teams](#gaps)                                                                                                                                    |
+| `GET /policy`, `/topology`                                                         | [Declared-policy outcomes](#policy) and [Team Topologies design smells](#topology)                                                                                             |
 | `GET /<domain>`, `/teams/:id/<domain>`, `/teams/:id/<domain>/:resourceId`          | Any [AI-native section](#ai-native): `/agents`, `/memory`, `/specifications`, `/steering`, `/prompts`, `/playbooks`, `/policies`, `/knowledge-base`, `/workflows`, `/sessions` |
 | `POST /teams/:id/prompts/:promptId/render`                                         | Fill a prompt's `{{variable}}` placeholders                                                                                                                                    |
 | `POST /context`                                                                    | [Context bundle](#ai-native) for a stated goal                                                                                                                                 |
@@ -382,6 +383,14 @@ Reloaded: 4 team(s), 0 unresolved reference(s).
 ## 🖥️ Dashboard
 
 The same `teamapi serve-api` also serves a live dashboard at **`/dashboard`** — static HTML/CSS/JS fetching the REST API you already have running, no separate process or build step. It shows every team with its type and focus, a cognitive-load bar per team (color- and icon-coded, never color alone — with a separate 🤖 chip for supervision load, kept out of the bar so its width means the same thing for every team), free-text search, and a tabbed diagram viewer (`topology` / `org-hierarchy` / `context-map`) rendered client-side with [Mermaid](https://mermaid.js.org/). Each section loads independently, so a blocked CDN (a locked-down corporate network, for instance) only disables the diagram tab — team list, cognitive load, and search keep working.
+
+![The Health section: Gaps 4, Policy 1 and Topology 1 as counts, above one merged finding list — unconsumed events, a vacant load-bearing role, a one-sided collaboration, an overrunning collaboration, and a policy delegated to an external enforcer.](docs/assets/dashboard-health.png)
+
+A **Health** section runs all three graph-only checks at once — [gaps](#gaps), [policy](#policy), and [topology](#topology) — as counts plus a combined finding list sorted most-serious-first, so a blocking finding is never buried under twenty warnings. These are served by `GET /gaps`, `/policy` and `/topology`, all pure functions of the resolved graph, and each is fetched independently: a server built before `/policy` and `/topology` existed shows those two as unavailable rather than blanking the section.
+
+**Clicking a team** opens a detail panel: its roles (with vacancies marked, since a vacancy is what `gaps` escalates when another team reports into it), members and contacts, services, declared agents and who owns each, and its interactions and dependencies. Cards are keyboard-operable, not mouse-only.
+
+![The Platform Payments detail panel: Head of Engineering marked vacant in amber, three members with contact addresses, two services, five AI agents each with the member who owns it, and one inbound x-as-a-service interaction.](docs/assets/dashboard-team.png)
 
 ```bash
 teamapi serve-api examples/acme-org --port 3000

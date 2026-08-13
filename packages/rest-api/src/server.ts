@@ -16,6 +16,7 @@ import { diagramsRoutes } from "./routes/diagrams";
 import { contextMapRoutes } from "./routes/context-map";
 import { cognitiveLoadRoutes } from "./routes/cognitive-load";
 import { gapsRoutes } from "./routes/gaps";
+import { checksRoutes } from "./routes/checks";
 import { healthRoutes } from "./routes/health";
 import { dashboardRoutes } from "./routes/dashboard";
 import { knowledgeRoutes } from "./routes/knowledge";
@@ -98,6 +99,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Context Map", description: "DDD context mapping derived from interactions" },
         { name: "Cognitive Load", description: "Team Topologies cognitive load reports" },
         { name: "Gaps", description: "Accountability holes between teams, computed from the resolved graph" },
+        { name: "Topology", description: "Team Topologies design smells, computed from the resolved graph" },
         { name: "Agents", description: "AI agents declared as first-class team participants" },
         { name: "Memory", description: "Persistent organizational memory" },
         { name: "Specifications", description: "Specification-driven-development artifacts" },
@@ -134,6 +136,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   await app.register(contextMapRoutes);
   await app.register(cognitiveLoadRoutes);
   await app.register(gapsRoutes);
+  await app.register(checksRoutes);
   await app.register(knowledgeRoutes);
   await app.register(contextRoutes);
   await app.register(knowledgeGraphRoutes);

@@ -205,6 +205,82 @@
   }
   #diagram .placeholder { color: var(--ink-muted); font-size: 0.9rem; }
 
+  .checks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+  .check-card {
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px 16px;
+    background: var(--surface);
+  }
+  .check-card h3 { margin: 0 0 6px; font-size: 0.95rem; }
+  .check-count { font-size: 1.6rem; font-weight: 700; line-height: 1.1; }
+  .check-sub { color: var(--ink-muted); font-size: 0.8rem; margin-top: 2px; }
+  .findings { margin-top: 12px; }
+  .finding {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+  .finding:last-child { border-bottom: none; }
+  .finding-kind {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+  .sev-blocking { color: #b91c1c; font-weight: 600; }
+  .sev-warning { color: #b45309; }
+  .sev-info { color: var(--ink-muted); }
+  .team-card { cursor: pointer; }
+  .team-card:hover { border-color: var(--accent); }
+  .detail-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 40px 16px;
+    overflow-y: auto;
+    z-index: 10;
+  }
+  .detail-panel {
+    background: var(--surface);
+    border-radius: 12px;
+    max-width: 720px;
+    width: 100%;
+    padding: 24px 28px;
+    box-shadow: 0 20px 50px rgba(15, 23, 42, 0.25);
+  }
+  .detail-panel h2 { margin-top: 0; }
+  .detail-close {
+    float: right;
+    border: 1px solid var(--line);
+    background: none;
+    border-radius: 6px;
+    cursor: pointer;
+    padding: 4px 10px;
+    font-size: 0.85rem;
+  }
+  .detail-section { margin-top: 18px; }
+  .detail-section h4 {
+    margin: 0 0 6px;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--ink-muted);
+  }
+  .detail-list { margin: 0; padding-left: 18px; font-size: 0.88rem; }
+  .detail-list li { margin: 3px 0; }
+  .vacant { color: #b45309; }
+
   footer {
     text-align: center;
     color: var(--ink-muted);
@@ -233,6 +309,12 @@
   </section>
 
   <section>
+    <h2>Health</h2>
+    <div class="checks-grid" id="checks-grid"></div>
+    <div class="findings" id="findings"></div>
+  </section>
+
+  <section>
     <h2>Teams</h2>
     <div class="teams-grid" id="teams-grid"></div>
   </section>
@@ -246,6 +328,8 @@
     </div>
     <div id="diagram"><span class="placeholder">Loading diagram…</span></div>
   </section>
+
+  <div id="detail-root"></div>
 
   <footer>
     Rendered from a live <a href="/docs">REST API</a> — <a href="https://github.com/JGalego/TeamAPI">TeamAPI</a>
@@ -348,17 +432,227 @@
     grid.innerHTML = "";
     for (const team of teams) {
       const typeVar = TYPE_VAR[team.type] ?? "--ink-muted";
-      grid.appendChild(
-        h("div", { class: "team-card" }, [
+      const card = h("div", { class: "team-card", role: "button", tabindex: "0" }, [
           h("h3", { text: team.name }),
           team.focus ? h("div", { class: "focus", text: team.focus }) : null,
           h("span", { class: "type-chip" }, [
             h("span", { class: "type-dot", style: `background:var(${typeVar})` }),
             h("span", { text: team.type }),
           ]),
+        ]);
+      card.addEventListener("click", () => openTeam(team.id));
+      // Keyboard too: the card is a button in everything but element name, and a grid that only
+      // opens on a mouse click is a grid half the org cannot use.
+      card.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openTeam(team.id);
+        }
+      });
+      grid.appendChild(card);
+    }
+  }
+
+
+  const SEVERITY_RANK = { blocking: 0, warning: 1, info: 2 };
+
+  /**
+   * The three graph-only checks, in one place.
+   *
+   * Each is a pure function of the resolved graph, so the page can ask for all three at once and
+   * show a whole-org verdict without anyone having run a report. `Promise.allSettled`, not `all`:
+   * one endpoint failing must not blank the other two, which is exactly what would happen on a
+   * server built before these routes existed.
+   */
+  async function loadChecks() {
+    const grid = document.getElementById("checks-grid");
+    const findingsEl = document.getElementById("findings");
+    grid.innerHTML = "";
+    findingsEl.innerHTML = "";
+
+    const [gaps, policy, topology] = await Promise.allSettled([
+      getJson("/gaps"),
+      getJson("/policy"),
+      getJson("/topology"),
+    ]);
+
+    const collected = [];
+
+    const card = (title, state, describe) => {
+      if (state.status !== "fulfilled") {
+        grid.appendChild(
+          h("div", { class: "check-card" }, [
+            h("h3", { text: title }),
+            h("div", { class: "check-sub", text: "Unavailable on this server" }),
+          ]),
+        );
+        return;
+      }
+      const { count, sub, findings } = describe(state.value);
+      collected.push(...findings);
+      grid.appendChild(
+        h("div", { class: "check-card" }, [
+          h("h3", { text: title }),
+          h("div", { class: "check-count", text: String(count) }),
+          h("div", { class: "check-sub", text: sub }),
+        ]),
+      );
+    };
+
+    card("Gaps", gaps, (report) => ({
+      count: report.findings.length,
+      sub: `${report.findings.filter((f) => f.severity === "blocking").length} blocking · ${report.matched} seam(s) checked`,
+      findings: report.findings.map((f) => ({ group: "gap", kind: f.kind, severity: f.severity, detail: f.detail })),
+    }));
+
+    card("Policy", policy, (report) => ({
+      count: report.findings.length,
+      sub: `${report.satisfied}/${report.evaluated} checked here pass · ${report.total} declared`,
+      findings: report.findings.map((f) => ({
+        group: "policy",
+        kind: f.outcome,
+        severity: f.severity,
+        detail: `${f.teamId} / ${f.policyId}: ${f.detail}`,
+      })),
+    }));
+
+    card("Topology", topology, (report) => ({
+      count: report.findings.length,
+      sub: `${report.teams} team(s) checked`,
+      findings: report.findings.map((f) => ({
+        group: "topology",
+        kind: f.kind,
+        severity: f.severity,
+        detail: `${f.teamId}: ${f.detail}`,
+      })),
+    }));
+
+    if (collected.length === 0) {
+      findingsEl.appendChild(h("div", { class: "placeholder", text: "Nothing to report — every check is clean." }));
+      return;
+    }
+
+    // Most serious first: a blocking finding buried under twenty warnings is a finding nobody acts on.
+    collected.sort((a, b) => (SEVERITY_RANK[a.severity] ?? 3) - (SEVERITY_RANK[b.severity] ?? 3));
+    for (const finding of collected) {
+      findingsEl.appendChild(
+        h("div", { class: "finding" }, [
+          h("span", { class: `finding-kind sev-${finding.severity}`, text: finding.kind }),
+          h("span", { text: finding.detail }),
         ]),
       );
     }
+  }
+
+  function detailList(items, empty) {
+    if (!items || items.length === 0) return h("div", { class: "placeholder", text: empty });
+    return h("ul", { class: "detail-list" }, items.map((item) => h("li", item)));
+  }
+
+  function closeDetail() {
+    document.getElementById("detail-root").innerHTML = "";
+  }
+
+  /**
+   * The team detail panel.
+   *
+   * The card grid answers "what teams are there"; almost every actual question is about one team —
+   * who is on it, what it owns, who it depends on, which roles are vacant. That was all in the API
+   * and reachable only by typing URLs.
+   */
+  async function openTeam(teamId) {
+    const root = document.getElementById("detail-root");
+    root.innerHTML = "";
+    const panel = h("div", { class: "detail-panel" }, [h("div", { class: "placeholder", text: "Loading…" })]);
+    const backdrop = h("div", { class: "detail-backdrop" }, [panel]);
+    // Click the backdrop to dismiss, but not a click that started inside the panel itself.
+    backdrop.addEventListener("click", (event) => {
+      if (event.target === backdrop) closeDetail();
+    });
+    root.appendChild(backdrop);
+
+    let team, staffing, interactions, dependencies, agents;
+    try {
+      [team, staffing, interactions, dependencies, agents] = await Promise.all([
+        getJson(`/teams/${teamId}`),
+        // `/roles` answers with `{ roles, members }` — roles alone would not say which are filled.
+        getJson(`/teams/${teamId}/roles`),
+        getJson(`/teams/${teamId}/interactions`),
+        getJson(`/teams/${teamId}/dependencies`),
+        // A separate call because the team DTO does not carry the AI-native sections; asking the
+        // team document for its agents returns nothing, silently.
+        getJson(`/teams/${teamId}/agents`),
+      ]);
+    } catch (err) {
+      panel.innerHTML = "";
+      panel.appendChild(h("div", { class: "placeholder", text: `Could not load ${teamId}: ${err}` }));
+      return;
+    }
+
+    const roles = staffing.roles ?? [];
+    const members = staffing.members ?? team.members ?? [];
+    const filled = new Set(members.flatMap((m) => m.roleIds ?? []));
+
+    panel.innerHTML = "";
+    panel.appendChild(h("button", { class: "detail-close", text: "Close" }));
+    panel.querySelector(".detail-close").addEventListener("click", closeDetail);
+    panel.appendChild(h("h2", { text: team.name ?? teamId }));
+    if (team.focus) panel.appendChild(h("div", { class: "focus", text: team.focus }));
+
+    const section = (title, node) =>
+      panel.appendChild(h("div", { class: "detail-section" }, [h("h4", { text: title }), node]));
+
+    section(
+      "Roles",
+      detailList(
+        roles.map((role) => {
+          // A vacancy is the thing worth seeing at a glance: it is what `gaps` escalates when
+          // another team's reporting line terminates in it.
+          const vacant = !filled.has(role.id);
+          return vacant ? { class: "vacant", text: `${role.name} (${role.kind}) — vacant` } : { text: `${role.name} (${role.kind})` };
+        }),
+        "No roles declared.",
+      ),
+    );
+
+    section(
+      "Members",
+      detailList(
+        members.map((m) => ({ text: m.contact ? `${m.name} · ${m.contact}` : m.name })),
+        "No members declared.",
+      ),
+    );
+
+    section(
+      "Services",
+      detailList((team.services ?? []).map((svc) => ({ text: svc.name })), "No services declared."),
+    );
+
+    section(
+      "Agents",
+      detailList(
+        (agents ?? []).map((agent) => ({
+          text: `${agent.name} (${agent.provider}) — ${agent.ownerId ? `owned by ${agent.ownerId}` : "no owner"}`,
+        })),
+        "No agents declared.",
+      ),
+    );
+
+    section(
+      "Interactions",
+      detailList(
+        (interactions ?? []).map((edge) => ({ text: `${edge.from} → ${edge.to} (${edge.mode})` })),
+        "No interactions declared.",
+      ),
+    );
+
+    section(
+      "Dependencies",
+      detailList(
+        (dependencies ?? []).map((edge) => ({ text: `${edge.from} → ${edge.to} (${edge.type})` })),
+        "No dependencies declared.",
+      ),
+    );
   }
 
   async function loadDiagram(scope) {
@@ -457,6 +751,7 @@
     const results = await Promise.allSettled([
       loadSummary().then(renderTeamCards),
       loadCognitiveLoad(),
+      loadChecks(),
       loadDiagram("topology"),
     ]);
 
