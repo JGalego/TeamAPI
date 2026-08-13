@@ -82,8 +82,8 @@ cognitiveLoad:
   extraneous: 8
   germane: 5
   notes: >
-    Dunning logic is entangled with three different payment-failure taxonomies from
-    Platform Ledger and Risk Scoring; a strong candidate for a shared, canonical failure-reason enum.
+    Dunning logic is entangled with three different payment-failure taxonomies from Platform Ledger
+    and Risk Scoring; a strong candidate for a shared, canonical failure-reason enum.
 meetings:
   - purpose: daily sync
     dayOfWeek: Monday
@@ -110,6 +110,7 @@ dependencies:
     type: Slowing
     $ref: ../platform-ledger/teamapi.yml
   - teamName: Risk Scoring
-    description: Billing cannot launch usage-based invoicing until Risk Scoring exposes a synchronous scoring endpoint
+    description: Billing cannot launch usage-based invoicing until Risk Scoring exposes a synchronous
+      scoring endpoint
     type: Blocking
     $ref: ../risk-scoring/teamapi.yml

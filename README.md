@@ -48,6 +48,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
   - [🤖 Machine-readable output](#machine-readable)
+  - [🧹 Formatting](#fmt)
   - [⚙️ Project config](#config)
   - [⚔️ Name conflicts](#name-conflicts)
 - [✍️ Editor support](#editor-support)
@@ -682,6 +683,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--with-agents] [--out <file>]`                        | Render a diagram                                                                                                                                                                                                                         |
 | `teamapi init [dir] [--teams-dir <dir>] [--team <id...>] [--force]`                                                                                                                | Scaffold a whole org repository: config, CI, editor settings, first teams                                                                                                                                                                |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                                                 | Generate a minimal, schema-valid document                                                                                                                                                                                                |
+| `teamapi fmt [patterns...] [--check]`                                                                                                                                              | [Canonical formatting](#fmt) for Team API documents                                                                                                                                                                                      |
 | `teamapi schema [--out <file>]`                                                                                                                                                    | Print the [JSON Schema](#editor-support) for the document format                                                                                                                                                                         |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>`                        | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
 | `teamapi diff <patterns...> --against <ref>`                                                                                                                                       | Diff the resolved org graph against a git revision                                                                                                                                                                                       |
@@ -729,6 +731,25 @@ That turns every finding into an inline annotation on the pull request diff and 
 Paths are emitted relative to the working directory, because SARIF consumers resolve them against the repository root — an absolute path from a CI runner matches no file in the repository and the annotation silently disappears. Severity maps to SARIF's levels on the same line the exit codes draw: `blocking` becomes `error`, `warning` stays `warning`, `info` becomes `note`.
 
 The output format never changes an exit code.
+
+<a id="fmt"></a>
+
+### 🧹 Formatting
+
+```bash
+teamapi fmt          # rewrite documents into canonical form
+teamapi fmt --check  # report what would change, write nothing, exit non-zero
+```
+
+The problem is review, not aesthetics. These documents get edited by hand across a whole org by people with their own habits about where a new section goes, so two teams adding the same thing produce diffs that look nothing alike — and a diff nobody can read is a review nobody does, on a file that says who is accountable for what.
+
+Top-level keys are ordered the way the schema declares them, not alphabetically: the document reads top to bottom — what this team is, what it owns, who is on it, how it relates to everyone else — and sorting alphabetically would open every file with `agents` and bury `info` in the middle. Keys the schema doesn't know stay, after the rest and in their original order, since the format passes unknown fields through and dropping them would be data loss.
+
+**Comments survive.** A load-and-dump round trip silently deletes every one of them, which across an org means deleting the explanations of why a role reports across a boundary or why a team runs no agents — data loss discovered one file at a time, long after the commit. `fmt` parses to a comment-preserving document tree instead, so a section that moves takes its commentary with it.
+
+A file that doesn't parse is reported and left alone rather than rewritten on a guess, and one broken document doesn't stop the other forty.
+
+`--check` is what makes it stick: this repo runs `pnpm fmt:check` over `examples/` in its own `verify` gate.
 
 <a id="config"></a>
 

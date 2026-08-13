@@ -12,6 +12,9 @@ searchTerms:
   - term: seller tools
   - term: onboarding
   - term: listing quality
+work:
+  waysOfWorking:
+    - name: Seller onboarding playbook
 roles:
   - id: coach
     name: Seller Tools Coach
@@ -25,6 +28,3 @@ members:
     contact: freya.johansson@cartwell.example
     roleIds: [coach]
     allocation: 100
-work:
-  waysOfWorking:
-    - name: Seller onboarding playbook

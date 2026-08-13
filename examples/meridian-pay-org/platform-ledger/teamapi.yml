@@ -46,6 +46,9 @@ services:
         - LedgerEntryPosted
       subscribedEvents:
         - PaymentIntentSucceeded
+work:
+  waysOfWorking:
+    - name: API-first design review
 roles:
   - id: head-of-platform-engineering
     name: Head of Platform Engineering
@@ -98,12 +101,10 @@ cognitiveLoad:
   intrinsic: 7
   extraneous: 4
   germane: 6
-  notes: PCI and multi-jurisdiction regulatory scope adds real intrinsic complexity; onboarding docs are solid.
+  notes: PCI and multi-jurisdiction regulatory scope adds real intrinsic complexity; onboarding docs
+    are solid.
 meetings:
   - purpose: daily sync
     dayOfWeek: Monday
     timeOfDay: "09:00"
     durationMinutes: 15
-work:
-  waysOfWorking:
-    - name: API-first design review

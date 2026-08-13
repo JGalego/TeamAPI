@@ -49,6 +49,9 @@ services:
       subscribedEvents:
         - ChargeSettled
         - RefundIssued
+work:
+  waysOfWorking:
+    - name: Trunk-based development
 roles:
   - id: head-of-engineering
     name: Head of Engineering
@@ -110,9 +113,6 @@ meetings:
     dayOfWeek: Tuesday
     timeOfDay: "09:30"
     durationMinutes: 15
-work:
-  waysOfWorking:
-    - name: Trunk-based development
 agents:
   - id: architecture-reviewer
     name: Architecture Reviewer
@@ -164,6 +164,29 @@ agents:
     ownerId: priya-raman
     permissions: [read:knowledge-base, read:policies]
     tags: [compliance, pci]
+memory:
+  - id: pci-scope-creep-lesson
+    title: PCI scope creep from logging raw card data
+    kind: lesson-learned
+    body: >
+      A 2025 incident traced back to a debug log line that captured raw card numbers, expanding PCI
+      audit scope to the whole logging pipeline. Never log full payment payloads; redact PANs at the
+      edge.
+    tags: [pci, security, logging]
+    contributors: [priya-raman]
+  - id: conways-law-for-agents
+    title: Conway's Law now applies to our agent roster, not just our services
+    kind: architecture-decision
+    body: >
+      We started with one general-purpose "Payments Assistant" agent doing review, tests, security,
+      and docs. Its prompt turned into an unmaintainable pile of conditionals, and three review
+      comments on the same PR would routinely contradict each other. Splitting it into agents scoped
+      the same way our service ownership already is (architecture, tests, security, docs,
+      compliance) fixed both problems: each agent's prompt stays small, and its output maps onto
+      exactly one review concern. Conway's Law says a system mirrors the org that builds it; ours
+      says the agent roster mirrors it too, whether or not anyone designs it that way on purpose.
+    tags: [conways-law, agents, architecture]
+    contributors: [priya-raman]
 steeringDocuments:
   - id: security-guidelines
     title: Payments Security Guidelines
@@ -178,95 +201,9 @@ steeringDocuments:
     category: api-conventions
     scope: organization
     body: >
-      REST APIs are versioned via the URL path (/v1/...), use kebab-case resource names, and
-      return RFC 7807 problem+json error bodies.
+      REST APIs are versioned via the URL path (/v1/...), use kebab-case resource names, and return
+      RFC 7807 problem+json error bodies.
     tags: [api, conventions]
-policies:
-  - id: pr-requires-two-approvals
-    name: Pull requests require two approvals
-    category: required-approvals
-    severity: blocking
-    description: Every PR touching a payments service must get two approvals before merge.
-    rules:
-      - key: min_approvals
-        value: 2
-    enforcedBy: [github-actions:pr-gate]
-    tags: [governance]
-playbooks:
-  - id: incident-response
-    name: Payments Incident Response
-    category: incident-response
-    steps:
-      - order: 1
-        title: Acknowledge the page
-        requiredRoles: [tech-lead]
-      - order: 2
-        title: Open an incident channel and post initial status
-        requiredRoles: [tech-lead]
-      - order: 3
-        title: Mitigate, then write a postmortem within 48 hours
-        requiredRoles: [tech-lead]
-    documentation: See the on-call runbook for escalation contacts.
-    tags: [incident, on-call]
-knowledgeBase:
-  - id: adr-oauth-for-login
-    title: "ADR: Adopt OAuth 2.0 / OIDC for customer login"
-    kind: adr
-    category: authentication
-    body: >
-      We will use OAuth 2.0 with OIDC for all new customer-facing login flows, delegating to a
-      managed identity provider rather than building password storage ourselves.
-    tags: [oauth, authentication, adr]
-memory:
-  - id: pci-scope-creep-lesson
-    title: PCI scope creep from logging raw card data
-    kind: lesson-learned
-    body: >
-      A 2025 incident traced back to a debug log line that captured raw card numbers, expanding
-      PCI audit scope to the whole logging pipeline. Never log full payment payloads; redact PANs
-      at the edge.
-    tags: [pci, security, logging]
-    contributors: [priya-raman]
-  - id: conways-law-for-agents
-    title: Conway's Law now applies to our agent roster, not just our services
-    kind: architecture-decision
-    body: >
-      We started with one general-purpose "Payments Assistant" agent doing review, tests, security,
-      and docs. Its prompt turned into an unmaintainable pile of conditionals, and three review
-      comments on the same PR would routinely contradict each other. Splitting it into agents
-      scoped the same way our service ownership already is (architecture, tests, security, docs,
-      compliance) fixed both problems: each agent's prompt stays small, and its output maps onto
-      exactly one review concern. Conway's Law says a system mirrors the org that builds it; ours
-      says the agent roster mirrors it too, whether or not anyone designs it that way on purpose.
-    tags: [conways-law, agents, architecture]
-    contributors: [priya-raman]
-workflows:
-  - id: release-workflow
-    name: Release Workflow
-    description: Testing -> approval -> deployment -> announcement.
-    states:
-      - id: testing
-        name: Testing
-      - id: approval
-        name: Approval
-      - id: deployment
-        name: Deployment
-      - id: announcement
-        name: Announcement
-    transitions:
-      - from: testing
-        to: approval
-        trigger: ci-green
-      - from: approval
-        to: deployment
-        trigger: two-approvals
-      - from: deployment
-        to: announcement
-        trigger: deploy-succeeded
-    automation:
-      - trigger: ci-green
-        action: github-actions:promote-to-approval
-    tags: [release]
 prompts:
   - id: code-review
     name: Code Review
@@ -296,8 +233,8 @@ prompts:
     name: Security Scan
     description: Scans a diff for secrets, unsafe logging of PCI-scoped fields, and dependency CVEs.
     template: >
-      Scan {{repository}}@{{ref}} for hardcoded secrets, PCI-scoped fields (PAN, CVV) reaching a
-      log statement, and dependencies with known CVEs.
+      Scan {{repository}}@{{ref}} for hardcoded secrets, PCI-scoped fields (PAN, CVV) reaching a log
+      statement, and dependencies with known CVEs.
     variables:
       - name: repository
         required: true
@@ -307,6 +244,69 @@ prompts:
     version: "1.0.0"
     tags: [security]
     owner: priya-raman
+playbooks:
+  - id: incident-response
+    name: Payments Incident Response
+    category: incident-response
+    steps:
+      - order: 1
+        title: Acknowledge the page
+        requiredRoles: [tech-lead]
+      - order: 2
+        title: Open an incident channel and post initial status
+        requiredRoles: [tech-lead]
+      - order: 3
+        title: Mitigate, then write a postmortem within 48 hours
+        requiredRoles: [tech-lead]
+    documentation: See the on-call runbook for escalation contacts.
+    tags: [incident, on-call]
+policies:
+  - id: pr-requires-two-approvals
+    name: Pull requests require two approvals
+    category: required-approvals
+    severity: blocking
+    description: Every PR touching a payments service must get two approvals before merge.
+    rules:
+      - key: min_approvals
+        value: 2
+    enforcedBy: [github-actions:pr-gate]
+    tags: [governance]
+knowledgeBase:
+  - id: adr-oauth-for-login
+    title: "ADR: Adopt OAuth 2.0 / OIDC for customer login"
+    kind: adr
+    category: authentication
+    body: >
+      We will use OAuth 2.0 with OIDC for all new customer-facing login flows, delegating to a
+      managed identity provider rather than building password storage ourselves.
+    tags: [oauth, authentication, adr]
+workflows:
+  - id: release-workflow
+    name: Release Workflow
+    description: Testing -> approval -> deployment -> announcement.
+    states:
+      - id: testing
+        name: Testing
+      - id: approval
+        name: Approval
+      - id: deployment
+        name: Deployment
+      - id: announcement
+        name: Announcement
+    transitions:
+      - from: testing
+        to: approval
+        trigger: ci-green
+      - from: approval
+        to: deployment
+        trigger: two-approvals
+      - from: deployment
+        to: announcement
+        trigger: deploy-succeeded
+    automation:
+      - trigger: ci-green
+        action: github-actions:promote-to-approval
+    tags: [release]
 sessions:
   - id: 2026-07-01-oauth-spike
     agentId: architecture-reviewer
@@ -337,7 +337,8 @@ sessions:
     objective: Scan the OAuth login PR for secret leakage and PCI-scoped logging
     promptIds: [security-scan]
     decisions:
-      - No secrets or PCI-scoped fields found in logs; flagged one dependency with a known CVE for upgrade
+      - No secrets or PCI-scoped fields found in logs; flagged one dependency with a known CVE for
+        upgrade
     startedAt: "2026-07-02T09:05:00Z"
     endedAt: "2026-07-02T09:20:00Z"
     tags: [oauth, security]

@@ -15,6 +15,7 @@ const {
   runRender,
   runScaffold,
   runInit,
+  runFmt,
   runSchema,
   runGenerate,
   runDiff,
@@ -36,6 +37,7 @@ const {
   runRender: vi.fn(async () => 0),
   runScaffold: vi.fn(async () => 0),
   runInit: vi.fn(async () => 0),
+  runFmt: vi.fn(async () => 0),
   runSchema: vi.fn(async () => 0),
   runGenerate: vi.fn(async () => 0),
   runDiff: vi.fn(async () => 0),
@@ -58,6 +60,7 @@ vi.mock("../commands/topology", () => ({ runTopology }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/init", () => ({ runInit }));
+vi.mock("../commands/fmt", () => ({ runFmt }));
 vi.mock("../commands/schema", () => ({ runSchema }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
 vi.mock("../commands/diff", () => ({ runDiff }));
@@ -692,5 +695,19 @@ describe("createProgram — init", () => {
       teams: ["checkout", "billing"],
       force: true,
     });
+  });
+});
+
+describe("createProgram — fmt", () => {
+  it("defaults to writing, with patterns from the config", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "fmt"]);
+    expect(runFmt).toHaveBeenCalledWith([], { check: undefined, config: undefined, noConfig: false });
+  });
+
+  it("passes --check through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "fmt", "org", "--check"]);
+    expect(runFmt).toHaveBeenCalledWith(["org"], expect.objectContaining({ check: true }));
   });
 });

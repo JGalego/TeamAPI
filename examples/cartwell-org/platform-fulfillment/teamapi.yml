@@ -42,6 +42,9 @@ services:
       publishedEvents:
         - InventoryReserved
       subscribedEvents: []
+work:
+  waysOfWorking:
+    - name: Two-pizza team charter
 roles:
   - id: director-of-engineering
     name: Director of Engineering
@@ -100,6 +103,3 @@ meetings:
     dayOfWeek: Tuesday
     timeOfDay: "08:30"
     durationMinutes: 15
-work:
-  waysOfWorking:
-    - name: Two-pizza team charter

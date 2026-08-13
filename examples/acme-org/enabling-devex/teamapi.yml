@@ -12,6 +12,9 @@ searchTerms:
   - term: developer experience
   - term: test automation
   - term: ci/cd
+work:
+  waysOfWorking:
+    - name: Coaching engagement playbook
 roles:
   - id: coach
     name: DevEx Coach
@@ -26,6 +29,3 @@ members:
     githubUsername: marta-kowalski
     roleIds: [coach]
     allocation: 100
-work:
-  waysOfWorking:
-    - name: Coaching engagement playbook

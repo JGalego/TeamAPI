@@ -59,6 +59,11 @@ jobs:
         if: ${{ !cancelled() }}
         run: pnpm build
 
+      # After Build, because it runs the CLI from dist/.
+      - name: Team API document formatting
+        if: ${{ !cancelled() }}
+        run: pnpm fmt:check
+
       # Runs the same suites as `pnpm test`, and additionally fails if any package drops below
       # the coverage floor in its vitest.config.ts.
       - name: Test with coverage

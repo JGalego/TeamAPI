@@ -25,6 +25,7 @@ export * from "./diagrams/context-map";
 export * from "./diagrams/mermaid";
 export * from "./diagrams/dot";
 export * from "./serialize/team-dto";
+export * from "./serialize/format-document";
 export * from "./context-bundle/derive";
 export * from "./knowledge-graph/derive";
 export * from "./generators/crewai";

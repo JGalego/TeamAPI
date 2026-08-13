@@ -3,7 +3,8 @@ teamApiVersion: "1.0.0"
 id: enabling-ai-guild
 info:
   name: Enabling AI Guild
-  focus: Coaching other teams on prompt practice, agent review, and evaluation — a community of practice that grew into a team
+  focus: Coaching other teams on prompt practice, agent review, and evaluation — a community of
+    practice that grew into a team
   type: enabling
 channels:
   - type: slack
@@ -40,8 +41,8 @@ memory:
     kind: lesson-learned
     body: >
       This started as a Slack channel where four engineers compared prompts. It acquired a name, a
-      weekly session, and a shared prompt library months before it appeared in any org chart, and
-      by then every team was already routing agent questions to it. Writing it down here was
+      weekly session, and a shared prompt library months before it appeared in any org chart, and by
+      then every team was already routing agent questions to it. Writing it down here was
       retroactive: the relationships in alignsWith[] existed long before the box did.
     tags: [informal-network, agents, community-of-practice]
     contributors: [sasha-brenner]

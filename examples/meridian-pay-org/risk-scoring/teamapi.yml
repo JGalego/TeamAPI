@@ -3,7 +3,8 @@ teamApiVersion: "1.0.0"
 id: risk-scoring
 info:
   name: Risk Scoring
-  focus: Fraud detection and real-time risk scoring, requiring specialist ML and adversarial-abuse expertise
+  focus: Fraud detection and real-time risk scoring, requiring specialist ML and adversarial-abuse
+    expertise
   type: complicated-subsystem
 channels:
   - type: slack
@@ -27,6 +28,9 @@ services:
         - RiskScoreComputed
       subscribedEvents:
         - PaymentIntentSucceeded
+work:
+  waysOfWorking:
+    - name: Model review board
 roles:
   - id: domain-expert
     name: Risk Scoring Domain Expert
@@ -67,6 +71,3 @@ meetings:
     dayOfWeek: Thursday
     timeOfDay: "09:15"
     durationMinutes: 15
-work:
-  waysOfWorking:
-    - name: Model review board

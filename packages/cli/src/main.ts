@@ -12,6 +12,7 @@ import { runTopology } from "./commands/topology";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runInit } from "./commands/init";
+import { runFmt } from "./commands/fmt";
 import { runSchema } from "./commands/schema";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
@@ -199,6 +200,18 @@ export function createProgram(): Command {
     .requiredOption("--out <file>", "output file path")
     .action(async (id: string, opts: { type: string; name?: string; out: string }) => {
       process.exitCode = await runScaffold({ id, type: opts.type, name: opts.name, out: opts.out });
+    });
+
+  const fmtCommand = program
+    .command("fmt")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
+    .description("Rewrite Team API documents into canonical form")
+    .option("--check", "report which files would change and exit non-zero, without writing");
+  fmtCommand
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
+    .action(async (patterns: string[], opts: { check?: boolean; config?: string | boolean }) => {
+      process.exitCode = await runFmt(patterns, { check: opts.check, ...configFlags(opts) });
     });
 
   program

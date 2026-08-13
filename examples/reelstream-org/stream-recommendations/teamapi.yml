@@ -79,9 +79,8 @@ cognitiveLoad:
   extraneous: 7
   germane: 5
   notes: >
-    Full-cycle ownership (build, run, and on-call) is deliberate, but the ranking model's
-    on-call load has crept up; a strong candidate for a paved-road deploy pipeline from
-    Platform Delivery.
+    Full-cycle ownership (build, run, and on-call) is deliberate, but the ranking model's on-call
+    load has crept up; a strong candidate for a paved-road deploy pipeline from Platform Delivery.
 meetings:
   - purpose: daily sync
     dayOfWeek: Wednesday

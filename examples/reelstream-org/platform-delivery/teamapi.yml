@@ -44,6 +44,9 @@ services:
         - EdgeNodeDegraded
       subscribedEvents:
         - RenditionReady
+work:
+  waysOfWorking:
+    - name: Trunk-based development
 roles:
   - id: vp-engineering
     name: VP of Engineering
@@ -96,12 +99,10 @@ cognitiveLoad:
   intrinsic: 7
   extraneous: 5
   germane: 6
-  notes: Global multi-region delivery and per-territory licensing constraints add real intrinsic complexity.
+  notes: Global multi-region delivery and per-territory licensing constraints add real intrinsic
+    complexity.
 meetings:
   - purpose: daily sync
     dayOfWeek: Tuesday
     timeOfDay: "09:30"
     durationMinutes: 15
-work:
-  waysOfWorking:
-    - name: Trunk-based development

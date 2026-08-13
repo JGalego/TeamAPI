@@ -12,6 +12,9 @@ searchTerms:
   - term: chaos engineering
   - term: resilience
   - term: on-call
+work:
+  waysOfWorking:
+    - name: Chaos-day playbook
 roles:
   - id: coach
     name: Resilience Coach
@@ -25,6 +28,3 @@ members:
     contact: oscar.lindqvist@reelstream.example
     roleIds: [coach]
     allocation: 100
-work:
-  waysOfWorking:
-    - name: Chaos-day playbook

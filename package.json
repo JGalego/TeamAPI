@@ -14,7 +14,7 @@
   },
   "scripts": {
     "prepare": "git rev-parse --git-dir > /dev/null 2>&1 && git config core.hooksPath .githooks && git config blame.ignoreRevsFile .git-blame-ignore-revs || true",
-    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm deadcode && pnpm build && pnpm test:coverage",
+    "verify": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm deadcode && pnpm build && pnpm fmt:check && pnpm test:coverage",
     "build": "turbo run build",
     "test": "turbo run test",
     "test:coverage": "turbo run test:coverage",
@@ -24,6 +24,7 @@
     "clean": "turbo run clean",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "fmt:check": "pnpm teamapi fmt examples --check",
     "teamapi": "node packages/cli/dist/main.js",
     "example:validate": "pnpm teamapi validate examples/acme-org",
     "example:render": "pnpm teamapi render examples/acme-org --scope topology",

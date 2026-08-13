@@ -3,7 +3,8 @@ teamApiVersion: "1.0.0"
 id: platform-audio
 info:
   name: Platform Audio
-  focus: Provide audio transcoding, streaming delivery, and rights management as internal platform services
+  focus: Provide audio transcoding, streaming delivery, and rights management as internal platform
+    services
   type: platform
 channels:
   - type: slack
@@ -42,6 +43,9 @@ services:
       publishedEvents:
         - LicenseRevoked
       subscribedEvents: []
+work:
+  waysOfWorking:
+    - name: Squad health check
 roles:
   - id: vp-engineering
     name: VP of Engineering
@@ -100,6 +104,3 @@ meetings:
     dayOfWeek: Thursday
     timeOfDay: "09:30"
     durationMinutes: 15
-work:
-  waysOfWorking:
-    - name: Squad health check

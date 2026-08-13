@@ -12,6 +12,9 @@ searchTerms:
   - term: chapter
   - term: guild
   - term: coaching
+work:
+  waysOfWorking:
+    - name: Guild session cadence
 roles:
   - id: coach
     name: Chapter Lead
@@ -25,6 +28,3 @@ members:
     contact: ines.larsson@wavelength.example
     roleIds: [coach]
     allocation: 100
-work:
-  waysOfWorking:
-    - name: Guild session cadence
