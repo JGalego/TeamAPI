@@ -3,8 +3,11 @@ import { join } from "node:path";
 import Fastify, { type FastifyInstance } from "fastify";
 import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
+import fastifyCors from "@fastify/cors";
+import fastifyRateLimit from "@fastify/rate-limit";
 import type { OrgGraphStore } from "@jgalego/teamapi-core";
 import { registerOrgGraphStore } from "./plugins/org-graph";
+import { registerAuth } from "./plugins/auth";
 import { teamsRoutes } from "./routes/teams";
 import { servicesRoutes } from "./routes/services";
 import { searchRoutes } from "./routes/search";
@@ -25,6 +28,14 @@ export interface BuildServerOptions {
   /** Slack app signing secret. The `/slack/whoowns` route exists only when this is set, so an
    * unauthenticated command endpoint can never be mounted by accident. */
   slackSigningSecret?: string;
+  /** When set, every route except `/health` and `/slack/*` requires `Authorization: Bearer`. */
+  apiToken?: string;
+  /** Origins allowed to make cross-origin browser requests. Omitted (or empty) sends no CORS
+   * headers at all, which is the safe default: a read-only API is still an information
+   * disclosure, and `*` would let any page a viewer visits read the whole org chart. */
+  corsOrigins?: string[];
+  /** Requests allowed per minute, per client IP. Omitted means no limit. */
+  rateLimitPerMinute?: number;
 }
 
 // Read at runtime (not imported as a TS module) so this keeps working both from `dist/` in the
@@ -45,6 +56,18 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   const app = Fastify({ logger: options.logger ?? false });
 
   registerOrgGraphStore(app, store);
+
+  if (options.corsOrigins && options.corsOrigins.length > 0) {
+    await app.register(fastifyCors, { origin: options.corsOrigins, methods: ["GET", "POST"] });
+  }
+
+  if (options.rateLimitPerMinute !== undefined) {
+    await app.register(fastifyRateLimit, { max: options.rateLimitPerMinute, timeWindow: "1 minute" });
+  }
+
+  // Registered before the routes so the auth hook is in place for every one of them. Its ordering
+  // relative to the rate limiter is handled by the lifecycle stage it hooks — see `registerAuth`.
+  registerAuth(app, { token: options.apiToken });
 
   await app.register(fastifySwagger, {
     openapi: {

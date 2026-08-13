@@ -36,6 +36,14 @@ function parsePort(value: string): number {
   return port;
 }
 
+function parsePositiveInt(value: string): number {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    throw new InvalidArgumentError("must be a positive integer.");
+  }
+  return parsed;
+}
+
 const RENDER_SCOPES = ["topology", "hierarchy", "context-map", "org-hierarchy"] as const;
 const RENDER_FORMATS = ["mermaid", "dot"] as const;
 const TEAM_TYPES = ["stream-aligned", "platform", "complicated-subsystem", "enabling"] as const;
@@ -279,9 +287,33 @@ export function createProgram(): Command {
     .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
     .description("Start the read-only REST API over the resolved org graph")
     .option("--port <port>", "port to listen on", parsePort, 3000)
-    .action(async (patterns: string[], opts: { port: number }) => {
-      await runServeApi(patterns, { port: opts.port });
-    });
+    .option("--host <host>", "address to bind (non-loopback requires --token or --allow-anonymous)", "127.0.0.1")
+    .option("--token <token>", "require this bearer token on every request (defaults to TEAMAPI_API_TOKEN)")
+    .option("--cors-origin <origin...>", "allow cross-origin browser requests from these origins")
+    .option("--rate-limit <per-minute>", "max requests per minute per client IP", parsePositiveInt)
+    .option("--allow-anonymous", "serve a non-loopback address with no token (this exposes the org graph)")
+    .action(
+      async (
+        patterns: string[],
+        opts: {
+          port: number;
+          host: string;
+          token?: string;
+          corsOrigin?: string[];
+          rateLimit?: number;
+          allowAnonymous?: boolean;
+        },
+      ) => {
+        await runServeApi(patterns, {
+          port: opts.port,
+          host: opts.host,
+          token: opts.token,
+          corsOrigin: opts.corsOrigin,
+          rateLimit: opts.rateLimit,
+          allowAnonymous: opts.allowAnonymous,
+        });
+      },
+    );
 
   program
     .command("serve-mcp")

@@ -304,6 +304,38 @@ flowchart TD
 ]
 ```
 
+### 🔒 Exposing it beyond localhost
+
+The API binds `127.0.0.1` and requires no credential, which is right for the common case — a laptop, a local checkout, one person looking something up. It becomes wrong the moment the port is reachable from anywhere else: the org graph is every person in the company, their contact details, and who reports to whom.
+
+So the two facts can't be true at once by accident. Binding a non-loopback address with no token is **refused**, not warned about:
+
+```console
+$ teamapi serve-api examples/acme-org --host 0.0.0.0
+Refusing to listen on 0.0.0.0 without a token: this would serve the whole org graph,
+including every member's contact details, to anything that can reach this port.
+Pass --token <token> (or set TEAMAPI_API_TOKEN), or --allow-anonymous if that is really what you want.
+```
+
+A warning would scroll past in a terminal nobody is watching, and an exposed server looks exactly like a working one.
+
+| Flag                        | Effect                                                                    |
+| --------------------------- | ------------------------------------------------------------------------- |
+| `--host <host>`             | Address to bind (default `127.0.0.1`)                                     |
+| `--token <token>`           | Require `Authorization: Bearer <token>`; defaults to `$TEAMAPI_API_TOKEN` |
+| `--cors-origin <origin…>`   | Allow cross-origin browser requests from these origins (default: none)    |
+| `--rate-limit <per-minute>` | Cap requests per minute per client IP (default: no limit)                 |
+| `--allow-anonymous`         | Serve a reachable address with no token anyway                            |
+
+```bash
+TEAMAPI_API_TOKEN=$(openssl rand -hex 32) teamapi serve-api examples/acme-org \
+  --host 0.0.0.0 --rate-limit 120 --cors-origin https://intranet.example
+```
+
+`/health` stays open so liveness probes work, and `/slack/*` keeps authenticating with Slack's own request signature — which is stronger than a shared token, and the only thing Slack can actually send. Everything else needs the token.
+
+Token comparison is constant-time, and a rejection never echoes the presented credential back into the response or the logs. Failed attempts are counted by the rate limiter, so a token can't be guessed at line rate.
+
 <a id="dashboard"></a>
 
 ## 🖥️ Dashboard
@@ -621,7 +653,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi okta-drift <patterns...> --url <url> [--token <token>] [--group-prefix <prefix>]`                                                                  | Report where declared members and an [Okta](#okta) directory group disagree                                                                                                                                                              |
 | `teamapi pagerduty-drift <patterns...> [--token <token>] [--url <url>]`                                                                                     | Report where [PagerDuty](#pagerduty) and the org graph disagree about who gets paged                                                                                                                                                     |
 | `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]`                                                                        | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only)                                                                                                                                             |
-| `teamapi serve-api <patterns...> [--port 3000]`                                                                                                             | Start the read-only REST API                                                                                                                                                                                                             |
+| `teamapi serve-api <patterns...> [--port 3000] [--host <host>] [--token <token>] [--cors-origin <origin...>] [--rate-limit <n>] [--allow-anonymous]`        | Start the read-only REST API ([exposing it beyond localhost](#rest-api))                                                                                                                                                                 |
 | `teamapi serve-mcp <patterns...>`                                                                                                                           | Start the MCP server                                                                                                                                                                                                                     |
 | `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]`                                                                           | Chat as a team or team member (requires `ANTHROPIC_API_KEY`)                                                                                                                                                                             |
 

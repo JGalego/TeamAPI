@@ -216,6 +216,57 @@ describe("createProgram — schema", () => {
   });
 });
 
+describe("createProgram — serve-api security flags", () => {
+  it("defaults to loopback with no token", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "serve-api", "org"]);
+    expect(runServeApi).toHaveBeenCalledWith(
+      ["org"],
+      expect.objectContaining({ host: "127.0.0.1", token: undefined, allowAnonymous: undefined }),
+    );
+  });
+
+  it("passes host, token, cors origins and rate limit through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync([
+      "node",
+      "teamapi",
+      "serve-api",
+      "org",
+      "--host",
+      "0.0.0.0",
+      "--token",
+      "abc",
+      "--cors-origin",
+      "https://a.test",
+      "https://b.test",
+      "--rate-limit",
+      "60",
+    ]);
+    expect(runServeApi).toHaveBeenCalledWith(
+      ["org"],
+      expect.objectContaining({
+        host: "0.0.0.0",
+        token: "abc",
+        corsOrigin: ["https://a.test", "https://b.test"],
+        rateLimit: 60,
+      }),
+    );
+  });
+
+  it("rejects a non-numeric --rate-limit before ever calling runServeApi", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "serve-api", "org", "--rate-limit", "lots"])).rejects.toThrow();
+    expect(runServeApi).not.toHaveBeenCalled();
+  });
+
+  it("rejects a zero --rate-limit, which would otherwise silently block every request", async () => {
+    const { program } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "serve-api", "org", "--rate-limit", "0"])).rejects.toThrow();
+    expect(runServeApi).not.toHaveBeenCalled();
+  });
+});
+
 describe("createProgram — serve-api", () => {
   it("rejects a non-numeric --port before ever calling runServeApi", async () => {
     const { program, stderr } = freshProgram();
@@ -241,10 +292,10 @@ describe("createProgram — serve-api", () => {
   it("parses --port to a number and defaults to 3000", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "serve-api", "some/path"]);
-    expect(runServeApi).toHaveBeenCalledWith(["some/path"], { port: 3000 });
+    expect(runServeApi).toHaveBeenCalledWith(["some/path"], expect.objectContaining({ port: 3000 }));
 
     await program.parseAsync(["node", "teamapi", "serve-api", "some/path", "--port", "4000"]);
-    expect(runServeApi).toHaveBeenCalledWith(["some/path"], { port: 4000 });
+    expect(runServeApi).toHaveBeenCalledWith(["some/path"], expect.objectContaining({ port: 4000 }));
   });
 });
 
