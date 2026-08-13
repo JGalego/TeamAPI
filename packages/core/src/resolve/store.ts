@@ -8,16 +8,30 @@ import type { OrgGraph } from "../model/org-graph";
  */
 export class OrgGraphStore {
   private graph: OrgGraph | undefined;
+  private options: BuildOrgGraphOptions;
 
-  constructor(private readonly options: BuildOrgGraphOptions) {}
+  constructor(options: BuildOrgGraphOptions) {
+    this.options = options;
+  }
 
-  async load(): Promise<OrgGraph> {
+  /**
+   * Resolves the graph and, only on success, publishes it.
+   *
+   * The assignment deliberately happens after the `await`, not around it: a reload that throws —
+   * a document saved mid-write, a `$ref` pointing at a file that briefly doesn't exist — leaves
+   * the previously resolved graph in place for readers. A server answering from a slightly stale
+   * org is always more useful than one answering from a half-parsed one.
+   */
+  async load(seedUris?: string[]): Promise<OrgGraph> {
+    if (seedUris) this.options = { ...this.options, seedUris };
     this.graph = await buildOrgGraph(this.options);
     return this.graph;
   }
 
-  async reload(): Promise<OrgGraph> {
-    return this.load();
+  /** Re-resolves, optionally against a freshly discovered set of seeds — so a team document added
+   * after startup is picked up, not just edits to the ones that existed then. */
+  async reload(seedUris?: string[]): Promise<OrgGraph> {
+    return this.load(seedUris);
   }
 
   get current(): OrgGraph {

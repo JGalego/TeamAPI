@@ -22,6 +22,7 @@ import { knowledgeRoutes } from "./routes/knowledge";
 import { contextRoutes } from "./routes/context";
 import { knowledgeGraphRoutes } from "./routes/knowledge-graph";
 import { slackRoutes } from "./routes/slack";
+import { reloadRoutes } from "./routes/reload";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -36,6 +37,8 @@ export interface BuildServerOptions {
   corsOrigins?: string[];
   /** Requests allowed per minute, per client IP. Omitted means no limit. */
   rateLimitPerMinute?: number;
+  /** When supplied, mounts `POST /reload` and calls this to re-resolve the graph. */
+  reload?: () => Promise<void>;
 }
 
 // Read at runtime (not imported as a TS module) so this keeps working both from `dist/` in the
@@ -115,6 +118,9 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   app.get("/", { schema: { hide: true } }, async (_req, reply) => reply.redirect("/docs"));
 
   await app.register(healthRoutes);
+  if (options.reload) {
+    await app.register(reloadRoutes, { reload: options.reload });
+  }
   await app.register(teamsRoutes);
   await app.register(servicesRoutes);
   await app.register(searchRoutes);

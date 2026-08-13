@@ -4,6 +4,7 @@ export * from "./model/knowledge-resources";
 export * from "./resolve/loaders";
 export * from "./resolve/graph-builder";
 export * from "./resolve/store";
+export * from "./resolve/watch";
 export * from "./validate/format-errors";
 export * from "./cognitive-load/score";
 export * from "./gaps/plan";

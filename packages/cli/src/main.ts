@@ -292,6 +292,8 @@ export function createProgram(): Command {
     .option("--cors-origin <origin...>", "allow cross-origin browser requests from these origins")
     .option("--rate-limit <per-minute>", "max requests per minute per client IP", parsePositiveInt)
     .option("--allow-anonymous", "serve a non-loopback address with no token (this exposes the org graph)")
+    .option("--watch", "re-resolve the graph when a team document changes")
+    .option("--reload-endpoint", "mount POST /reload without watching the filesystem")
     .action(
       async (
         patterns: string[],
@@ -302,6 +304,8 @@ export function createProgram(): Command {
           corsOrigin?: string[];
           rateLimit?: number;
           allowAnonymous?: boolean;
+          watch?: boolean;
+          reloadEndpoint?: boolean;
         },
       ) => {
         await runServeApi(patterns, {
@@ -311,6 +315,8 @@ export function createProgram(): Command {
           corsOrigin: opts.corsOrigin,
           rateLimit: opts.rateLimit,
           allowAnonymous: opts.allowAnonymous,
+          watch: opts.watch,
+          reloadEndpoint: opts.reloadEndpoint,
         });
       },
     );
@@ -319,8 +325,9 @@ export function createProgram(): Command {
     .command("serve-mcp")
     .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
     .description("Start the MCP server (stdio transport) over the resolved org graph")
-    .action(async (patterns: string[]) => {
-      await runServeMcp(patterns);
+    .option("--watch", "re-resolve the graph when a team document changes")
+    .action(async (patterns: string[], opts: { watch?: boolean }) => {
+      await runServeMcp(patterns, { watch: opts.watch });
     });
 
   program

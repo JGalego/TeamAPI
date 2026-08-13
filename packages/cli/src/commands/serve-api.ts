@@ -1,6 +1,7 @@
-import { OrgGraphStore } from "@jgalego/teamapi-core";
+import { OrgGraphStore, watchOrgGraph } from "@jgalego/teamapi-core";
 import { buildServer } from "@jgalego/teamapi-rest-api";
 import { expandSeeds } from "../seeds";
+import { resolveWatchRoots } from "../watch-seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
 export interface ServeApiOptions {
@@ -12,6 +13,10 @@ export interface ServeApiOptions {
   rateLimit?: number;
   /** Required to bind a non-loopback address with no token. */
   allowAnonymous?: boolean;
+  /** Re-resolve the graph when a watched document changes. */
+  watch?: boolean;
+  /** Mount `POST /reload` even without `--watch`, for a webhook-driven refresh. */
+  reloadEndpoint?: boolean;
 }
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
@@ -55,15 +60,43 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
   await store.load();
   warnUnresolved(store.current);
 
+  const watcher =
+    options.watch || options.reloadEndpoint
+      ? watchOrgGraph({
+          store,
+          // No roots when only `--reload-endpoint` was asked for: the endpoint reloads on demand,
+          // and installing filesystem watches nobody asked for would be a surprise on a server
+          // whose documents are deployed rather than edited in place.
+          watchPaths: options.watch ? await resolveWatchRoots(patterns) : [],
+          resolveSeeds: () => expandSeeds(patterns),
+          onReload: (graph) =>
+            console.log(`Reloaded: ${graph.teams.size} team(s), ${graph.unresolved.length} unresolved reference(s).`),
+          onError: (error) => console.error(`Reload failed, still serving the last good graph: ${error.message}`),
+        })
+      : undefined;
+
   const app = await buildServer(store, {
     logger: true,
     apiToken: token,
     corsOrigins: options.corsOrigin,
     rateLimitPerMinute: options.rateLimit,
+    reload: watcher ? () => watcher.reload() : undefined,
   });
+
+  // The Unix idiom for "re-read your configuration" — the one trigger that needs neither a
+  // filesystem watch nor an open port, and that every process supervisor already knows how to send.
+  if (watcher) process.on("SIGHUP", () => void watcher.reload());
+
   const port = options.port ?? 3000;
   await app.listen({ port, host });
 
   console.log(`REST API listening on http://${host}:${port}`);
   console.log(token ? "Authentication: bearer token required" : "Authentication: none (loopback only)");
+  if (watcher) {
+    console.log(
+      options.watch
+        ? "Reload: on file change, POST /reload, or SIGHUP"
+        : "Reload: POST /reload, or SIGHUP (no file watching)",
+    );
+  }
 }

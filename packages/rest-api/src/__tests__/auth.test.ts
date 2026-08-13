@@ -185,3 +185,36 @@ describe("rate limiting", () => {
     expect(codes).toEqual([401, 401, 429, 429]);
   });
 });
+
+describe("POST /reload", () => {
+  it("does not exist unless the server was given a reload mechanism", async () => {
+    const app = await buildServer(store);
+    expect((await app.inject({ method: "POST", url: "/reload" })).statusCode).toBe(404);
+  });
+
+  it("triggers the supplied reload and reports the resulting graph", async () => {
+    let called = 0;
+    const app = await buildServer(store, { reload: async () => void called++ });
+
+    const res = await app.inject({ method: "POST", url: "/reload" });
+    expect(res.statusCode).toBe(200);
+    expect(called).toBe(1);
+    expect(res.json()).toMatchObject({ status: "reloaded", teams: 4, unresolved: 0 });
+  });
+
+  it("is covered by the bearer token, so it cannot be used to make a server do unbounded work", async () => {
+    let called = 0;
+    const app = await buildServer(store, { apiToken: TOKEN, reload: async () => void called++ });
+
+    expect((await app.inject({ method: "POST", url: "/reload" })).statusCode).toBe(401);
+    expect(called).toBe(0);
+
+    const authorized = await app.inject({
+      method: "POST",
+      url: "/reload",
+      headers: { authorization: `Bearer ${TOKEN}` },
+    });
+    expect(authorized.statusCode).toBe(200);
+    expect(called).toBe(1);
+  });
+});
