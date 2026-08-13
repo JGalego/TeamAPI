@@ -192,13 +192,29 @@ describe("createProgram — policy", () => {
   it("passes the patterns straight through", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "policy", "examples/acme-org"]);
-    expect(runPolicy).toHaveBeenCalledWith(["examples/acme-org"]);
+    expect(runPolicy).toHaveBeenCalledWith(["examples/acme-org"], { format: "text" });
   });
 
   it("requires at least one pattern", async () => {
     const { program } = freshProgram();
     await expect(program.parseAsync(["node", "teamapi", "policy"])).rejects.toThrow();
     expect(runPolicy).not.toHaveBeenCalled();
+  });
+});
+
+describe("createProgram — report formats", () => {
+  it.each(["validate", "gaps", "policy"])("rejects an unknown --format on %s", async (command) => {
+    const { program, stderr } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", command, "org", "--format", "xml"])).rejects.toThrow();
+    expect(stderr.join("")).toContain("Allowed choices are text, json, sarif");
+  });
+
+  it("does not offer sarif on diff, which produces changes rather than findings", async () => {
+    const { program, stderr } = freshProgram();
+    await expect(
+      program.parseAsync(["node", "teamapi", "diff", "org", "--against", "main", "--format", "sarif"]),
+    ).rejects.toThrow();
+    expect(stderr.join("")).toContain("Allowed choices are text, json");
   });
 });
 
@@ -413,7 +429,7 @@ describe("createProgram — diff", () => {
   it("passes patterns and --against through to runDiff", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "diff", "some/path", "--against", "main"]);
-    expect(runDiff).toHaveBeenCalledWith(["some/path"], { against: "main" });
+    expect(runDiff).toHaveBeenCalledWith(["some/path"], { against: "main", format: "text" });
   });
 });
 
@@ -571,7 +587,7 @@ describe("createProgram — validate", () => {
   it("passes patterns straight through to runValidate", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "validate", "a", "b"]);
-    expect(runValidate).toHaveBeenCalledWith(["a", "b"]);
+    expect(runValidate).toHaveBeenCalledWith(["a", "b"], { format: "text" });
   });
 });
 
@@ -579,7 +595,7 @@ describe("createProgram — gaps", () => {
   it("passes patterns straight through to runGaps", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "gaps", "a", "b"]);
-    expect(runGaps).toHaveBeenCalledWith(["a", "b"]);
+    expect(runGaps).toHaveBeenCalledWith(["a", "b"], { format: "text" });
   });
 
   it("requires at least one pattern", async () => {
@@ -592,7 +608,7 @@ describe("createProgram — shadow-ai", () => {
   it("passes patterns and --scan through to runShadowAi", async () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "shadow-ai", "org", "--scan", "./repos"]);
-    expect(runShadowAi).toHaveBeenCalledWith(["org"], { scan: "./repos" });
+    expect(runShadowAi).toHaveBeenCalledWith(["org"], { scan: "./repos", format: "text" });
   });
 
   it("requires --scan", async () => {

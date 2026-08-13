@@ -35,6 +35,16 @@ inputs:
       via `enforcedBy` never fail the job. Off by default, for the same reason `check-gaps` is.
     required: false
     default: "false"
+  sarif-dir:
+    description: >-
+      Write findings to this directory as SARIF — `gaps.sarif`, and `policy.sarif` when
+      `check-policies` is on. Point `github/codeql-action/upload-sarif` at the directory (it
+      accepts one) and every finding becomes an inline annotation on the pull request diff plus an
+      entry in the repository's security tab, instead of a list in a job log nobody opens. A
+      directory rather than a file so enabling both checks never means losing one of the reports.
+      Empty (the default) writes nothing.
+    required: false
+    default: ""
   comment:
     description: "Post (and keep updated on later pushes) a PR comment with the result"
     required: false
@@ -97,6 +107,22 @@ runs:
       if: inputs.check-policies == 'true' && steps.validate.outputs.success == 'true'
       shell: bash
       run: teamapi policy ${{ inputs.patterns }}
+
+    # Runs regardless of whether the gate steps above failed, so the annotations describing *why*
+    # the build is red are still produced — `continue-on-error` on the checks themselves would
+    # instead make the job green and hide them.
+    - name: Write SARIF
+      if: always() && inputs.sarif-dir != '' && steps.validate.outputs.success == 'true'
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.sarif-dir }}"
+        # `teamapi gaps`/`policy` exit non-zero on a blocking finding, which is exactly the run
+        # whose SARIF is worth uploading — so the exit code is ignored here and left to the gate
+        # steps above to enforce.
+        teamapi gaps ${{ inputs.patterns }} --format sarif > "${{ inputs.sarif-dir }}/gaps.sarif" || true
+        if [ "${{ inputs.check-policies }}" = "true" ]; then
+          teamapi policy ${{ inputs.patterns }} --format sarif > "${{ inputs.sarif-dir }}/policy.sarif" || true
+        fi
 
     - name: Render preview diagram
       id: render

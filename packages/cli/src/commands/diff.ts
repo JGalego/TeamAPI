@@ -18,6 +18,9 @@ const execFileAsync = promisify(execFile);
 export interface DiffOptions {
   /** A git revision to diff against — a branch, tag, or commit sha (e.g. "HEAD", "main", "v1.2.0"). */
   against: string;
+  /** `json` emits the `OrgGraphDiff` itself. No SARIF: a diff is a description of change, not a
+   * set of findings, and there is nothing here for a code scanner to annotate. */
+  format?: "text" | "json";
 }
 
 /**
@@ -64,6 +67,7 @@ async function gitRepoRoot(cwd: string): Promise<string | undefined> {
  * existed at a given git revision — added/removed teams, role/member/service changes, cognitive
  * load deltas, and edge changes. Requires running inside a git repository. */
 export async function runDiff(patterns: string[], options: DiffOptions): Promise<number> {
+  const format = options.format ?? "text";
   const seeds = await expandSeeds(patterns);
   if (seeds.length === 0) {
     console.error(`No files matched: ${patterns.join(", ")}`);
@@ -100,6 +104,11 @@ export async function runDiff(patterns: string[], options: DiffOptions): Promise
   }
 
   const diff = diffOrgGraphs(oldGraph, newGraph);
+  if (format === "json") {
+    console.log(JSON.stringify({ against: options.against, empty: isEmptyDiff(diff), diff }, null, 2));
+    return 0;
+  }
+
   if (isEmptyDiff(diff)) {
     console.log(`No differences between ${options.against} and the working tree.`);
     return 0;

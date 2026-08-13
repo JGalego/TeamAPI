@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Argument, Command, InvalidArgumentError } from "commander";
+import { Argument, Command, InvalidArgumentError, Option } from "commander";
 import { DEFAULT_CHAT_MODEL } from "@jgalego/teamapi-chat";
 import { runValidate } from "./commands/validate";
+import { REPORT_FORMATS, type ReportFormat } from "./report-format";
 import { runGaps } from "./commands/gaps";
 import { runShadowAi } from "./commands/shadow-ai";
 import { runPolicy } from "./commands/policy";
@@ -44,6 +45,13 @@ function parsePositiveInt(value: string): number {
   return parsed;
 }
 
+/** The shared reporting-format option. Declared once so every command that produces findings
+ * offers exactly the same spelling and the same choices — a `--format` that means one thing on
+ * `gaps` and another on `policy` is worse than none. */
+function reportFormatOption(command: Command): Option {
+  return command.createOption("--format <format>", "text | json | sarif").choices(REPORT_FORMATS).default("text");
+}
+
 const RENDER_SCOPES = ["topology", "hierarchy", "context-map", "org-hierarchy"] as const;
 const RENDER_FORMATS = ["mermaid", "dot"] as const;
 const TEAM_TYPES = ["stream-aligned", "platform", "complicated-subsystem", "enabling"] as const;
@@ -56,37 +64,45 @@ export function createProgram(): Command {
   const program = new Command();
   program.name("teamapi").description("Team API as Code toolchain CLI").version(packageVersion);
 
-  program
+  const validateCommand = program
     .command("validate")
     .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
-    .description("Validate and resolve one or more Team API documents (and everything they $ref)")
-    .action(async (patterns: string[]) => {
-      process.exitCode = await runValidate(patterns);
+    .description("Validate and resolve one or more Team API documents (and everything they $ref)");
+  validateCommand
+    .addOption(reportFormatOption(validateCommand))
+    .action(async (patterns: string[], opts: { format: ReportFormat }) => {
+      process.exitCode = await runValidate(patterns, { format: opts.format });
     });
 
-  program
+  const gapsCommand = program
     .command("gaps")
     .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
-    .description("Report accountability holes between teams — unowned event contracts, vacant seats, unowned agents")
-    .action(async (patterns: string[]) => {
-      process.exitCode = await runGaps(patterns);
+    .description("Report accountability holes between teams — unowned event contracts, vacant seats, unowned agents");
+  gapsCommand
+    .addOption(reportFormatOption(gapsCommand))
+    .action(async (patterns: string[], opts: { format: ReportFormat }) => {
+      process.exitCode = await runGaps(patterns, { format: opts.format });
     });
 
-  program
+  const policyCommand = program
     .command("policy")
     .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
-    .description("Check declared policies[] against the org graph, and report the ones nothing enforces")
-    .action(async (patterns: string[]) => {
-      process.exitCode = await runPolicy(patterns);
+    .description("Check declared policies[] against the org graph, and report the ones nothing enforces");
+  policyCommand
+    .addOption(reportFormatOption(policyCommand))
+    .action(async (patterns: string[], opts: { format: ReportFormat }) => {
+      process.exitCode = await runPolicy(patterns, { format: opts.format });
     });
 
-  program
+  const shadowAiCommand = program
     .command("shadow-ai")
     .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
     .description("Report AI adoption found in repositories against what teams declare in agents[] (read-only)")
-    .requiredOption("--scan <dir>", "directory whose immediate subdirectories are repository checkouts")
-    .action(async (patterns: string[], opts: { scan: string }) => {
-      process.exitCode = await runShadowAi(patterns, { scan: opts.scan });
+    .requiredOption("--scan <dir>", "directory whose immediate subdirectories are repository checkouts");
+  shadowAiCommand
+    .addOption(reportFormatOption(shadowAiCommand))
+    .action(async (patterns: string[], opts: { scan: string; format: ReportFormat }) => {
+      process.exitCode = await runShadowAi(patterns, { scan: opts.scan, format: opts.format });
     });
 
   const renderCommand = program
@@ -183,8 +199,9 @@ export function createProgram(): Command {
     .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
     .description("Diff the resolved org graph against a git revision (requires running inside a git repository)")
     .requiredOption("--against <ref>", "git revision to diff against, e.g. HEAD, main, a tag, or a commit sha")
-    .action(async (patterns: string[], opts: { against: string }) => {
-      process.exitCode = await runDiff(patterns, { against: opts.against });
+    .addOption(new Option("--format <format>", "text | json").choices(["text", "json"]).default("text"))
+    .action(async (patterns: string[], opts: { against: string; format: "text" | "json" }) => {
+      process.exitCode = await runDiff(patterns, { against: opts.against, format: opts.format });
     });
 
   program

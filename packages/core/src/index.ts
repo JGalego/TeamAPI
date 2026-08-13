@@ -9,6 +9,7 @@ export * from "./validate/format-errors";
 export * from "./cognitive-load/score";
 export * from "./gaps/plan";
 export * from "./policy/check";
+export * from "./report/sarif";
 export * from "./shadow-ai/scan";
 export * from "./shadow-ai/plan";
 export * from "./context-map/patterns";

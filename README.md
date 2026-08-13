@@ -47,6 +47,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [📥 Import from GitHub](#import)
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
+  - [🤖 Machine-readable output](#machine-readable)
 - [✍️ Editor support](#editor-support)
 - [🕰️ Org history](#org-history)
 - [🕳️ Gaps](#gaps)
@@ -680,6 +681,38 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]`                                                                                                  | Chat as a team or team member (requires `ANTHROPIC_API_KEY`)                                                                                                                                                                             |
 
 `<patterns...>` accepts file paths, globs, or a directory (auto-discovers every `teamapi.yml`/`.yaml` under it).
+
+<a id="machine-readable"></a>
+
+### 🤖 Machine-readable output
+
+`validate`, `gaps`, `policy` and `shadow-ai` take `--format text | json | sarif`; `diff` takes `--format text | json`.
+
+```bash
+teamapi gaps examples/driftwood-org --format json | jq '.findings[] | select(.severity == "blocking")'
+```
+
+`json` emits the report object the library itself returns, not a re-rendering of the text — anything you can do with `planGaps`'s return value in code, you can do here in `jq`. The `text` format's "N unresolved reference(s)" warning is suppressed for the structured formats, since a stray line would make the document unparseable for the consumer the format exists for.
+
+`sarif` is [SARIF 2.1.0](https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning), which GitHub's code scanning ingests:
+
+```yaml
+- uses: JGalego/TeamAPI/.github/actions/validate@main
+  with:
+    patterns: teams
+    check-gaps: "true"
+    sarif-dir: teamapi-sarif
+- uses: github/codeql-action/upload-sarif@v3
+  if: always()
+  with:
+    sarif_file: teamapi-sarif
+```
+
+That turns every finding into an inline annotation on the pull request diff and an entry in the repository's security tab, with history and dismissal — which is a different thing from a list in a job log. The person who introduced an orphaned event contract sees it on their own diff, at review time, without having gone looking for it.
+
+Paths are emitted relative to the working directory, because SARIF consumers resolve them against the repository root — an absolute path from a CI runner matches no file in the repository and the annotation silently disappears. Severity maps to SARIF's levels on the same line the exit codes draw: `blocking` becomes `error`, `warning` stays `warning`, `info` becomes `note`.
+
+The output format never changes an exit code.
 
 <a id="editor-support"></a>
 
