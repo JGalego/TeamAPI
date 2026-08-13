@@ -3,6 +3,7 @@ export * from "./model/queries";
 export * from "./model/knowledge-resources";
 export * from "./resolve/loaders";
 export * from "./resolve/graph-builder";
+export * from "./resolve/conflicts";
 export * from "./resolve/store";
 export * from "./resolve/watch";
 export * from "./validate/format-errors";

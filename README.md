@@ -48,6 +48,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
   - [🤖 Machine-readable output](#machine-readable)
+  - [⚔️ Name conflicts](#name-conflicts)
 - [✍️ Editor support](#editor-support)
 - [🕰️ Org history](#org-history)
 - [🕳️ Gaps](#gaps)
@@ -663,7 +664,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 
 | Command                                                                                                                                                                            | Purpose                                                                                                                                                                                                                                  |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `teamapi validate <patterns...>`                                                                                                                                                   | Resolve every `$ref` transitively and report unresolved refs                                                                                                                                                                             |
+| `teamapi validate <patterns...> [--format text\|json\|sarif]`                                                                                                                      | Resolve every `$ref` transitively; report unresolved refs and [org-wide name conflicts](#name-conflicts)                                                                                                                                 |
 | `teamapi gaps <patterns...>`                                                                                                                                                       | Report [accountability holes between teams](#gaps) — unowned event contracts, vacant seats, unowned agents                                                                                                                               |
 | `teamapi policy <patterns...>`                                                                                                                                                     | Check [declared policies](#policy) against the org graph, and report the ones nothing enforces                                                                                                                                           |
 | `teamapi shadow-ai <patterns...> --scan <dir>`                                                                                                                                     | Report [AI adoption found in repositories](#shadow-ai) against what teams declare in `agents[]`                                                                                                                                          |
@@ -716,6 +717,25 @@ That turns every finding into an inline annotation on the pull request diff and 
 Paths are emitted relative to the working directory, because SARIF consumers resolve them against the repository root — an absolute path from a CI runner matches no file in the repository and the annotation silently disappears. Severity maps to SARIF's levels on the same line the exit codes draw: `blocking` becomes `error`, `warning` stays `warning`, `info` becomes `note`.
 
 The output format never changes an exit code.
+
+<a id="name-conflicts"></a>
+
+### ⚔️ Name conflicts
+
+The schema enforces uniqueness _within_ a document — role ids, member ids, agent ids — because that's all one document can see. Some names have to be unique across the whole org, though, because consumers look them up by name alone:
+
+```console
+$ teamapi validate org
+2 name conflict(s):
+  - service 'payments-api' is declared by team-a, team-b — "who owns it" has no single answer
+  - channel 'slack:payments' is declared by team-a, team-b — slack-sync would set its topic to whichever ran last
+```
+
+Ask `findServiceOwner` who owns `payments-api` when two teams declare it and it answers with whichever team id sorts first — deterministically, and silently. Every consumer inherits that: `GET /services/payments-api`, the `who_owns_service` MCP tool, the Slack `/whoowns` command, generated CODEOWNERS. The other team believes it owns the service and nothing says otherwise.
+
+A deterministic tie-break is right for a query that has to return _something_. It's wrong for the org, so the ambiguity is reported once, at validation, instead of being rediscovered by each consumer that has to pick a winner. Both claimants are named — which one "wins" is an artifact of sorting, not a fact about the org.
+
+Every document in a conflicting org resolves perfectly, which is what makes this different from an unresolved `$ref`: nothing is missing, and the org is still ambiguous.
 
 <a id="editor-support"></a>
 

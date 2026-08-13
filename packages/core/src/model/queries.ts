@@ -78,10 +78,16 @@ export function listServices(graph: OrgGraph, search?: string): ServiceEntry[] {
 }
 
 /**
- * Finds the team declaring a service with this exact (case-insensitive) name. Service names are
- * expected to be unique org-wide, but that isn't enforced by the schema — if two teams declare
- * the same service name, the team whose id sorts first alphabetically wins, which is at least a
- * deterministic, well-defined tie-break rather than an accident of graph traversal order.
+ * Finds the team declaring a service with this exact (case-insensitive) name.
+ *
+ * Service names are expected to be unique org-wide, and the schema cannot enforce that: it sees
+ * one document at a time. If two teams declare the same service name, the team whose id sorts
+ * first alphabetically wins — a deterministic, well-defined tie-break rather than an accident of
+ * traversal order, which is the right behaviour for a query that has to return *something*.
+ *
+ * The ambiguity itself is caught by `findNameConflicts`, which `teamapi validate` fails on, so an
+ * org never has to discover the tie-break by noticing that a service it owns answers with someone
+ * else's team.
  */
 export function findServiceOwner(graph: OrgGraph, serviceName: string): ServiceEntry | undefined {
   const q = serviceName.toLowerCase();

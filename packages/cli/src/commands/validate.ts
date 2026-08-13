@@ -1,4 +1,10 @@
-import { buildOrgGraph, type OrgGraph } from "@jgalego/teamapi-core";
+import {
+  buildOrgGraph,
+  findNameConflicts,
+  formatNameConflicts,
+  type NameConflict,
+  type OrgGraph,
+} from "@jgalego/teamapi-core";
 import { expandSeeds } from "../seeds";
 import { printReport, type ReportFormat } from "../report-format";
 
@@ -12,15 +18,20 @@ interface ValidateReport {
   ok: boolean;
   teams: { id: string; type: string; sourceUri: string }[];
   unresolved: { fromUri: string; ref: string; reason: string }[];
+  /** Names two teams both claim. Distinct from `unresolved`: every document here resolved
+   * perfectly, and the org is still ambiguous. */
+  conflicts: NameConflict[];
 }
 
 function toReport(graph: OrgGraph): ValidateReport {
+  const conflicts = findNameConflicts(graph);
   return {
-    ok: graph.unresolved.length === 0,
+    ok: graph.unresolved.length === 0 && conflicts.length === 0,
     teams: [...graph.teams.values()]
       .sort((a, b) => a.id.localeCompare(b.id))
       .map((team) => ({ id: team.id, type: team.doc.info.type, sourceUri: team.sourceUri })),
     unresolved: graph.unresolved,
+    conflicts,
   };
 }
 
@@ -31,11 +42,17 @@ function printText(report: ValidateReport, seedCount: number): void {
   for (const team of report.teams) console.log(`  - ${team.id} (${team.type}) <- ${team.sourceUri}`);
 
   if (report.ok) {
-    console.log("\nNo unresolved references. Validation passed.");
+    console.log("\nNo unresolved references or name conflicts. Validation passed.");
     return;
   }
-  console.error(`\n${report.unresolved.length} unresolved reference(s):`);
-  for (const u of report.unresolved) console.error(`  - ${u.ref}: ${u.reason}`);
+  if (report.unresolved.length > 0) {
+    console.error(`\n${report.unresolved.length} unresolved reference(s):`);
+    for (const u of report.unresolved) console.error(`  - ${u.ref}: ${u.reason}`);
+  }
+  if (report.conflicts.length > 0) {
+    console.error(`\n${report.conflicts.length} name conflict(s):`);
+    console.error(formatNameConflicts(report.conflicts));
+  }
 }
 
 export async function runValidate(patterns: string[], options: ValidateOptions = {}): Promise<number> {
@@ -58,13 +75,27 @@ export async function runValidate(patterns: string[], options: ValidateOptions =
     format,
     report,
     toolName: "teamapi validate",
-    rules: [{ id: "unresolved-ref", description: "A $ref that could not be resolved to a valid Team API document" }],
-    findings: report.unresolved.map((entry) => ({
-      ruleId: "unresolved-ref",
-      level: "error" as const,
-      message: `${entry.ref}: ${entry.reason}`,
-      filePath: entry.fromUri,
-    })),
+    rules: [
+      { id: "unresolved-ref", description: "A $ref that could not be resolved to a valid Team API document" },
+      { id: "duplicate-service", description: "Two teams declare a service with the same name" },
+      { id: "duplicate-channel", description: "Two teams declare the same communication channel" },
+    ],
+    findings: [
+      ...report.unresolved.map((entry) => ({
+        ruleId: "unresolved-ref",
+        level: "error" as const,
+        message: `${entry.ref}: ${entry.reason}`,
+        filePath: entry.fromUri,
+      })),
+      ...report.conflicts.map((conflict) => ({
+        ruleId: conflict.kind,
+        level: "error" as const,
+        message: conflict.detail,
+        // Annotated on the first claimant's document; the detail names every team involved, since
+        // the conflict belongs to all of them rather than to whichever sorts first.
+        filePath: graph.teams.get(conflict.teamIds[0]!)?.sourceUri,
+      })),
+    ],
     baseDir: process.cwd(),
   });
 
