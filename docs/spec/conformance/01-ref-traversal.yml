@@ -1,0 +1,72 @@
+clause: File format and layout
+requirement: >-
+  $ref is resolved in exactly five places — platform, interactions[], dependencies[],
+  roles[].reportsToRef and roles[].alignsWith[] — and each becomes an edge between flat team nodes.
+files:
+  hub/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: hub
+    info:
+      name: Hub
+      type: stream-aligned
+    platform:
+      $ref: ../platform/teamapi.yml
+    interactions:
+      - teamName: Peer
+        mode: collaboration
+        $ref: ../peer/teamapi.yml
+    dependencies:
+      - teamName: Supplier
+        type: Slowing
+        $ref: ../supplier/teamapi.yml
+    roles:
+      - id: lead
+        name: Hub Lead
+        kind: TechLead
+        reportsToRef:
+          teamName: Platform
+          roleId: director
+          $ref: ../platform/teamapi.yml
+        alignsWith:
+          - teamName: Peer
+            roleId: coach
+            kind: advises
+            $ref: ../peer/teamapi.yml
+  platform/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: platform
+    info:
+      name: Platform
+      type: platform
+    roles:
+      - id: director
+        name: Director
+        kind: EngineeringManager
+  peer/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: peer
+    info:
+      name: Peer
+      type: stream-aligned
+    roles:
+      - id: coach
+        name: Coach
+        kind: Engineer
+  supplier/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: supplier
+    info:
+      name: Supplier
+      type: complicated-subsystem
+seeds:
+  - hub/teamapi.yml
+expect:
+  outcome: resolved
+  teams: [hub, peer, platform, supplier]
+  edges:
+    - dependency hub -> supplier
+    - interaction hub -> peer
+    - platform hub -> platform
+  roleEdges:
+    - advises hub.lead -> peer.coach
+    - reports-to hub.lead -> platform.director

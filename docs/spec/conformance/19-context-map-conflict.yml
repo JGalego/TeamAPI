@@ -1,0 +1,32 @@
+clause: Interactions and context mapping
+requirement: >-
+  Each team's interaction declaration is an independent directed edge. Two teams describing the
+  same relationship with different modes surfaces as a conflict rather than being silently
+  reconciled.
+files:
+  left/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: left
+    info:
+      name: Left
+      type: stream-aligned
+    interactions:
+      - teamName: Right
+        mode: collaboration
+        $ref: ../right/teamapi.yml
+  right/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: right
+    info:
+      name: Right
+      type: platform
+    interactions:
+      - teamName: Left
+        mode: x-as-a-service
+        $ref: ../left/teamapi.yml
+seeds:
+  - left/teamapi.yml
+expect:
+  outcome: resolved
+  teams: [left, right]
+  contextMapConflicts: 1

@@ -1,0 +1,37 @@
+clause: RoleRef
+requirement: >-
+  roleId must name a role that exists on the referenced team. A reference to a role that does not
+  exist is an unresolved reference, not a silently dropped edge.
+files:
+  a/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: a
+    info:
+      name: A
+      type: stream-aligned
+    roles:
+      - id: lead
+        name: Lead
+        kind: TechLead
+        reportsToRef:
+          teamName: B
+          roleId: ghost
+          $ref: ../b/teamapi.yml
+  b/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: b
+    info:
+      name: B
+      type: platform
+    roles:
+      - id: director
+        name: Director
+        kind: EngineeringManager
+seeds:
+  - a/teamapi.yml
+expect:
+  outcome: resolved
+  teams: [a, b]
+  roleEdges: []
+  unresolved: 1
+  unresolvedReasonContains: "Role 'ghost' not found on team 'b'"

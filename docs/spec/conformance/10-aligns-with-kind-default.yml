@@ -1,0 +1,44 @@
+clause: RoleRef
+requirement: >-
+  An alignsWith[] entry with no kind means aligns-with, so every document written before kind
+  existed keeps its exact meaning.
+files:
+  a/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: a
+    info:
+      name: A
+      type: stream-aligned
+    roles:
+      - id: lead
+        name: Lead
+        kind: TechLead
+        alignsWith:
+          - teamName: B
+            roleId: coach
+            $ref: ../b/teamapi.yml
+          - teamName: B
+            roleId: guild
+            kind: community-of-practice
+            $ref: ../b/teamapi.yml
+  b/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: b
+    info:
+      name: B
+      type: enabling
+    roles:
+      - id: coach
+        name: Coach
+        kind: Engineer
+      - id: guild
+        name: Guild Lead
+        kind: Engineer
+seeds:
+  - a/teamapi.yml
+expect:
+  outcome: resolved
+  teams: [a, b]
+  roleEdges:
+    - aligns-with a.lead -> b.coach
+    - community-of-practice a.lead -> b.guild

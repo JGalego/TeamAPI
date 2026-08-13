@@ -1,0 +1,26 @@
+clause: File format and layout
+requirement: >-
+  Every object in the schema allows unknown vendor-extension fields, so teams can attach
+  organization-specific metadata without forking the schema — and the fields survive resolution.
+files:
+  team/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: team
+    x-cost-centre: CC-1024
+    info:
+      name: Team
+      type: stream-aligned
+      x-tier: gold
+    services:
+      - name: ledger
+        x-pagerduty-service: PABC123
+    roles:
+      - id: lead
+        name: Lead
+        kind: TechLead
+        x-seat-budget: 1
+expect:
+  outcome: resolved
+  teams: [team]
+  passthrough:
+    x-cost-centre: CC-1024

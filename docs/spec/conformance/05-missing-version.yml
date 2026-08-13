@@ -1,0 +1,13 @@
+clause: Relationship to the base spec
+requirement: >-
+  A document with no teamApiVersion at all is diagnosed as missing a version, not as declaring
+  the wrong one.
+files:
+  bare/teamapi.yml: |
+    id: bare
+    info:
+      name: Bare
+      type: stream-aligned
+expect:
+  outcome: rejected
+  reasonContains: No teamApiVersion

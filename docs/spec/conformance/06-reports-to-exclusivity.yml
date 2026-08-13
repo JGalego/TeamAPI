@@ -1,0 +1,26 @@
+clause: Role
+requirement: >-
+  reportsTo and reportsToRef are mutually exclusive — a role reports to exactly one manager,
+  same-team or not, and a document setting both fails validation.
+files:
+  team/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: team
+    info:
+      name: Team
+      type: stream-aligned
+    roles:
+      - id: manager
+        name: Manager
+        kind: EngineeringManager
+      - id: lead
+        name: Lead
+        kind: TechLead
+        reportsTo: manager
+        reportsToRef:
+          teamName: Other
+          roleId: director
+          $ref: ../other/teamapi.yml
+expect:
+  outcome: rejected
+  reasonContains: mutually exclusive

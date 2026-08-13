@@ -1,0 +1,19 @@
+clause: CognitiveLoadAssessment
+requirement: >-
+  The assessment is a 1-10 self-assessment across the three load types, with supervision optional
+  on the same scale. A score outside the range is rejected rather than clamped.
+files:
+  team/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: team
+    info:
+      name: Team
+      type: stream-aligned
+    cognitiveLoad:
+      intrinsic: 7
+      extraneous: 4
+      germane: 6
+      supervision: 11
+expect:
+  outcome: rejected
+  reasonContains: cognitiveLoad.supervision

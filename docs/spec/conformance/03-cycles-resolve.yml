@@ -1,0 +1,33 @@
+clause: File format and layout
+requirement: >-
+  Resolution is a BFS worklist over canonical URIs rather than recursive inlining, so a reference
+  cycle between two teams resolves cleanly with no special-casing.
+files:
+  alpha/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: alpha
+    info:
+      name: Alpha
+      type: stream-aligned
+    interactions:
+      - teamName: Beta
+        mode: collaboration
+        $ref: ../beta/teamapi.yml
+  beta/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: beta
+    info:
+      name: Beta
+      type: stream-aligned
+    interactions:
+      - teamName: Alpha
+        mode: collaboration
+        $ref: ../alpha/teamapi.yml
+seeds:
+  - alpha/teamapi.yml
+expect:
+  outcome: resolved
+  teams: [alpha, beta]
+  edges:
+    - interaction alpha -> beta
+    - interaction beta -> alpha

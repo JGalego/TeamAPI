@@ -1,0 +1,33 @@
+clause: File format and layout
+requirement: >-
+  work.*[].$ref is not traversed by the resolver — it points at repos, wikis or tickets, and a
+  team reachable only through one is not part of the team graph.
+files:
+  solo/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: solo
+    info:
+      name: Solo
+      type: stream-aligned
+    work:
+      services:
+        - name: Checkout rewrite
+          $ref: ../decoy/teamapi.yml
+      waysOfWorking:
+        - name: Trunk-based development
+      crossTeam:
+        - name: Payments migration
+          $ref: ../decoy/teamapi.yml
+  decoy/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: decoy
+    info:
+      name: Decoy
+      type: platform
+seeds:
+  - solo/teamapi.yml
+expect:
+  outcome: resolved
+  teams: [solo]
+  edges: []
+  roleEdges: []

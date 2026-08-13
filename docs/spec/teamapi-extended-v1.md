@@ -7,6 +7,14 @@ context and context-mapping annotations. The canonical schema is the Zod schema 
 [`packages/schema/src/v1`](../../packages/schema/src/v1); this document is a human-readable
 mirror of it, in the spirit of the upstream project's own `spec/teamapi.md`.
 
+A mirror drifts, so the mirroring is tested. [`conformance/`](conformance/) holds one fixture per
+normative statement below — the documents and the outcome the statement promises — and the
+[runner](../../packages/core/src/__tests__/spec-conformance.test.ts) additionally reads the
+[enum reference](#enum-reference), the [root object table](#root-object), and the list of `$ref`
+fields in [File format and layout](#file-format-and-layout) straight out of this file and compares
+them against the schema and the resolver. A sentence here that the implementation does not honour
+fails the build.
+
 ## Relationship to the base spec
 
 This is a **new, non-strictly-backwards-compatible extension**, not a drop-in replacement. The

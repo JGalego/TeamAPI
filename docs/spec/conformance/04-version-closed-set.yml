@@ -1,0 +1,14 @@
+clause: Relationship to the base spec
+requirement: >-
+  teamApiVersion is a closed set. A document declaring an unsupported version fails validation
+  rather than being parsed against the wrong schema, and is told the toolchain is behind it.
+files:
+  future/teamapi.yml: |
+    teamApiVersion: "2.0.0"
+    id: future
+    info:
+      name: Future
+      type: stream-aligned
+expect:
+  outcome: rejected
+  reasonContains: newer than this build understands

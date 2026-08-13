@@ -1,0 +1,22 @@
+clause: Role
+requirement: >-
+  Same-team reportsTo cycles, including a role reporting to itself, are rejected.
+files:
+  team/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: team
+    info:
+      name: Team
+      type: stream-aligned
+    roles:
+      - id: a
+        name: A
+        kind: Engineer
+        reportsTo: b
+      - id: b
+        name: B
+        kind: Engineer
+        reportsTo: a
+expect:
+  outcome: rejected
+  reasonContains: cycle

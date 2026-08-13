@@ -1,0 +1,14 @@
+clause: Root object
+requirement: >-
+  Fields typed slug are lowercase kebab-case identifiers matching ^[a-z0-9]+(-[a-z0-9]+)*$ — not
+  display names.
+files:
+  team/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: Stream Checkout
+    info:
+      name: Stream Checkout
+      type: stream-aligned
+expect:
+  outcome: rejected
+  reasonContains: kebab-case

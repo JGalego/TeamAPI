@@ -1,0 +1,20 @@
+clause: Root object
+requirement: >-
+  id is the stable identifier used for $ref linking. Two documents declaring the same id is a
+  conflict, not a merge — the graph cannot hold two teams under one id.
+files:
+  first/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: shared
+    info:
+      name: First
+      type: stream-aligned
+  second/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: shared
+    info:
+      name: Second
+      type: platform
+expect:
+  outcome: rejected
+  reasonContains: Duplicate team id

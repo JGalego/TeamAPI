@@ -1,0 +1,23 @@
+clause: RoleRef
+requirement: >-
+  kind is rejected on reportsToRef, which is always formal reporting, rather than being silently
+  ignored.
+files:
+  team/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: team
+    info:
+      name: Team
+      type: stream-aligned
+    roles:
+      - id: lead
+        name: Lead
+        kind: TechLead
+        reportsToRef:
+          teamName: Other
+          roleId: director
+          kind: advises
+          $ref: ../other/teamapi.yml
+expect:
+  outcome: rejected
+  reasonContains: kind belongs on alignsWith

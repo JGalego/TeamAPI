@@ -1,0 +1,18 @@
+clause: Role
+requirement: >-
+  reportsTo must match an existing role in this team's roles[].
+files:
+  team/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: team
+    info:
+      name: Team
+      type: stream-aligned
+    roles:
+      - id: lead
+        name: Lead
+        kind: TechLead
+        reportsTo: nobody
+expect:
+  outcome: rejected
+  reasonContains: does not match any role id

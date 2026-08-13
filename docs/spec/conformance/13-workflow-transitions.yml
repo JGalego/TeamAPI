@@ -1,0 +1,23 @@
+clause: AI-native domains
+requirement: >-
+  Every workflows[].transitions[].from/.to must match a declared states[].id.
+files:
+  team/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: team
+    info:
+      name: Team
+      type: stream-aligned
+    workflows:
+      - id: release
+        name: Release
+        states:
+          - id: testing
+            name: Testing
+        transitions:
+          - from: testing
+            to: deployment
+            trigger: approval
+expect:
+  outcome: rejected
+  reasonContains: does not match any state id

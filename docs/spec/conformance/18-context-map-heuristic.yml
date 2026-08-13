@@ -1,0 +1,48 @@
+clause: Interactions and context mapping
+requirement: >-
+  When contextMappingPattern is omitted, deriveContextMap infers OpenHostService for
+  x-as-a-service and Partnership for collaboration, and infers nothing for facilitating.
+files:
+  hub/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: hub
+    info:
+      name: Hub
+      type: stream-aligned
+    interactions:
+      - teamName: Service
+        mode: x-as-a-service
+        $ref: ../service/teamapi.yml
+      - teamName: Partner
+        mode: collaboration
+        $ref: ../partner/teamapi.yml
+      - teamName: Coach
+        mode: facilitating
+        $ref: ../coach/teamapi.yml
+  service/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: service
+    info:
+      name: Service
+      type: platform
+  partner/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: partner
+    info:
+      name: Partner
+      type: stream-aligned
+  coach/teamapi.yml: |
+    teamApiVersion: "1.0.0"
+    id: coach
+    info:
+      name: Coach
+      type: enabling
+seeds:
+  - hub/teamapi.yml
+expect:
+  outcome: resolved
+  teams: [coach, hub, partner, service]
+  contextMap:
+    - hub -> service x-as-a-service OpenHostService (heuristic)
+    - hub -> partner collaboration Partnership (heuristic)
+    - hub -> coach facilitating - (heuristic)
