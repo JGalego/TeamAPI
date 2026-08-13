@@ -10,6 +10,7 @@ export * from "./cognitive-load/score";
 export * from "./gaps/plan";
 export * from "./gaps/rules";
 export * from "./policy/check";
+export * from "./topology/heuristics";
 export * from "./report/sarif";
 export * from "./shadow-ai/scan";
 export * from "./shadow-ai/plan";

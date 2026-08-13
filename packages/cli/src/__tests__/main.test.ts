@@ -11,6 +11,7 @@ const {
   runGaps,
   runShadowAi,
   runPolicy,
+  runTopology,
   runRender,
   runScaffold,
   runSchema,
@@ -30,6 +31,7 @@ const {
   runGaps: vi.fn(async () => 0),
   runShadowAi: vi.fn(async () => 0),
   runPolicy: vi.fn(async () => 0),
+  runTopology: vi.fn(async () => 0),
   runRender: vi.fn(async () => 0),
   runScaffold: vi.fn(async () => 0),
   runSchema: vi.fn(async () => 0),
@@ -50,6 +52,7 @@ vi.mock("../commands/validate", () => ({ runValidate }));
 vi.mock("../commands/gaps", () => ({ runGaps }));
 vi.mock("../commands/shadow-ai", () => ({ runShadowAi }));
 vi.mock("../commands/policy", () => ({ runPolicy }));
+vi.mock("../commands/topology", () => ({ runTopology }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
 vi.mock("../commands/schema", () => ({ runSchema }));
@@ -630,5 +633,19 @@ describe("createProgram — gaps config flags", () => {
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "gaps", "org", "--no-config"]);
     expect(runGaps).toHaveBeenCalledWith(["org"], expect.objectContaining({ config: undefined, noConfig: true }));
+  });
+});
+
+describe("createProgram — topology", () => {
+  it("passes patterns and defaults through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "topology", "org"]);
+    expect(runTopology).toHaveBeenCalledWith(["org"], { format: "text", config: undefined, noConfig: false });
+  });
+
+  it("rejects an unknown --format", async () => {
+    const { program, stderr } = freshProgram();
+    await expect(program.parseAsync(["node", "teamapi", "topology", "org", "--format", "xml"])).rejects.toThrow();
+    expect(stderr.join("")).toContain("Allowed choices are text, json, sarif");
   });
 });

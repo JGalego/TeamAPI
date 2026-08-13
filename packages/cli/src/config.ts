@@ -2,7 +2,14 @@ import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import * as YAML from "js-yaml";
 import { z } from "zod";
-import { GapRulesConfigSchema, isGapKind, type GapRulesConfig } from "@jgalego/teamapi-core";
+import {
+  GapRulesConfigSchema,
+  isGapKind,
+  isTopologyKind,
+  TopologyConfigSchema,
+  type GapRulesConfig,
+  type TopologyConfig,
+} from "@jgalego/teamapi-core";
 
 export const CONFIG_FILENAMES = ["teamapi.config.yml", "teamapi.config.yaml"] as const;
 
@@ -16,11 +23,15 @@ export const CONFIG_FILENAMES = ["teamapi.config.yml", "teamapi.config.yaml"] as
 export const TeamApiConfigSchema = z
   .object({
     gaps: GapRulesConfigSchema.default({ severity: {}, waivers: [] }),
+    topology: TopologyConfigSchema.default({ maxTeamSize: 9, maxCollaborations: 3, severity: {} }),
   })
   .strict();
 export type TeamApiConfig = z.infer<typeof TeamApiConfigSchema>;
 
-export const EMPTY_CONFIG: TeamApiConfig = { gaps: { severity: {}, waivers: [] } };
+export const EMPTY_CONFIG: TeamApiConfig = {
+  gaps: { severity: {}, waivers: [] },
+  topology: { maxTeamSize: 9, maxCollaborations: 3, severity: {} },
+};
 
 export interface LoadedConfig {
   config: TeamApiConfig;
@@ -68,6 +79,13 @@ function checkGapKinds(gaps: GapRulesConfig, sourcePath: string): void {
   }
 }
 
+function checkTopologyKinds(topology: TopologyConfig, sourcePath: string): void {
+  const unknown = Object.keys(topology.severity).filter((kind) => !isTopologyKind(kind));
+  if (unknown.length > 0) {
+    throw new ConfigError(`${sourcePath}: unknown topology kind(s): ${[...new Set(unknown)].sort().join(", ")}`);
+  }
+}
+
 export async function loadConfig(options: { explicitPath?: string; cwd?: string } = {}): Promise<LoadedConfig> {
   const sourcePath = options.explicitPath
     ? path.resolve(options.explicitPath)
@@ -99,5 +117,6 @@ export async function loadConfig(options: { explicitPath?: string; cwd?: string 
   }
 
   checkGapKinds(parsed.data.gaps, sourcePath);
+  checkTopologyKinds(parsed.data.topology, sourcePath);
   return { config: parsed.data, sourcePath };
 }

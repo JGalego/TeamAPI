@@ -8,6 +8,7 @@ import { REPORT_FORMATS, type ReportFormat } from "./report-format";
 import { runGaps } from "./commands/gaps";
 import { runShadowAi } from "./commands/shadow-ai";
 import { runPolicy } from "./commands/policy";
+import { runTopology } from "./commands/topology";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runSchema } from "./commands/schema";
@@ -100,6 +101,22 @@ export function createProgram(): Command {
     .addOption(reportFormatOption(policyCommand))
     .action(async (patterns: string[], opts: { format: ReportFormat }) => {
       process.exitCode = await runPolicy(patterns, { format: opts.format });
+    });
+
+  const topologyCommand = program
+    .command("topology")
+    .argument("<patterns...>", "file paths, globs, or a directory to auto-discover teamapi.yml under it")
+    .description("Report Team Topologies design smells — overrunning collaborations, oversized teams, inverted flow");
+  topologyCommand
+    .addOption(reportFormatOption(topologyCommand))
+    .option("--config <file>", "config file with thresholds and severity overrides")
+    .option("--no-config", "ignore any config file and use the default thresholds")
+    .action(async (patterns: string[], opts: { format: ReportFormat; config?: string | boolean }) => {
+      process.exitCode = await runTopology(patterns, {
+        format: opts.format,
+        config: typeof opts.config === "string" ? opts.config : undefined,
+        noConfig: opts.config === false,
+      });
     });
 
   const shadowAiCommand = program

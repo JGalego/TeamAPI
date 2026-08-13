@@ -35,6 +35,13 @@ inputs:
       via `enforcedBy` never fail the job. Off by default, for the same reason `check-gaps` is.
     required: false
     default: "false"
+  check-topology:
+    description: >-
+      Also run `teamapi topology`. It reports Team Topologies design smells and exits 0 unless the
+      org has configured a kind as `blocking` in `teamapi.config.yml`, so switching this on adds
+      visibility without adding a gate until you ask for one.
+    required: false
+    default: "false"
   sarif-dir:
     description: >-
       Write findings to this directory as SARIF — `gaps.sarif`, and `policy.sarif` when
@@ -111,6 +118,11 @@ runs:
     # Runs regardless of whether the gate steps above failed, so the annotations describing *why*
     # the build is red are still produced — `continue-on-error` on the checks themselves would
     # instead make the job green and hide them.
+    - name: Check topology
+      if: inputs.check-topology == 'true' && steps.validate.outputs.success == 'true'
+      shell: bash
+      run: teamapi topology ${{ inputs.patterns }}
+
     - name: Write SARIF
       if: always() && inputs.sarif-dir != '' && steps.validate.outputs.success == 'true'
       shell: bash
@@ -122,6 +134,9 @@ runs:
         teamapi gaps ${{ inputs.patterns }} --format sarif > "${{ inputs.sarif-dir }}/gaps.sarif" || true
         if [ "${{ inputs.check-policies }}" = "true" ]; then
           teamapi policy ${{ inputs.patterns }} --format sarif > "${{ inputs.sarif-dir }}/policy.sarif" || true
+        fi
+        if [ "${{ inputs.check-topology }}" = "true" ]; then
+          teamapi topology ${{ inputs.patterns }} --format sarif > "${{ inputs.sarif-dir }}/topology.sarif" || true
         fi
 
     - name: Render preview diagram

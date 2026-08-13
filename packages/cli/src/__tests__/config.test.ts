@@ -125,3 +125,40 @@ gaps:
     expect((await loadConfig({ explicitPath: file })).config).toEqual(EMPTY_CONFIG);
   });
 });
+
+describe("loadConfig — topology", () => {
+  it("parses thresholds and severity overrides", async () => {
+    const file = await writeConfig(`
+topology:
+  maxTeamSize: 6
+  maxCollaborations: 2
+  severity:
+    team-too-large: blocking
+`);
+    const { config } = await loadConfig({ explicitPath: file });
+    expect(config.topology).toEqual({
+      maxTeamSize: 6,
+      maxCollaborations: 2,
+      severity: { "team-too-large": "blocking" },
+    });
+  });
+
+  it("defaults the thresholds when the section is absent", async () => {
+    const file = await writeConfig("gaps: {}");
+    expect((await loadConfig({ explicitPath: file })).config.topology).toEqual({
+      maxTeamSize: 9,
+      maxCollaborations: 3,
+      severity: {},
+    });
+  });
+
+  it("rejects an unknown topology kind", async () => {
+    const file = await writeConfig("topology:\n  severity:\n    team-too-big: blocking\n");
+    await expect(loadConfig({ explicitPath: file })).rejects.toThrow(/unknown topology kind/);
+  });
+
+  it("rejects a zero threshold, which would report every team", async () => {
+    const file = await writeConfig("topology:\n  maxTeamSize: 0\n");
+    await expect(loadConfig({ explicitPath: file })).rejects.toThrow(ConfigError);
+  });
+});

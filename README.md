@@ -53,6 +53,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🕳️ Gaps](#gaps)
   - [🧾 Severity overrides and waivers](#gap-rules)
 - [📋 Policy](#policy)
+- [🧩 Topology](#topology)
 - [🫥 Shadow AI](#shadow-ai)
 - [🔁 CI integration](#ci-integration)
   - [🛰️ Drift watch](#drift-watch)
@@ -875,6 +876,46 @@ The rule keys with built-in evaluators:
 The set is deliberately small, and every key on it is _fully_ decidable from the graph. A rule that can only be half-checked here is worse than one that's honestly delegated: a partial check reporting "satisfied" is how a policy stops being read.
 
 Wire it into CI with `check-policies: true` on the [bundled action](#ci-integration).
+
+<a id="topology"></a>
+
+## 🧩 Topology
+
+`gaps` asks what nobody owns. This asks a different question: everything is owned and declared — is the _shape_ right? These are the Team Topologies design smells the book is explicit about, and which the schema already carries the fields to detect.
+
+```bash
+teamapi topology examples/acme-org
+```
+
+```text
+! collaboration-overrun: stream-checkout: collaboration with Stream Onboarding was due to end 2026-06-29 and is still declared
+
+1 finding(s), 0 blocking; 4 team(s) checked.
+```
+
+| Kind                         | What it means                                                            |
+| ---------------------------- | ------------------------------------------------------------------------ |
+| `collaboration-overrun`      | A collaboration past the duration it declared for itself                 |
+| `collaboration-untimed`      | A collaboration that never said when it should end                       |
+| `collaboration-overload`     | A team in more concurrent collaborations than it can sustain (default 3) |
+| `team-too-large`             | A team past the size at which it holds shared context (default 9)        |
+| `platform-depends-on-stream` | A platform team depending on a team it exists to serve                   |
+| `blocking-dependency`        | A dependency the team itself labelled `Blocking`                         |
+
+The collaboration checks are the ones worth having. Team Topologies is emphatic that collaboration is the _expensive_ mode — high bandwidth, both teams paying for it — and therefore deliberately temporary. A collaboration with no `expectedDuration` isn't a collaboration, it's two teams that have merged without saying so; one still declared six months past its end date is the same thing arrived at by drift. Both are invisible until something reads the dates, which is what this does.
+
+`platform-depends-on-stream` catches inverted flow: a platform exists to be consumed, so one that depends on a team it serves has the consumer waiting on the platform which is waiting on the consumer.
+
+**Everything here is a warning and exits 0.** None of these is automatically wrong — an org can have a good reason for a nine-month collaboration — so they're prompts for a conversation, not defects. Thresholds and severities are configurable, for orgs that have decided one really is a gate:
+
+```yaml
+topology:
+  maxTeamSize: 7
+  maxCollaborations: 2
+  severity:
+    collaboration-untimed: blocking
+    blocking-dependency: "off"
+```
 
 <a id="shadow-ai"></a>
 
