@@ -8,6 +8,9 @@ node_modules/
 
 # Generated / machine-owned
 pnpm-lock.yaml
+# Written by `teamapi schema --out`, and checked byte-for-byte by a test against a fresh
+# regeneration — reformatting it here would fail that check on the next unrelated commit.
+site/schema/v1.json
 
 # Hand-tuned HTML with inline <script>/<style>; Prettier's reflow buys little here
 # and makes the inline template literals harder to read.

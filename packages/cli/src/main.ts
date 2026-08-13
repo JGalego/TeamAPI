@@ -8,6 +8,7 @@ import { runGaps } from "./commands/gaps";
 import { runShadowAi } from "./commands/shadow-ai";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
+import { runSchema } from "./commands/schema";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
 import { runApply } from "./commands/apply";
@@ -118,6 +119,14 @@ export function createProgram(): Command {
     .requiredOption("--out <file>", "output file path")
     .action(async (id: string, opts: { type: string; name?: string; out: string }) => {
       process.exitCode = await runScaffold({ id, type: opts.type, name: opts.name, out: opts.out });
+    });
+
+  program
+    .command("schema")
+    .description("Print the JSON Schema for the Team API document format (for editors and CI)")
+    .option("--out <file>", "write to a file instead of stdout")
+    .action(async (opts: { out?: string }) => {
+      process.exitCode = await runSchema({ out: opts.out });
     });
 
   const GENERATE_TARGETS = ["crewai", "backstage", "paperclip", "codeowners", "agents-md", "port", "otel"] as const;

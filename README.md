@@ -47,6 +47,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [📥 Import from GitHub](#import)
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
+- [✍️ Editor support](#editor-support)
 - [🕰️ Org history](#org-history)
 - [🕳️ Gaps](#gaps)
 - [🫥 Shadow AI](#shadow-ai)
@@ -608,6 +609,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi shadow-ai <patterns...> --scan <dir>`                                                                                                              | Report [AI adoption found in repositories](#shadow-ai) against what teams declare in `agents[]`                                                                                                                                          |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--with-agents] [--out <file>]` | Render a diagram                                                                                                                                                                                                                         |
 | `teamapi scaffold <id> --type <type> [--name <name>] --out <file>`                                                                                          | Generate a minimal, schema-valid document                                                                                                                                                                                                |
+| `teamapi schema [--out <file>]`                                                                                                                             | Print the [JSON Schema](#editor-support) for the document format                                                                                                                                                                         |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>` | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
 | `teamapi diff <patterns...> --against <ref>`                                                                                                                | Diff the resolved org graph against a git revision                                                                                                                                                                                       |
 | `teamapi import github-org <org> --out <dir> [--token <token>]`                                                                                             | Bootstrap `teamapi.yml` document(s) from an existing GitHub org                                                                                                                                                                          |
@@ -622,6 +624,34 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]`                                                                           | Chat as a team or team member (requires `ANTHROPIC_API_KEY`)                                                                                                                                                                             |
 
 `<patterns...>` accepts file paths, globs, or a directory (auto-discovers every `teamapi.yml`/`.yaml` under it).
+
+<a id="editor-support"></a>
+
+## ✍️ Editor support
+
+Every `teamapi.yml` in this repo opens with a modeline pointing at the published JSON Schema:
+
+```yaml
+# yaml-language-server: $schema=https://teamapi.dev/schema/v1.json
+teamApiVersion: "1.0.0"
+id: stream-checkout
+```
+
+That one line gives you completion, hover documentation, and inline validation in any editor running the [YAML language server](https://github.com/redhat-developer/yaml-language-server) — VS Code (Red Hat YAML extension), Neovim, JetBrains IDEs — with nothing to configure per workspace. `teamapi scaffold` writes it into every document it generates, so new teams get it for free.
+
+Errors surface as you type rather than at `teamapi validate` time: an unknown `info.type`, a misspelled top-level key, a `roles[]` entry missing its `kind`.
+
+The schema is generated from the same Zod schemas the resolver validates against — there is no second, hand-maintained copy to drift. Print it yourself with `teamapi schema`, or write it somewhere with `teamapi schema --out schema.json`. A test regenerates it and fails if the published copy is stale, so the URL above always matches the code that ships.
+
+For a schema that isn't reachable over the network (air-gapped setups, or pinning a specific version), vendor it into your org's repo and point the modeline at a relative path:
+
+```bash
+teamapi schema --out .teamapi/schema.json
+```
+
+```yaml
+# yaml-language-server: $schema=../.teamapi/schema.json
+```
 
 <a id="org-history"></a>
 

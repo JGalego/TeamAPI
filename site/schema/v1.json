@@ -1,0 +1,1337 @@
+{
+  "$id": "https://teamapi.dev/schema/v1.json",
+  "$ref": "#/definitions/TeamApiDocument",
+  "definitions": {
+    "TeamApiDocument": {
+      "type": "object",
+      "properties": {
+        "teamApiVersion": {
+          "type": "string",
+          "const": "1.0.0"
+        },
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$"
+        },
+        "info": {
+          "type": "object",
+          "properties": {
+            "name": {
+              "type": "string",
+              "minLength": 1
+            },
+            "focus": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "enum": [
+                "stream-aligned",
+                "platform",
+                "complicated-subsystem",
+                "enabling"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "type"
+          ],
+          "additionalProperties": true
+        },
+        "channels": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "minLength": 1
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "type",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "searchTerms": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "term": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "term"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "platform": {
+          "type": "object",
+          "properties": {
+            "$ref": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "required": [
+            "$ref"
+          ],
+          "additionalProperties": true
+        },
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "url": {
+                "type": "string"
+              },
+              "versioning": {
+                "type": "object",
+                "properties": {
+                  "type": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "type"
+                ],
+                "additionalProperties": true
+              },
+              "repository": {
+                "type": "string"
+              },
+              "boundedContext": {
+                "type": "object",
+                "properties": {
+                  "ubiquitousLanguage": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "term": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "definition": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "term",
+                        "definition"
+                      ],
+                      "additionalProperties": true
+                    },
+                    "default": []
+                  },
+                  "aggregates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "default": []
+                  },
+                  "publishedEvents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "default": []
+                  },
+                  "subscribedEvents": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "default": []
+                  }
+                },
+                "additionalProperties": true
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "work": {
+          "type": "object",
+          "properties": {
+            "services": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "$ref": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "additionalProperties": true
+              },
+              "default": []
+            },
+            "waysOfWorking": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TeamApiDocument/properties/work/properties/services/items"
+              },
+              "default": []
+            },
+            "crossTeam": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TeamApiDocument/properties/work/properties/services/items"
+              },
+              "default": []
+            }
+          },
+          "additionalProperties": true
+        },
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "minLength": 1
+              },
+              "responsibilities": {
+                "type": "array",
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "doneWhen": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "text"
+                      ],
+                      "additionalProperties": true
+                    }
+                  ]
+                },
+                "default": []
+              },
+              "reportsTo": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "reportsToRef": {
+                "type": "object",
+                "properties": {
+                  "$ref": {
+                    "$ref": "#/definitions/TeamApiDocument/properties/platform/properties/$ref"
+                  },
+                  "teamName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "roleId": {
+                    "$ref": "#/definitions/TeamApiDocument/properties/id"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "aligns-with",
+                      "advises",
+                      "learns-from",
+                      "community-of-practice"
+                    ]
+                  }
+                },
+                "required": [
+                  "$ref",
+                  "teamName",
+                  "roleId"
+                ],
+                "additionalProperties": true
+              },
+              "alignsWith": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/roles/items/properties/reportsToRef"
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "kind"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "contact": {
+                "type": "string"
+              },
+              "roleIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/id"
+                },
+                "default": []
+              },
+              "allocation": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "githubUsername": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "cognitiveLoad": {
+          "type": "object",
+          "properties": {
+            "intrinsic": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "extraneous": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "germane": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "supervision": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 10
+            },
+            "notes": {
+              "type": "string"
+            },
+            "assessedOn": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "intrinsic",
+            "extraneous",
+            "germane"
+          ],
+          "additionalProperties": true
+        },
+        "meetings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "purpose": {
+                "type": "string",
+                "minLength": 1
+              },
+              "dayOfWeek": {
+                "type": "string"
+              },
+              "timeOfDay": {
+                "type": "string"
+              },
+              "durationMinutes": {
+                "type": "integer",
+                "exclusiveMinimum": 0
+              }
+            },
+            "required": [
+              "purpose"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "interactions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "$ref": {
+                "$ref": "#/definitions/TeamApiDocument/properties/platform/properties/$ref"
+              },
+              "teamName": {
+                "type": "string",
+                "minLength": 1
+              },
+              "mode": {
+                "type": "string",
+                "enum": [
+                  "collaboration",
+                  "x-as-a-service",
+                  "facilitating"
+                ]
+              },
+              "purpose": {
+                "type": "string"
+              },
+              "startDate": {
+                "type": "string"
+              },
+              "expectedDuration": {
+                "type": "number",
+                "exclusiveMinimum": 0
+              },
+              "expectedDurationUnit": {
+                "type": "string",
+                "enum": [
+                  "days",
+                  "weeks",
+                  "months"
+                ]
+              },
+              "contextMappingPattern": {
+                "type": "string",
+                "enum": [
+                  "Partnership",
+                  "CustomerSupplier",
+                  "Conformist",
+                  "OpenHostService",
+                  "AnticorruptionLayer",
+                  "SharedKernel"
+                ]
+              }
+            },
+            "required": [
+              "$ref",
+              "teamName",
+              "mode"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "$ref": {
+                "$ref": "#/definitions/TeamApiDocument/properties/platform/properties/$ref"
+              },
+              "teamName": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string"
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "OK",
+                  "Slowing",
+                  "Blocking"
+                ]
+              }
+            },
+            "required": [
+              "$ref",
+              "teamName",
+              "type"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "agents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string",
+                "minLength": 1
+              },
+              "model": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string",
+                "minLength": 1
+              },
+              "capabilities": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "inactive",
+                  "deprecated"
+                ],
+                "default": "active"
+              },
+              "ownerId": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "provider",
+              "role"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "memory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "architecture-decision",
+                  "convention",
+                  "lesson-learned",
+                  "recurring-issue",
+                  "domain-knowledge",
+                  "historical-decision"
+                ]
+              },
+              "body": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "contributors": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "relatedRefs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/platform"
+                },
+                "default": []
+              },
+              "createdAt": {
+                "type": "string"
+              },
+              "updatedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "kind",
+              "body"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "specifications": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "requirement",
+                  "design",
+                  "task",
+                  "acceptance-criteria"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "in-review",
+                  "approved",
+                  "in-progress",
+                  "implemented",
+                  "deprecated"
+                ],
+                "default": "draft"
+              },
+              "body": {
+                "type": "string"
+              },
+              "reviewers": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "approvals": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "reviewer": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "approvedAt": {
+                      "type": "string"
+                    },
+                    "comment": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "reviewer"
+                  ],
+                  "additionalProperties": true
+                },
+                "default": []
+              },
+              "linkedPullRequests": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "linkedIssues": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "linkedDocuments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/platform"
+                },
+                "default": []
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "kind"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "steeringDocuments": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "coding-standards",
+                  "api-conventions",
+                  "security-guidelines",
+                  "architecture-principles",
+                  "documentation-style",
+                  "custom"
+                ]
+              },
+              "scope": {
+                "type": "string",
+                "enum": [
+                  "organization",
+                  "team",
+                  "project"
+                ],
+                "default": "team"
+              },
+              "appliesTo": {
+                "type": "string"
+              },
+              "body": {
+                "type": "string",
+                "minLength": 1
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "category",
+              "body"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "prompts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string"
+              },
+              "template": {
+                "type": "string",
+                "minLength": 1
+              },
+              "variables": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "default": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ],
+                  "additionalProperties": true
+                },
+                "default": []
+              },
+              "version": {
+                "type": "string",
+                "default": "1.0.0"
+              },
+              "versions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "version": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "template": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "changelog": {
+                      "type": "string"
+                    },
+                    "publishedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "version",
+                    "template"
+                  ],
+                  "additionalProperties": true
+                },
+                "default": []
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "owner": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "template"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "playbooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "incident-response",
+                  "release",
+                  "onboarding",
+                  "offboarding",
+                  "production-deployment",
+                  "custom"
+                ]
+              },
+              "steps": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "order": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "title": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "requiredRoles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "default": []
+                    },
+                    "automationHook": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "order",
+                    "title"
+                  ],
+                  "additionalProperties": true
+                },
+                "default": []
+              },
+              "documentation": {
+                "type": "string"
+              },
+              "attachments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/platform"
+                },
+                "default": []
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "category"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "pr-requirements",
+                  "required-approvals",
+                  "documentation",
+                  "security",
+                  "dependency",
+                  "custom"
+                ]
+              },
+              "severity": {
+                "type": "string",
+                "enum": [
+                  "info",
+                  "warning",
+                  "blocking"
+                ],
+                "default": "warning"
+              },
+              "description": {
+                "type": "string"
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "key": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "value": {}
+                  },
+                  "required": [
+                    "key"
+                  ],
+                  "additionalProperties": true
+                },
+                "default": []
+              },
+              "enforcedBy": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "category"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "knowledgeBase": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "title": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "adr",
+                  "faq",
+                  "meeting-notes",
+                  "architecture-doc",
+                  "runbook",
+                  "design-doc"
+                ]
+              },
+              "category": {
+                "type": "string"
+              },
+              "body": {
+                "type": "string",
+                "minLength": 1
+              },
+              "relatedRefs": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/platform"
+                },
+                "default": []
+              },
+              "attachments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/platform"
+                },
+                "default": []
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "kind",
+              "body"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "workflows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": {
+                "type": "string"
+              },
+              "states": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "$ref": "#/definitions/TeamApiDocument/properties/id"
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "description": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "additionalProperties": true
+                },
+                "default": []
+              },
+              "transitions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "from": {
+                      "$ref": "#/definitions/TeamApiDocument/properties/id"
+                    },
+                    "to": {
+                      "$ref": "#/definitions/TeamApiDocument/properties/id"
+                    },
+                    "trigger": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "from",
+                    "to",
+                    "trigger"
+                  ],
+                  "additionalProperties": true
+                },
+                "default": []
+              },
+              "automation": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "trigger": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "action": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "trigger",
+                    "action"
+                  ],
+                  "additionalProperties": true
+                },
+                "default": []
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "name"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "agentId": {
+                "$ref": "#/definitions/TeamApiDocument/properties/id"
+              },
+              "assistant": {
+                "type": "string",
+                "minLength": 1
+              },
+              "model": {
+                "type": "string"
+              },
+              "objective": {
+                "type": "string",
+                "minLength": 1
+              },
+              "promptIds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/id"
+                },
+                "default": []
+              },
+              "generatedArtifacts": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/platform"
+                },
+                "default": []
+              },
+              "referencedDocuments": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/TeamApiDocument/properties/platform"
+                },
+                "default": []
+              },
+              "decisions": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "startedAt": {
+                "type": "string"
+              },
+              "endedAt": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              }
+            },
+            "required": [
+              "id",
+              "assistant",
+              "objective"
+            ],
+            "additionalProperties": true
+          },
+          "default": []
+        }
+      },
+      "required": [
+        "teamApiVersion",
+        "id",
+        "info"
+      ],
+      "additionalProperties": true
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

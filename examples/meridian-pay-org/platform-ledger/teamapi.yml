@@ -1,3 +1,4 @@
+# yaml-language-server: $schema=https://teamapi.dev/schema/v1.json
 teamApiVersion: "1.0.0"
 id: platform-ledger
 info:

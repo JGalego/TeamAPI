@@ -12,6 +12,7 @@ const {
   runShadowAi,
   runRender,
   runScaffold,
+  runSchema,
   runGenerate,
   runDiff,
   runApply,
@@ -29,6 +30,7 @@ const {
   runShadowAi: vi.fn(async () => 0),
   runRender: vi.fn(async () => 0),
   runScaffold: vi.fn(async () => 0),
+  runSchema: vi.fn(async () => 0),
   runGenerate: vi.fn(async () => 0),
   runDiff: vi.fn(async () => 0),
   runApply: vi.fn(async () => 0),
@@ -47,6 +49,7 @@ vi.mock("../commands/gaps", () => ({ runGaps }));
 vi.mock("../commands/shadow-ai", () => ({ runShadowAi }));
 vi.mock("../commands/render", () => ({ runRender }));
 vi.mock("../commands/scaffold", () => ({ runScaffold }));
+vi.mock("../commands/schema", () => ({ runSchema }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
 vi.mock("../commands/diff", () => ({ runDiff }));
 vi.mock("../commands/apply", () => ({ runApply }));
@@ -179,6 +182,20 @@ describe("createProgram — scaffold", () => {
       name: undefined,
       out: "out.yml",
     });
+  });
+});
+
+describe("createProgram — schema", () => {
+  it("defaults --out to undefined, so the schema goes to stdout", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "schema"]);
+    expect(runSchema).toHaveBeenCalledWith({ out: undefined });
+  });
+
+  it("passes --out through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync(["node", "teamapi", "schema", "--out", "site/schema/v1.json"]);
+    expect(runSchema).toHaveBeenCalledWith({ out: "site/schema/v1.json" });
   });
 });
 

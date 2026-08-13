@@ -1,6 +1,6 @@
 import * as fs from "node:fs/promises";
 import * as YAML from "js-yaml";
-import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
+import { TEAM_API_SCHEMA_MODELINE, TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { formatZodError } from "@jgalego/teamapi-core";
 
 export interface ScaffoldOptions {
@@ -38,7 +38,9 @@ export async function runScaffold(options: ScaffoldOptions): Promise<number> {
     return 1;
   }
 
-  await fs.writeFile(options.out, YAML.dump(doc, { noRefs: true }), "utf-8");
+  // Prepended rather than emitted through js-yaml: `YAML.dump` has no way to write a leading
+  // comment, and this has to be the first line for the language server to pick it up.
+  await fs.writeFile(options.out, `${TEAM_API_SCHEMA_MODELINE}\n${YAML.dump(doc, { noRefs: true })}`, "utf-8");
   console.log(`Wrote ${options.out}`);
   return 0;
 }

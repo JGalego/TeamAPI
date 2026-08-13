@@ -3,7 +3,7 @@ import { TeamApiDocumentSchema } from "./v1/team";
 
 export * from "./v1";
 export * as v1 from "./v1";
-export { getTeamApiJsonSchema } from "./json-schema";
+export { getTeamApiJsonSchema, TEAM_API_SCHEMA_URL, TEAM_API_SCHEMA_MODELINE } from "./json-schema";
 
 /** Registry of supported `teamApiVersion` values to their Zod schema, for forward compatibility. */
 export const SCHEMA_REGISTRY = {

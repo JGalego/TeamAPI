@@ -3,7 +3,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import * as YAML from "js-yaml";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
+import { TEAM_API_SCHEMA_MODELINE, TeamApiDocumentSchema } from "@jgalego/teamapi-schema";
 import { runValidate } from "../commands/validate";
 import { runGaps } from "../commands/gaps";
 import { runShadowAi } from "../commands/shadow-ai";
@@ -206,5 +206,15 @@ describe("teamapi scaffold", () => {
     const parsed = TeamApiDocumentSchema.parse(raw);
     expect(parsed.id).toBe("new-stream-team");
     expect(parsed.info.type).toBe("stream-aligned");
+  });
+
+  it("opens with the schema modeline, so a new file gets editor validation immediately", async () => {
+    const outFile = path.join(tmpDir, "teamapi.yml");
+    await runScaffold({ id: "new-stream-team", type: "stream-aligned", out: outFile });
+
+    const text = await fs.readFile(outFile, "utf-8");
+    expect(text.split("\n")[0]).toBe(TEAM_API_SCHEMA_MODELINE);
+    // The modeline is a comment: it must not change what the document parses to.
+    expect(TeamApiDocumentSchema.parse(YAML.load(text)).id).toBe("new-stream-team");
   });
 });
