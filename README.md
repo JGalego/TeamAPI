@@ -54,6 +54,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [📋 Policy](#policy)
 - [🫥 Shadow AI](#shadow-ai)
 - [🔁 CI integration](#ci-integration)
+  - [🛰️ Drift watch](#drift-watch)
 - [🔗 Paperclip](#paperclip)
 - [💬 Slack](#slack)
 - [📟 PagerDuty](#pagerduty)
@@ -883,6 +884,41 @@ jobs:
 ```
 
 It installs `@jgalego/teamapi` and runs `teamapi validate`, then posts a single PR comment with the result — kept up to date on later pushes, and carrying a live-rendered Mermaid preview when validation passes. The job fails when validation fails, so it can gate a required check; `check-gaps: true` additionally runs [`teamapi gaps`](#gaps) after validation passes and fails on a blocking finding (warnings print but never fail). This repo dogfoods it against [`examples/acme-org`](examples/acme-org); see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml) and the action's [inputs and outputs](.github/actions/validate/README.md).
+
+<a id="drift-watch"></a>
+
+### 🛰️ Drift watch
+
+Pull-request checks only fire when somebody touches a `teamapi.yml`. Most drift is the opposite: the documents sit still while the org moves around them — someone leaves and their agents keep an `ownerId` nobody holds, a service starts publishing an event nothing consumes. Nothing in a PR-triggered workflow ever notices.
+
+[`JGalego/TeamAPI/.github/actions/drift`](.github/actions/drift) runs the checks on a schedule and keeps **one** tracking issue in sync with what they find:
+
+```yaml
+on:
+  schedule:
+    - cron: "0 7 * * 1-5"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: JGalego/TeamAPI/.github/actions/drift@main
+        with:
+          patterns: org
+          check-policies: "true"
+          assignees: your-github-login
+```
+
+It runs `validate`, `gaps`, and (optionally) `policy` and `shadow-ai`, and every check runs even when an earlier one fails — a report describing only the first problem found would be worth less than no report.
+
+The issue is found by a marker in its body rather than by title, so it survives being renamed and the action updates it in place instead of opening a new one every morning. When everything comes back clean it closes the issue; if none is open it does nothing at all, because opening an issue to announce that there is no problem is how a bot gets muted.
+
+This repo ships [`.github/workflows/drift.yml`](.github/workflows/drift.yml) wired to `examples/acme-org`. Its schedule is inert until you set the repository variable `TEAMAPI_DRIFT_ENABLED` to `true` — `workflow_dispatch` always works, so you can try it before committing to the cadence.
 
 <a id="paperclip"></a>
 

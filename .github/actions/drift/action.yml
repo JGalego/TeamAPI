@@ -1,0 +1,215 @@
+name: "Team API Drift Watch"
+description: "Run the org-graph checks on a schedule and keep a single tracking issue in sync with what they find"
+author: "JGalego"
+branding:
+  icon: "activity"
+  color: "purple"
+
+inputs:
+  patterns:
+    description: "File paths, globs, or a directory to auto-discover teamapi.yml under."
+    required: false
+    default: "."
+  check-policies:
+    description: "Also run `teamapi policy`."
+    required: false
+    default: "true"
+  scan-dir:
+    description: >-
+      Directory whose immediate subdirectories are repository checkouts. When set, `teamapi
+      shadow-ai` runs against it. Requires those repositories to already be on disk — this action
+      does not clone them.
+    required: false
+    default: ""
+  issue-title:
+    description: "Title of the tracking issue this action keeps in sync."
+    required: false
+    default: "Team API drift"
+  issue-labels:
+    description: "Comma-separated labels applied to the tracking issue when it is created."
+    required: false
+    default: "teamapi"
+  assignees:
+    description: "Comma-separated GitHub logins to assign the tracking issue to."
+    required: false
+    default: ""
+  close-when-clean:
+    description: >-
+      Close the tracking issue when every check comes back clean. On by default: an issue that
+      stays open after the drift is fixed teaches people to ignore it.
+    required: false
+    default: "true"
+  github-token:
+    description: "Token used to read and write the tracking issue. Needs `issues: write`."
+    required: false
+    default: ${{ github.token }}
+
+outputs:
+  clean:
+    description: "'true' if every check passed"
+    value: ${{ steps.check.outputs.clean }}
+  issue-number:
+    description: "The tracking issue's number, empty when nothing was opened"
+    value: ${{ steps.issue.outputs.number }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v7
+      with:
+        node-version: "22"
+
+    - name: Install teamapi
+      shell: bash
+      run: npm install --global @jgalego/teamapi
+
+    # Every check runs even when an earlier one fails, and none of them fail the step: the point
+    # of this action is the report, and a shell that aborts on the first non-zero exit would
+    # produce a tracking issue describing only the first problem found.
+    - name: Run checks
+      id: check
+      shell: bash
+      env:
+        TEAMAPI_PATTERNS: ${{ inputs.patterns }}
+        TEAMAPI_CHECK_POLICIES: ${{ inputs.check-policies }}
+        TEAMAPI_SCAN_DIR: ${{ inputs.scan-dir }}
+      run: |
+        set +e
+        clean=true
+
+        run_check() {
+          local name="$1"
+          shift
+          local output
+          output="$("$@" 2>&1)"
+          local code=$?
+          {
+            echo "### ${name}"
+            echo
+            if [ "$code" -eq 0 ]; then
+              echo ":white_check_mark: clean"
+            else
+              echo ":x: findings"
+            fi
+            echo
+            echo '```'
+            echo "$output"
+            echo '```'
+            echo
+          } >> report.md
+          if [ "$code" -ne 0 ]; then clean=false; fi
+        }
+
+        : > report.md
+        run_check "Validation" teamapi validate $TEAMAPI_PATTERNS
+        run_check "Gaps" teamapi gaps $TEAMAPI_PATTERNS
+        if [ "$TEAMAPI_CHECK_POLICIES" = "true" ]; then
+          run_check "Policies" teamapi policy $TEAMAPI_PATTERNS
+        fi
+        if [ -n "$TEAMAPI_SCAN_DIR" ]; then
+          run_check "Shadow AI" teamapi shadow-ai $TEAMAPI_PATTERNS --scan "$TEAMAPI_SCAN_DIR"
+        fi
+
+        echo "clean=$clean" >> "$GITHUB_OUTPUT"
+        {
+          echo "report<<TEAMAPI_DRIFT_EOF"
+          cat report.md
+          echo "TEAMAPI_DRIFT_EOF"
+        } >> "$GITHUB_OUTPUT"
+
+    # The report derives from the repository's own teamapi.yml files, which is lower-risk than the
+    # PR-controlled input the validate action handles — but it is still file content reaching a
+    # script, so it travels through `env:` and `process.env` rather than `${{ }}` interpolation,
+    # for the same reason and by the same rule.
+    - name: Open, update, or close the tracking issue
+      id: issue
+      uses: actions/github-script@v7
+      env:
+        TEAMAPI_CLEAN: ${{ steps.check.outputs.clean }}
+        TEAMAPI_REPORT: ${{ steps.check.outputs.report }}
+        TEAMAPI_ISSUE_TITLE: ${{ inputs.issue-title }}
+        TEAMAPI_ISSUE_LABELS: ${{ inputs.issue-labels }}
+        TEAMAPI_ASSIGNEES: ${{ inputs.assignees }}
+        TEAMAPI_CLOSE_WHEN_CLEAN: ${{ inputs.close-when-clean }}
+      with:
+        github-token: ${{ inputs.github-token }}
+        script: |
+          // A marker in the body, not the title: it survives someone renaming the issue, which
+          // they will, and it is what makes this idempotent instead of opening a new issue on
+          // every scheduled run.
+          const marker = "<!-- teamapi-drift -->";
+          const clean = process.env.TEAMAPI_CLEAN === "true";
+          const report = process.env.TEAMAPI_REPORT || "";
+          const title = process.env.TEAMAPI_ISSUE_TITLE || "Team API drift";
+          const labels = (process.env.TEAMAPI_ISSUE_LABELS || "")
+            .split(",")
+            .map((label) => label.trim())
+            .filter(Boolean);
+          const assignees = (process.env.TEAMAPI_ASSIGNEES || "")
+            .split(",")
+            .map((login) => login.trim())
+            .filter(Boolean);
+          const closeWhenClean = process.env.TEAMAPI_CLOSE_WHEN_CLEAN === "true";
+
+          const { owner, repo } = context.repo;
+
+          const existing = await github.paginate(github.rest.issues.listForRepo, {
+            owner,
+            repo,
+            state: "open",
+            per_page: 100,
+          });
+          const tracking = existing.find((issue) => !issue.pull_request && (issue.body || "").includes(marker));
+
+          const runUrl = `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`;
+          const body = [
+            marker,
+            clean
+              ? "Every Team API check is currently clean."
+              : "One or more Team API checks are reporting findings.",
+            "",
+            report,
+            "---",
+            `Last checked: ${new Date().toISOString()} ([run](${runUrl}))`,
+            "",
+            "This issue is maintained automatically. It is updated in place on each run and " +
+              (closeWhenClean ? "closed once every check is clean." : "left open when the checks are clean."),
+          ].join("\n");
+
+          if (clean) {
+            if (tracking && closeWhenClean) {
+              await github.rest.issues.update({ owner, repo, issue_number: tracking.number, body, state: "closed" });
+              core.setOutput("number", String(tracking.number));
+              core.info(`Closed #${tracking.number}: every check is clean.`);
+              return;
+            }
+            if (tracking) {
+              await github.rest.issues.update({ owner, repo, issue_number: tracking.number, body });
+              core.setOutput("number", String(tracking.number));
+              return;
+            }
+            // Nothing to say and nothing open to say it in. Opening an issue to report that
+            // there is no problem is how a bot gets muted.
+            core.setOutput("number", "");
+            core.info("Every check is clean and no tracking issue is open; nothing to do.");
+            return;
+          }
+
+          if (tracking) {
+            await github.rest.issues.update({ owner, repo, issue_number: tracking.number, body });
+            core.setOutput("number", String(tracking.number));
+            core.info(`Updated #${tracking.number}.`);
+            return;
+          }
+
+          const created = await github.rest.issues.create({
+            owner,
+            repo,
+            title,
+            body,
+            ...(labels.length > 0 ? { labels } : {}),
+            ...(assignees.length > 0 ? { assignees } : {}),
+          });
+          core.setOutput("number", String(created.data.number));
+          core.info(`Opened #${created.data.number}.`);

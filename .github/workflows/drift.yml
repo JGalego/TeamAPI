@@ -1,0 +1,40 @@
+name: Drift Watch
+
+# Runs the org-graph checks on a schedule and keeps one tracking issue in sync with what they
+# find, so drift surfaces on its own rather than when somebody remembers to run the CLI.
+#
+# Inert until you opt in: the job is gated on the repository variable TEAMAPI_DRIFT_ENABLED being
+# "true" (Settings → Secrets and variables → Actions → Variables). A workflow that started filing
+# issues in someone's repository the moment they merged it would be a bad neighbour, and the
+# schedule is the one part of this that nobody explicitly triggers.
+on:
+  schedule:
+    # 07:00 UTC on weekdays: before most working days start, and never at midnight, where every
+    # scheduled workflow on GitHub piles up and runs late.
+    - cron: "0 7 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  drift:
+    # `workflow_dispatch` always runs, so the action can be tried without flipping the variable
+    # first; only the unattended schedule needs the opt-in.
+    if: github.event_name == 'workflow_dispatch' || vars.TEAMAPI_DRIFT_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Check for drift
+        uses: ./.github/actions/drift
+        with:
+          patterns: examples/acme-org
+          check-policies: "true"
+          issue-title: "Team API drift — examples/acme-org"
