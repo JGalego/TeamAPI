@@ -21,6 +21,7 @@ import { gapsRoutes } from "./routes/gaps";
 import { checksRoutes } from "./routes/checks";
 import { healthRoutes } from "./routes/health";
 import { metricsRoutes } from "./routes/metrics";
+import { proposalRoutes, type ProposalRouteOptions } from "./routes/proposals";
 import { dashboardRoutes } from "./routes/dashboard";
 import { knowledgeRoutes } from "./routes/knowledge";
 import { contextRoutes } from "./routes/context";
@@ -45,6 +46,9 @@ export interface BuildServerOptions {
   /** Enables `GET /search?mode=hybrid|semantic` and `POST /context {semantic:true}`. Omitted, both
    * answer 400 rather than quietly falling back to substring matching. */
   embeddings?: EmbeddingProvider;
+  /** Mounts `POST /teams/:id/proposals`, which opens a pull request against the repository the
+   * documents came from. Omitted, there is no write path at all. */
+  proposals?: ProposalRouteOptions;
   /** Mounts `GET /metrics` in the Prometheus exposition format. Off by default: it is one more
    * surface, and a server nobody scrapes should not have one. */
   metrics?: boolean;
@@ -61,8 +65,12 @@ const packageVersion = (JSON.parse(readFileSync(join(__dirname, "..", "package.j
   .version;
 
 /**
- * Builds a Fastify app over an already-`load()`ed `OrgGraphStore`. Read-only: there is
- * intentionally no write path, since the Team API documents are the git-managed source of truth.
+ * Builds a Fastify app over an already-`load()`ed `OrgGraphStore`.
+ *
+ * Read-only by default, since the Team API documents are the git-managed source of truth. The one
+ * exception is opt-in and does not break that model: with `proposals` configured, a team can be
+ * edited into a *pull request* against the repository the documents came from — reviewed,
+ * attributable and declinable, rather than written straight into the served graph.
  *
  * Interactive docs (OpenAPI + Swagger UI "Try it out") are served at `/docs`. Routes declare
  * `summary`/`description`/`tags`/`querystring`/`params` schemas for documentation; response bodies
@@ -141,6 +149,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "MCP", description: "Model Context Protocol over Streamable HTTP" },
         { name: "Health", description: "Liveness check" },
         { name: "Metrics", description: "Prometheus metrics for the org graph and this server" },
+        { name: "Proposals", description: "Propose a change to a team as a pull request" },
       ],
     },
   });
@@ -151,7 +160,13 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
 
   app.get("/", { schema: { hide: true } }, async (_req, reply) => reply.redirect("/docs"));
 
-  await app.register(healthRoutes);
+  await app.register(healthRoutes, {
+    proposals: Boolean(options.proposals),
+    semanticSearch: Boolean(options.embeddings),
+    metrics: Boolean(options.metrics),
+    reload: Boolean(options.reload),
+    mcp: Boolean(options.mcpHandler),
+  });
   if (options.metrics) {
     await app.register(metricsRoutes, { http: httpMetrics, version: packageVersion });
   }
@@ -176,6 +191,9 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   }
   if (options.mcpHandler) {
     await app.register(mcpRoutes, { handler: options.mcpHandler });
+  }
+  if (options.proposals) {
+    await app.register(proposalRoutes, options.proposals);
   }
   await app.register(dashboardRoutes);
 

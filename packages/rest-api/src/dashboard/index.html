@@ -281,6 +281,33 @@
   .detail-list li { margin: 3px 0; }
   .vacant { color: #b45309; }
 
+  /* The proposal form. Deliberately plain: this is a change request, not a settings screen, and
+     anything that looks like a settings screen implies the change takes effect when you save it. */
+  .propose-form { display: grid; gap: 10px; }
+  .propose-form label { display: grid; gap: 4px; font-size: 0.82rem; color: var(--ink-muted); }
+  .propose-form input, .propose-form textarea {
+    font: inherit;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--ink);
+  }
+  .propose-scores { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+  .propose-actions { display: flex; gap: 8px; align-items: center; }
+  .propose-actions button {
+    font: inherit;
+    padding: 6px 12px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .propose-note { font-size: 0.8rem; color: var(--ink-muted); }
+  .propose-result { font-size: 0.85rem; }
+  .propose-result.error { color: #b45309; }
+
   footer {
     text-align: center;
     color: var(--ink-muted);
@@ -378,6 +405,20 @@
       if (child) el.appendChild(child);
     }
     return el;
+  }
+
+  // Which optional surfaces this server actually has. Asked once, at startup, because offering an
+  // edit button that 404s is worse than not offering one.
+  let proposalsEnabled = false;
+
+  async function loadCapabilities() {
+    try {
+      const health = await getJson("/health");
+      proposalsEnabled = Boolean(health.capabilities && health.capabilities.proposals);
+    } catch {
+      // A server too old to report capabilities is a server without them.
+      proposalsEnabled = false;
+    }
   }
 
   async function getJson(url) {
@@ -653,6 +694,89 @@
         "No dependencies declared.",
       ),
     );
+
+    if (proposalsEnabled) section("Propose a change", proposeForm(team, teamId));
+  }
+
+  /**
+   * The write path, such as it is: an edit that becomes a pull request.
+   *
+   * Two fields and four numbers, which is the whole point. The dashboard is read by people who
+   * will never open an editor, and the things most often wrong about a team are what it says it
+   * does and how loaded it says it is. Everything structural — refs, ids, interactions — is
+   * absent, because changing those changes what every other document resolves to and that belongs
+   * in a branch somebody reads.
+   *
+   * The button says "Open a pull request", not "Save". Nothing here changes the served graph.
+   */
+  function proposeForm(team, teamId) {
+    const load = team.cognitiveLoad ?? {};
+    const scoreInput = (name, value) =>
+      h("label", { text: name }, [
+        h("input", { type: "number", min: "1", max: "10", name, value: value === undefined ? "" : String(value) }),
+      ]);
+
+    const form = h("form", { class: "propose-form" }, [
+      h("label", { text: "Focus" }, [h("input", { type: "text", name: "focus", value: team.focus ?? "" })]),
+      h("div", { class: "propose-scores" }, [
+        scoreInput("intrinsic", load.intrinsic),
+        scoreInput("extraneous", load.extraneous),
+        scoreInput("germane", load.germane),
+        scoreInput("supervision", load.supervision),
+      ]),
+      h("label", { text: "Notes" }, [h("textarea", { name: "notes", rows: "2" })]),
+      h("label", { text: "Your name or address (credited in the pull request)" }, [
+        h("input", { type: "text", name: "author" }),
+      ]),
+      h("div", { class: "propose-actions" }, [
+        h("button", { type: "submit", text: "Open a pull request" }),
+        h("span", { class: "propose-note", text: "Nothing changes until somebody reviews and merges it." }),
+      ]),
+      h("div", { class: "propose-result" }),
+    ]);
+
+    form.querySelector('textarea[name="notes"]').value = load.notes ?? "";
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const result = form.querySelector(".propose-result");
+      result.className = "propose-result";
+      result.textContent = "Opening…";
+
+      const value = (name) => form.querySelector(`[name="${name}"]`).value.trim();
+      const number = (name) => (value(name) === "" ? undefined : Number(value(name)));
+
+      const patch = {};
+      if (value("focus") && value("focus") !== (team.focus ?? "")) patch.info = { focus: value("focus") };
+      // All four scores travel together or not at all: the assessment is one judgement made at one
+      // time, and sending a new intrinsic alone would merge it into last quarter's extraneous.
+      if (number("intrinsic") && number("extraneous") && number("germane")) {
+        patch.cognitiveLoad = {
+          intrinsic: number("intrinsic"),
+          extraneous: number("extraneous"),
+          germane: number("germane"),
+          ...(number("supervision") ? { supervision: number("supervision") } : {}),
+          ...(value("notes") ? { notes: value("notes") } : {}),
+        };
+      }
+
+      try {
+        const res = await fetch(`/teams/${teamId}/proposals`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patch, author: value("author") || undefined }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error ?? `${res.status}`);
+        result.innerHTML = "";
+        result.appendChild(h("a", { href: body.url, target: "_blank", rel: "noreferrer", text: `Opened #${body.number} →` }));
+      } catch (err) {
+        result.className = "propose-result error";
+        result.textContent = String(err.message ?? err);
+      }
+    });
+
+    return form;
   }
 
   async function loadDiagram(scope) {
@@ -744,6 +868,10 @@
   async function init() {
     wireTabs();
     wireSearch();
+
+    // Awaited before anything renders, since it decides whether the team panel offers an edit
+    // form at all. It is one small request against the one route that never needs a token.
+    await loadCapabilities();
 
     // Each section is independent: the org summary/team grid, the cognitive-load list, and the
     // diagram all come from separate requests and (in the diagram's case) a separate CDN

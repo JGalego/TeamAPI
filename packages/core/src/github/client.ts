@@ -78,6 +78,86 @@ export class GithubClient {
     return (await res.json()) as T;
   }
 
+  /** The repository's default branch, so a proposal does not have to be told what it is. */
+  async getDefaultBranch(owner: string, repo: string): Promise<string> {
+    const info = await this.request<{ default_branch: string }>("GET", `/repos/${owner}/${repo}`);
+    return info.default_branch;
+  }
+
+  async getBranchSha(owner: string, repo: string, branch: string): Promise<string> {
+    const ref = await this.request<{ object: { sha: string } }>(
+      "GET",
+      `/repos/${owner}/${repo}/git/ref/heads/${encodeURIComponent(branch)}`,
+    );
+    return ref.object.sha;
+  }
+
+  async branchExists(owner: string, repo: string, branch: string): Promise<boolean> {
+    try {
+      await this.getBranchSha(owner, repo, branch);
+      return true;
+    } catch {
+      // A 404 is the answer, not a failure — every other error shape would also land here, and
+      // the caller's next move (create the branch) fails loudly on its own if the cause was
+      // something else.
+      return false;
+    }
+  }
+
+  async createBranch(owner: string, repo: string, branch: string, fromSha: string): Promise<void> {
+    await this.request("POST", `/repos/${owner}/${repo}/git/refs`, { ref: `refs/heads/${branch}`, sha: fromSha });
+  }
+
+  /** The blob sha of a file on a branch, or undefined when it does not exist there. Required to
+   * update a file: GitHub uses it to reject a write computed against content that has since
+   * changed, which is exactly the check a proposal needs. */
+  async getFileSha(owner: string, repo: string, path: string, ref: string): Promise<string | undefined> {
+    try {
+      const file = await this.request<{ sha: string }>(
+        "GET",
+        `/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`,
+      );
+      return file.sha;
+    } catch {
+      return undefined;
+    }
+  }
+
+  async putFile(
+    owner: string,
+    repo: string,
+    input: { path: string; branch: string; message: string; content: string; sha?: string },
+  ): Promise<void> {
+    await this.request("PUT", `/repos/${owner}/${repo}/contents/${input.path}`, {
+      message: input.message,
+      branch: input.branch,
+      content: Buffer.from(input.content, "utf-8").toString("base64"),
+      ...(input.sha ? { sha: input.sha } : {}),
+    });
+  }
+
+  /** An open pull request from `head`, if one is already there. Proposals are idempotent, so this
+   * is how a repeated proposal updates its pull request rather than opening a second one. */
+  async findPullRequest(
+    owner: string,
+    repo: string,
+    head: string,
+  ): Promise<{ number: number; html_url: string } | undefined> {
+    const open = await this.request<Array<{ number: number; html_url: string }>>(
+      "GET",
+      `/repos/${owner}/${repo}/pulls?state=open&head=${encodeURIComponent(`${owner}:${head}`)}`,
+    );
+    return open[0];
+  }
+
+  createPullRequest(
+    owner: string,
+    repo: string,
+    input: { title: string; body: string; head: string; base: string },
+  ): Promise<{ number: number; html_url: string }> {
+    return this.request<{ number: number; html_url: string }>("POST", `/repos/${owner}/${repo}/pulls`, input);
+  }
+
   /** The authenticated login. Distinguishes a rejected token from an org with no teams. */
   async verify(): Promise<string> {
     const me = await this.request<{ login: string }>("GET", "/user");

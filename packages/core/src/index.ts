@@ -52,6 +52,8 @@ export * from "./git/ref-loader";
 export * from "./history/trends";
 export * from "./github/client";
 export * from "./apply/github-teams";
+export * from "./propose/patch";
+export * from "./propose/github-pr";
 export * from "./import/github-org";
 export * from "./import/backstage";
 export * from "./import/directory";

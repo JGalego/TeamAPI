@@ -19,10 +19,15 @@ beforeAll(async () => {
 });
 
 describe("REST API", () => {
-  it("GET /health", async () => {
+  it("GET /health reports liveness and which optional surfaces are mounted", async () => {
     const res = await app.inject({ method: "GET", url: "/health" });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: "ok" });
+    // Every optional surface is a startup decision, and a client has no other way to tell one
+    // that is switched off from one this build does not have.
+    expect(res.json()).toEqual({
+      status: "ok",
+      capabilities: { proposals: false, semanticSearch: false, metrics: false, reload: false, mcp: false },
+    });
   });
 
   it("GET /teams lists all four teams", async () => {

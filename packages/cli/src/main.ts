@@ -466,6 +466,8 @@ export function createProgram(): Command {
     .option("--reload-endpoint", "mount POST /reload without watching the filesystem")
     .option("--mcp", "also serve MCP over Streamable HTTP at POST /mcp")
     .option("--metrics", "also serve Prometheus metrics at GET /metrics")
+    .option("--propose-to <owner/repo>", "mount POST /teams/:id/proposals, opening PRs against this repo")
+    .option("--propose-base <branch>", "branch to open proposals against (default: the repo's default branch)")
     .option("--embeddings", "enable semantic/hybrid search (needs an OpenAI-compatible /embeddings endpoint)")
     .option(
       "--embeddings-url <url>",
@@ -488,6 +490,8 @@ export function createProgram(): Command {
           reloadEndpoint?: boolean;
           mcp?: boolean;
           metrics?: boolean;
+          proposeTo?: string;
+          proposeBase?: string;
           embeddings?: boolean;
           embeddingsUrl?: string;
           embeddingsModel?: string;
@@ -505,6 +509,8 @@ export function createProgram(): Command {
           reloadEndpoint: opts.reloadEndpoint,
           mcp: opts.mcp,
           metrics: opts.metrics,
+          proposeTo: opts.proposeTo,
+          proposeBase: opts.proposeBase,
           embeddings: opts.embeddings,
           embeddingsUrl: opts.embeddingsUrl,
           embeddingsModel: opts.embeddingsModel,

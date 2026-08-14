@@ -1,3 +1,4 @@
+import * as path from "node:path";
 import {
   EmbeddingCache,
   OpenAiEmbeddingProvider,
@@ -5,6 +6,7 @@ import {
   watchOrgGraph,
   withEmbeddingCache,
   type EmbeddingProvider,
+  type ProposalRepo,
 } from "@jgalego/teamapi-core";
 import { buildServer } from "@jgalego/teamapi-rest-api";
 import { createMcpHttpHandler } from "@jgalego/teamapi-mcp-server";
@@ -30,6 +32,10 @@ export interface ServeApiOptions extends ConfigAwareOptions {
   mcp?: boolean;
   /** Mount `GET /metrics` in the Prometheus exposition format. */
   metrics?: boolean;
+  /** `owner/repo` to open team-edit pull requests against. Requires GITHUB_TOKEN. */
+  proposeTo?: string;
+  /** Branch to open proposals against. Defaults to the repository's default branch. */
+  proposeBase?: string;
   /** Enable embedding-backed search: `GET /search?mode=hybrid` and `POST /context {semantic:true}`. */
   embeddings?: boolean;
   /** OpenAI-compatible `/embeddings` base URL. Defaults to OPENAI_BASE_URL, then OpenAI's own. */
@@ -57,6 +63,48 @@ export function buildEmbeddings(options: ServeApiOptions): EmbeddingProvider | u
   const configured = process.env.TEAMAPI_CACHE_DIR;
   const dir = configured === undefined || configured === "" ? ".teamapi-cache" : configured;
   return withEmbeddingCache(provider, new EmbeddingCache(`${dir.replace(/\/+$/, "")}/embeddings`));
+}
+
+/**
+ * The proposal write path's configuration, or undefined when it was not asked for.
+ *
+ * The repository root is derived from the seeds' common ancestor rather than configured
+ * separately: the documents the server resolved are the documents a proposal edits, and asking for
+ * that path twice is asking for the two to disagree.
+ */
+export function buildProposals(
+  options: ServeApiOptions,
+  seeds: string[],
+): { repo: ProposalRepo; token: string } | undefined {
+  if (!options.proposeTo) return undefined;
+
+  const [owner, repo] = options.proposeTo.split("/");
+  if (!owner || !repo) {
+    throw new Error(`--propose-to expects owner/repo, got '${options.proposeTo}'.`);
+  }
+  const token = process.env.GITHUB_TOKEN ?? process.env.GH_TOKEN;
+  if (!token) {
+    throw new Error("--propose-to needs a GitHub token with write access: set GITHUB_TOKEN or GH_TOKEN.");
+  }
+
+  return {
+    repo: { owner, repo, baseBranch: options.proposeBase, rootDir: commonAncestor(seeds) },
+    token,
+  };
+}
+
+/** The deepest directory containing every seed. */
+export function commonAncestor(paths: string[]): string {
+  if (paths.length === 0) return process.cwd();
+  const split = paths.map((p) => path.dirname(path.resolve(p)).split(path.sep));
+  const first = split[0]!;
+  let shared = first.length;
+  for (const parts of split.slice(1)) {
+    let i = 0;
+    while (i < shared && i < parts.length && parts[i] === first[i]) i++;
+    shared = i;
+  }
+  return first.slice(0, shared).join(path.sep) || path.sep;
 }
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
@@ -107,6 +155,10 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
   await store.load();
   warnUnresolved(store.current);
 
+  // Resolved before the server is built so a misconfigured write path fails at startup rather
+  // than on somebody's first attempt to use it.
+  const proposals = buildProposals(options, seeds);
+
   const corsOrigin = options.corsOrigin ?? serve.corsOrigin;
   const rateLimit = options.rateLimit ?? serve.rateLimit;
 
@@ -134,6 +186,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
     mcpHandler: options.mcp ? createMcpHttpHandler(store) : undefined,
     metrics: options.metrics,
     embeddings: buildEmbeddings(options),
+    proposals: proposals ?? undefined,
   });
 
   // The Unix idiom for "re-read your configuration" — the one trigger that needs neither a
@@ -148,6 +201,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
   if (options.mcp) console.log(`MCP (Streamable HTTP): http://${host}:${port}/mcp`);
   if (options.metrics) console.log(`Metrics (Prometheus): http://${host}:${port}/metrics`);
   if (options.embeddings) console.log("Search: lexical, hybrid and semantic (embedding model configured)");
+  if (proposals) console.log(`Proposals: POST /teams/:id/proposals opens a PR against ${options.proposeTo}`);
   if (watcher) {
     console.log(
       options.watch
