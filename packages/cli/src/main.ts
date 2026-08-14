@@ -18,6 +18,7 @@ import { runSchema } from "./commands/schema";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
 import { HISTORY_PERIODS, runHistory, type HistoryPeriod } from "./commands/history";
+import { DIGEST_FORMATS, runDigest, type DigestFormat } from "./commands/digest";
 import { runApply } from "./commands/apply";
 import { APPLY_TARGETS, runApplyIntegration, type ApplyTarget } from "./commands/apply-integration";
 import { runSlackSync } from "./commands/slack-sync";
@@ -303,6 +304,36 @@ export function createProgram(): Command {
           since: opts.since,
           limit: opts.limit,
           format: opts.format,
+        });
+      },
+    );
+
+  const digestCommand = program
+    .command("digest")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
+    .description("Summarise gaps, policy and topology findings — and what moved since last run — for a schedule");
+  digestCommand
+    .addOption(digestCommand.createOption("--format <format>", "text | json | html | slack").choices(DIGEST_FORMATS))
+    .option("--webhook <url>", "post to a Slack/Teams incoming webhook (defaults to TEAMAPI_DIGEST_WEBHOOK)")
+    .option("--state <file>", "compare against this snapshot, then rewrite it")
+    .option("--out <file>", "write the rendered digest here instead of stdout")
+    .option("--limit <n>", "findings to include before the list is capped", parsePositiveInt)
+    .option("--title <title>", "title on the message")
+    .action(
+      async (
+        patterns: string[],
+        opts: { format?: string; webhook?: string; state?: string; out?: string; limit?: number; title?: string },
+      ) => {
+        process.exitCode = await runDigest(patterns, {
+          format: opts.format as DigestFormat | undefined,
+          // Read from the environment as well as the flag: a webhook URL is a credential — anyone
+          // holding it can post to the channel — so it must not have to appear in a command line
+          // that lands in a CI log.
+          webhook: opts.webhook ?? process.env.TEAMAPI_DIGEST_WEBHOOK,
+          state: opts.state,
+          out: opts.out,
+          limit: opts.limit,
+          title: opts.title,
         });
       },
     );

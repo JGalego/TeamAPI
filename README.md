@@ -71,6 +71,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🫥 Shadow AI](#shadow-ai)
 - [🔁 CI integration](#ci-integration)
   - [🛰️ Drift watch](#drift-watch)
+  - [📮 Weekly digest](#digest)
 - [🔗 Paperclip](#paperclip)
 - [💬 Slack](#slack)
 - [📟 PagerDuty](#pagerduty)
@@ -1008,6 +1009,7 @@ None of these APIs has a transaction, so a failure partway through says so and t
 | `teamapi schema [--out <file>]`                                                                                                                                                                                                                   | Print the [JSON Schema](#editor-support) for the document format                                                                                                                                                                         |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>`                                                                                       | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
 | `teamapi history <patterns...> [--period commit\|day\|week\|month\|quarter] [--since <when>] [--format text\|json\|csv]`                                                                                                                          | Track how the org changed over git history ([trends](#org-history))                                                                                                                                                                      |
+| `teamapi digest <patterns...> [--format text\|json\|html\|slack] [--webhook <url>] [--state <file>] [--out <file>]`                                                                                                                               | Summarise findings and what moved, for a schedule ([weekly digest](#digest))                                                                                                                                                             |
 | `teamapi diff <patterns...> --against <ref>`                                                                                                                                                                                                      | Diff the resolved org graph against a git revision                                                                                                                                                                                       |
 | `teamapi import <source> [argument] --out <dir> [--token <token>] [--url <url>] [--prefix <prefix>] [--match <regex>]`                                                                                                                            | Bootstrap `teamapi.yml` document(s) from GitHub, Backstage, Okta, Slack or a CSV ([import](#import))                                                                                                                                     |
 | `teamapi apply-to <slack\|okta\|pagerduty> <patterns...> [--token <token>] [--url <url>] [--prefix <prefix>] [--yes]`                                                                                                                             | Reconcile Slack/Okta/PagerDuty membership with the org graph ([write back](#apply-to))                                                                                                                                                   |
@@ -1472,6 +1474,36 @@ The issue is found by a marker in its body rather than by title, so it survives 
 This repo ships [`.github/workflows/drift.yml`](.github/workflows/drift.yml) wired to `examples/acme-org`. Its schedule is inert until you set the repository variable `TEAMAPI_DRIFT_ENABLED` to `true` — `workflow_dispatch` always works, so you can try it before committing to the cadence.
 
 <a id="paperclip"></a>
+
+<a id="digest"></a>
+
+### 📮 Weekly digest
+
+Drift watch keeps an issue in sync. `teamapi digest` pushes the same picture somewhere people already look:
+
+```bash
+teamapi digest ./org --state .digest-state.json   # posts to $TEAMAPI_DIGEST_WEBHOOK
+```
+
+```text
+3 teams — 2 blocking, 8 warnings.
+
+Since last time:
+  blocking gaps: 0 → 2 (+2)
+  mean supervision: 6 → 0 (-6)
+
+  ! platform-data [dangling-owner] agent 'pipeline-reviewer' is owned by 'dana-whitfield', who is not a member of platform-data
+  ! platform-data [orphan-subscription] 'feature-store' subscribes to 'ModelTrained', which no declared service publishes
+  - stream-insights [unaccountable-agent] agent 'report-writer' names no ownerId, so nobody is accountable for it
+```
+
+`gaps`, `policy` and `topology` could always answer this. Getting the answer meant remembering to run three commands — and the findings that matter most are also the least urgent-feeling, so they wait behind whatever is on fire. Indefinitely.
+
+**`--state` is what makes it a digest rather than a report.** "Four blocking gaps" is a number people learn to scroll past; "two more than last week" is not. It's a JSON file, not a database: a workflow cache, an artifact, or a committed file all work, and asking somebody to provision storage to receive a weekly summary is how a feature goes unadopted. Only what _moved_ is listed — eight unchanged numbers every week is a digest people filter into a folder.
+
+`--format html` for email, `--format json` for anything else, `--webhook` (or `TEAMAPI_DIGEST_WEBHOOK`, since a webhook URL is a credential and shouldn't have to appear in a command line that lands in a CI log). It always exits 0: a digest that failed the build on a warning would be switched off within a fortnight, and then nobody would get the digest either.
+
+`.github/workflows/digest.yml` runs it weekly, keeping the state file in the Actions cache. Like the drift watch, it's inert until you set `TEAMAPI_DIGEST_ENABLED` — a workflow that started posting into somebody's Slack the moment they merged it would be a bad neighbour.
 
 ## 🔗 Paperclip
 

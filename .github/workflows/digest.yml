@@ -1,0 +1,75 @@
+name: Org Digest
+
+# Posts the org's state of play to Slack on a cadence, with what moved since the last run.
+#
+# `gaps`, `policy` and `topology` have always been able to answer this; getting the answer needed
+# somebody to remember to run three commands, and the findings that matter most are the least
+# urgent-feeling ones, so they wait behind whatever is on fire. Indefinitely.
+#
+# Inert until you opt in, like the drift watch: the job is gated on the repository variable
+# TEAMAPI_DIGEST_ENABLED being "true" (Settings → Secrets and variables → Actions → Variables). A
+# workflow that started posting into somebody's Slack the moment they merged it would be a bad
+# neighbour, and a schedule is the one trigger nobody explicitly presses.
+on:
+  schedule:
+    # 08:00 UTC on Mondays: the start of a week is when a summary of last week is worth reading,
+    # and never at midnight, where every scheduled workflow on GitHub piles up and runs late.
+    - cron: "0 8 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  digest:
+    # `workflow_dispatch` always runs, so the digest can be previewed without flipping the variable
+    # first; only the unattended schedule needs the opt-in.
+    if: github.event_name == 'workflow_dispatch' || vars.TEAMAPI_DIGEST_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+
+      - name: Install teamapi
+        run: npm install --global @jgalego/teamapi
+
+      # The comparison point, kept in the Actions cache rather than a database. The restore key is
+      # deliberately loose so a run always finds the most recent snapshot, whatever week it was
+      # written in; the primary key includes the run number so each run writes a new entry rather
+      # than trying to overwrite an immutable one.
+      - name: Restore last week's snapshot
+        uses: actions/cache/restore@v4
+        with:
+          path: .teamapi-digest-state.json
+          key: teamapi-digest-${{ github.run_number }}
+          restore-keys: teamapi-digest-
+
+      - name: Post the digest
+        env:
+          TEAMAPI_DIGEST_WEBHOOK: ${{ secrets.TEAMAPI_DIGEST_WEBHOOK }}
+        run: |
+          if [ -z "$TEAMAPI_DIGEST_WEBHOOK" ]; then
+            echo "::warning::No TEAMAPI_DIGEST_WEBHOOK secret set — printing the digest instead of posting it."
+            teamapi digest examples/acme-org --state .teamapi-digest-state.json
+          else
+            teamapi digest examples/acme-org --state .teamapi-digest-state.json \
+              --title "Team API digest — $(date -u +%Y-%m-%d)"
+          fi
+
+      # Saved only after a successful post, because the CLI writes the state file last for the same
+      # reason: a failed delivery that still consumed the comparison point would make next week's
+      # digest report no change at all.
+      - name: Save this week's snapshot
+        uses: actions/cache/save@v4
+        with:
+          path: .teamapi-digest-state.json
+          key: teamapi-digest-${{ github.run_number }}
