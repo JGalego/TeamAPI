@@ -385,6 +385,7 @@ export function createProgram(): Command {
     .option("--watch", "re-resolve the graph when a team document changes")
     .option("--reload-endpoint", "mount POST /reload without watching the filesystem")
     .option("--mcp", "also serve MCP over Streamable HTTP at POST /mcp")
+    .option("--metrics", "also serve Prometheus metrics at GET /metrics")
     .option("--config <file>", "path to teamapi.config.yml")
     .option("--no-config", "ignore any config file")
     .action(
@@ -400,6 +401,7 @@ export function createProgram(): Command {
           watch?: boolean;
           reloadEndpoint?: boolean;
           mcp?: boolean;
+          metrics?: boolean;
           config?: string | boolean;
         },
       ) => {
@@ -413,6 +415,7 @@ export function createProgram(): Command {
           watch: opts.watch,
           reloadEndpoint: opts.reloadEndpoint,
           mcp: opts.mcp,
+          metrics: opts.metrics,
           ...configFlags(opts),
         });
       },

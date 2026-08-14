@@ -9,6 +9,7 @@ import type { OrgGraphStore } from "@jgalego/teamapi-core";
 import { registerOrgGraphStore } from "./plugins/org-graph";
 import { registerAuth } from "./plugins/auth";
 import { registerEtag } from "./plugins/etag";
+import { HttpMetrics, registerHttpMetrics } from "./plugins/http-metrics";
 import { teamsRoutes } from "./routes/teams";
 import { servicesRoutes } from "./routes/services";
 import { searchRoutes } from "./routes/search";
@@ -19,6 +20,7 @@ import { cognitiveLoadRoutes } from "./routes/cognitive-load";
 import { gapsRoutes } from "./routes/gaps";
 import { checksRoutes } from "./routes/checks";
 import { healthRoutes } from "./routes/health";
+import { metricsRoutes } from "./routes/metrics";
 import { dashboardRoutes } from "./routes/dashboard";
 import { knowledgeRoutes } from "./routes/knowledge";
 import { contextRoutes } from "./routes/context";
@@ -40,6 +42,9 @@ export interface BuildServerOptions {
   corsOrigins?: string[];
   /** Requests allowed per minute, per client IP. Omitted means no limit. */
   rateLimitPerMinute?: number;
+  /** Mounts `GET /metrics` in the Prometheus exposition format. Off by default: it is one more
+   * surface, and a server nobody scrapes should not have one. */
+  metrics?: boolean;
   /** When supplied, mounts `POST /reload` and calls this to re-resolve the graph. */
   reload?: () => Promise<void>;
   /** When supplied, mounts `POST /mcp` and routes it to this handler. Injected so this package
@@ -69,6 +74,11 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   // Before the routes, so every GET — including any added later — gets a validator without having
   // to remember to ask for one.
   registerEtag(app);
+
+  // Registered whether or not /metrics is mounted, so switching the endpoint on mid-incident does
+  // not start from zero counters. The cost with no endpoint is one Map keyed by route template.
+  const httpMetrics = new HttpMetrics();
+  registerHttpMetrics(app, httpMetrics);
 
   if (options.corsOrigins && options.corsOrigins.length > 0) {
     await app.register(fastifyCors, { origin: options.corsOrigins, methods: ["GET", "POST"] });
@@ -126,6 +136,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Knowledge Graph", description: "Cross-resource graph traversal and visualization" },
         { name: "MCP", description: "Model Context Protocol over Streamable HTTP" },
         { name: "Health", description: "Liveness check" },
+        { name: "Metrics", description: "Prometheus metrics for the org graph and this server" },
       ],
     },
   });
@@ -137,6 +148,9 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   app.get("/", { schema: { hide: true } }, async (_req, reply) => reply.redirect("/docs"));
 
   await app.register(healthRoutes);
+  if (options.metrics) {
+    await app.register(metricsRoutes, { http: httpMetrics, version: packageVersion });
+  }
   if (options.reload) {
     await app.register(reloadRoutes, { reload: options.reload });
   }

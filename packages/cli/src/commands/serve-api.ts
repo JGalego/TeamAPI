@@ -21,6 +21,8 @@ export interface ServeApiOptions extends ConfigAwareOptions {
   reloadEndpoint?: boolean;
   /** Also serve MCP over Streamable HTTP at `POST /mcp`. */
   mcp?: boolean;
+  /** Mount `GET /metrics` in the Prometheus exposition format. */
+  metrics?: boolean;
 }
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
@@ -96,6 +98,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
     rateLimitPerMinute: rateLimit,
     reload: watcher ? () => watcher.reload() : undefined,
     mcpHandler: options.mcp ? createMcpHttpHandler(store) : undefined,
+    metrics: options.metrics,
   });
 
   // The Unix idiom for "re-read your configuration" — the one trigger that needs neither a
@@ -108,6 +111,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
   console.log(`REST API listening on http://${host}:${port}`);
   console.log(token ? "Authentication: bearer token required" : "Authentication: none (loopback only)");
   if (options.mcp) console.log(`MCP (Streamable HTTP): http://${host}:${port}/mcp`);
+  if (options.metrics) console.log(`Metrics (Prometheus): http://${host}:${port}/metrics`);
   if (watcher) {
     console.log(
       options.watch
