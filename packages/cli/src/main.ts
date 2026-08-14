@@ -386,6 +386,12 @@ export function createProgram(): Command {
     .option("--reload-endpoint", "mount POST /reload without watching the filesystem")
     .option("--mcp", "also serve MCP over Streamable HTTP at POST /mcp")
     .option("--metrics", "also serve Prometheus metrics at GET /metrics")
+    .option("--embeddings", "enable semantic/hybrid search (needs an OpenAI-compatible /embeddings endpoint)")
+    .option(
+      "--embeddings-url <url>",
+      "embeddings base URL, e.g. http://localhost:11434/v1 (defaults to OPENAI_BASE_URL)",
+    )
+    .option("--embeddings-model <id>", "embedding model id (default: text-embedding-3-small)")
     .option("--config <file>", "path to teamapi.config.yml")
     .option("--no-config", "ignore any config file")
     .action(
@@ -402,6 +408,9 @@ export function createProgram(): Command {
           reloadEndpoint?: boolean;
           mcp?: boolean;
           metrics?: boolean;
+          embeddings?: boolean;
+          embeddingsUrl?: string;
+          embeddingsModel?: string;
           config?: string | boolean;
         },
       ) => {
@@ -416,6 +425,9 @@ export function createProgram(): Command {
           reloadEndpoint: opts.reloadEndpoint,
           mcp: opts.mcp,
           metrics: opts.metrics,
+          embeddings: opts.embeddings,
+          embeddingsUrl: opts.embeddingsUrl,
+          embeddingsModel: opts.embeddingsModel,
           ...configFlags(opts),
         });
       },

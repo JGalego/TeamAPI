@@ -5,8 +5,8 @@ import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import fastifyCors from "@fastify/cors";
 import fastifyRateLimit from "@fastify/rate-limit";
-import type { OrgGraphStore } from "@jgalego/teamapi-core";
-import { registerOrgGraphStore } from "./plugins/org-graph";
+import type { EmbeddingProvider, OrgGraphStore } from "@jgalego/teamapi-core";
+import { registerEmbeddings, registerOrgGraphStore } from "./plugins/org-graph";
 import { registerAuth } from "./plugins/auth";
 import { registerEtag } from "./plugins/etag";
 import { HttpMetrics, registerHttpMetrics } from "./plugins/http-metrics";
@@ -42,6 +42,9 @@ export interface BuildServerOptions {
   corsOrigins?: string[];
   /** Requests allowed per minute, per client IP. Omitted means no limit. */
   rateLimitPerMinute?: number;
+  /** Enables `GET /search?mode=hybrid|semantic` and `POST /context {semantic:true}`. Omitted, both
+   * answer 400 rather than quietly falling back to substring matching. */
+  embeddings?: EmbeddingProvider;
   /** Mounts `GET /metrics` in the Prometheus exposition format. Off by default: it is one more
    * surface, and a server nobody scrapes should not have one. */
   metrics?: boolean;
@@ -70,6 +73,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   const app = Fastify({ logger: options.logger ?? false });
 
   registerOrgGraphStore(app, store);
+  registerEmbeddings(app, options.embeddings);
 
   // Before the routes, so every GET — including any added later — gets a validator without having
   // to remember to ask for one.

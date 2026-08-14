@@ -1,4 +1,11 @@
-import { OrgGraphStore, watchOrgGraph } from "@jgalego/teamapi-core";
+import {
+  EmbeddingCache,
+  OpenAiEmbeddingProvider,
+  OrgGraphStore,
+  watchOrgGraph,
+  withEmbeddingCache,
+  type EmbeddingProvider,
+} from "@jgalego/teamapi-core";
 import { buildServer } from "@jgalego/teamapi-rest-api";
 import { createMcpHttpHandler } from "@jgalego/teamapi-mcp-server";
 import { expandSeeds } from "../seeds";
@@ -23,6 +30,33 @@ export interface ServeApiOptions extends ConfigAwareOptions {
   mcp?: boolean;
   /** Mount `GET /metrics` in the Prometheus exposition format. */
   metrics?: boolean;
+  /** Enable embedding-backed search: `GET /search?mode=hybrid` and `POST /context {semantic:true}`. */
+  embeddings?: boolean;
+  /** OpenAI-compatible `/embeddings` base URL. Defaults to OPENAI_BASE_URL, then OpenAI's own. */
+  embeddingsUrl?: string;
+  embeddingsModel?: string;
+}
+
+/**
+ * The embedding provider, wrapped in the on-disk cache.
+ *
+ * Cached by default and not optionally: a server re-embeds the whole org on every reload, and a
+ * `--watch` server reloads whenever anyone saves a file. Without a cache that is a bill and a
+ * multi-second stall on every keystroke-adjacent event; with one, a reload re-embeds only the
+ * documents that actually changed.
+ */
+export function buildEmbeddings(options: ServeApiOptions): EmbeddingProvider | undefined {
+  if (!options.embeddings) return undefined;
+  const provider = new OpenAiEmbeddingProvider({
+    baseUrl: options.embeddingsUrl ?? process.env.OPENAI_BASE_URL,
+    apiKey: process.env.OPENAI_API_KEY,
+    model: options.embeddingsModel,
+  });
+  // `TEAMAPI_CACHE_DIR=` exported empty is how a CI matrix routinely un-sets a variable, and it
+  // means "unset" rather than "cache into the current directory".
+  const configured = process.env.TEAMAPI_CACHE_DIR;
+  const dir = configured === undefined || configured === "" ? ".teamapi-cache" : configured;
+  return withEmbeddingCache(provider, new EmbeddingCache(`${dir.replace(/\/+$/, "")}/embeddings`));
 }
 
 const LOOPBACK_HOSTS = new Set(["127.0.0.1", "::1", "localhost"]);
@@ -99,6 +133,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
     reload: watcher ? () => watcher.reload() : undefined,
     mcpHandler: options.mcp ? createMcpHttpHandler(store) : undefined,
     metrics: options.metrics,
+    embeddings: buildEmbeddings(options),
   });
 
   // The Unix idiom for "re-read your configuration" — the one trigger that needs neither a
@@ -112,6 +147,7 @@ export async function runServeApi(patterns: string[], options: ServeApiOptions):
   console.log(token ? "Authentication: bearer token required" : "Authentication: none (loopback only)");
   if (options.mcp) console.log(`MCP (Streamable HTTP): http://${host}:${port}/mcp`);
   if (options.metrics) console.log(`Metrics (Prometheus): http://${host}:${port}/metrics`);
+  if (options.embeddings) console.log("Search: lexical, hybrid and semantic (embedding model configured)");
   if (watcher) {
     console.log(
       options.watch

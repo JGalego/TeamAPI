@@ -1,9 +1,9 @@
 import type { FastifyInstance } from "fastify";
-import { deriveContextBundle, getTeam } from "@jgalego/teamapi-core";
+import { createEmbeddingScorer, deriveContextBundle, getTeam } from "@jgalego/teamapi-core";
 import { errorResponseSchema } from "../schemas/error";
 
 export async function contextRoutes(app: FastifyInstance): Promise<void> {
-  app.post<{ Body: { goal?: string; teamId?: string; limit?: number } }>(
+  app.post<{ Body: { goal?: string; teamId?: string; limit?: number; semantic?: boolean } }>(
     "/context",
     {
       schema: {
@@ -13,7 +13,8 @@ export async function contextRoutes(app: FastifyInstance): Promise<void> {
           "Given a goal (e.g. 'Implement OAuth'), assembles the minimum high-quality set of specifications, " +
           "steering documents, policies, memory, knowledge base entries, prompts, and playbooks relevant to it, " +
           "plus the scoped team's related teams, members, and services when teamId is given. Relevance is a " +
-          "keyword-overlap heuristic, not semantic search.",
+          "keyword overlap by default; set semantic=true to additionally rank by embedding " +
+          "similarity, which requires the server to have been started with an embedding model.",
         body: {
           type: "object",
           properties: {
@@ -24,6 +25,11 @@ export async function contextRoutes(app: FastifyInstance): Promise<void> {
                 "Scope the bundle to one team; boosts its own resources and adds relatedTeams/members/services",
             },
             limit: { type: "integer", minimum: 1, description: "Max items per resource category (default 5)" },
+            semantic: {
+              type: "boolean",
+              description: "Layer embedding similarity on top of keyword overlap. Needs --embeddings on the server.",
+              default: false,
+            },
           },
           required: ["goal"],
         },
@@ -36,7 +42,21 @@ export async function contextRoutes(app: FastifyInstance): Promise<void> {
       if (req.body.teamId && !getTeam(graph, req.body.teamId)) {
         return reply.code(404).send({ error: `Unknown team id '${req.body.teamId}'` });
       }
-      return deriveContextBundle(graph, { goal: req.body.goal, teamId: req.body.teamId, limit: req.body.limit });
+      let scorer;
+      if (req.body.semantic) {
+        if (!app.embeddings) {
+          return reply
+            .code(400)
+            .send({ error: "semantic=true requires an embedding model; start the server with --embeddings" });
+        }
+        scorer = await createEmbeddingScorer(graph, req.body.goal, { embeddings: app.embeddings }, req.body.teamId);
+      }
+      return deriveContextBundle(graph, {
+        goal: req.body.goal,
+        teamId: req.body.teamId,
+        limit: req.body.limit,
+        scorer,
+      });
     },
   );
 }

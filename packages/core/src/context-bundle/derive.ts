@@ -29,6 +29,20 @@ export interface ContextBundleRequest {
   teamId?: TeamId;
   /** Max items returned per resource category. Defaults to 5. */
   limit?: number;
+  /**
+   * Optional relevance signal layered on top of keyword overlap — in practice, embeddings.
+   *
+   * Injected rather than built in, so this function stays synchronous and pure: embedding is I/O,
+   * and every existing caller (the MCP tool, `POST /context`) would otherwise have to become async
+   * to gain a feature it may not have a model configured for. `createEmbeddingScorer` builds one.
+   */
+  scorer?: ContextBundleScorer;
+}
+
+/** Turns a candidate's text into an additional relevance score. Synchronous by construction: any
+ * I/O has to happen before ranking starts, which is what `createEmbeddingScorer` does. */
+export interface ContextBundleScorer {
+  score(text: string): number;
 }
 
 export interface ScoredEntry<T> {
@@ -100,22 +114,59 @@ function scoreText(
   return { score: matchedTerms.length, matchedTerms };
 }
 
+/** The text a scorer sees for a candidate — the same fields keyword overlap reads, joined, so the
+ * two signals are scored against identical material. */
+export function candidateText(fields: Array<string | undefined>, tags: readonly string[]): string {
+  return [...fields, ...tags].filter(Boolean).join(" ");
+}
+
 function rank<T extends { tags?: readonly string[] }>(
   entries: ResourceEntry<T>[],
   textFields: (item: T) => Array<string | undefined>,
   goalTokens: string[],
   teamId: TeamId | undefined,
   limit: number,
+  scorer: ContextBundleScorer | undefined,
 ): ScoredEntry<T>[] {
-  return entries
-    .map((entry) => {
-      const { score, matchedTerms } = scoreText(textFields(entry.item), entry.item.tags ?? [], goalTokens);
-      const boosted = teamId && entry.teamId === teamId ? score + SAME_TEAM_BOOST : score;
-      return { teamId: entry.teamId, item: entry.item, score: boosted, matchedTerms };
-    })
-    .filter((entry) => entry.score > 0)
-    .sort((a, b) => b.score - a.score)
-    .slice(0, limit);
+  return (
+    entries
+      .map((entry) => {
+        const tags = entry.item.tags ?? [];
+        const { score, matchedTerms } = scoreText(textFields(entry.item), tags, goalTokens);
+        const semantic = scorer ? scorer.score(candidateText(textFields(entry.item), tags)) : 0;
+        const boosted = (teamId && entry.teamId === teamId ? score + SAME_TEAM_BOOST : score) + semantic;
+        return { teamId: entry.teamId, item: entry.item, score: boosted, matchedTerms };
+      })
+      // A candidate the scorer alone surfaced is kept: that is the entire point of a semantic
+      // signal — the goal shares no words with the document that answers it.
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit)
+  );
+}
+
+/** Each category's candidates and the fields that describe them, in one place so the embedding
+ * scorer embeds exactly the text `rank` will later score. Two lists that drifted apart would look
+ * like a mysteriously bad ranking rather than like a bug. */
+export function contextBundleCandidateTexts(graph: OrgGraph, teamId?: TeamId): string[] {
+  const steeringEntries: ResourceEntry<SteeringDocument>[] = teamId
+    ? resolveEffectiveSteering(graph, teamId).map((item) => ({ teamId, item }))
+    : listAllSteeringAcrossOrg(graph);
+
+  const collect = <T extends { tags?: readonly string[] }>(
+    entries: ResourceEntry<T>[],
+    textFields: (item: T) => Array<string | undefined>,
+  ): string[] => entries.map((entry) => candidateText(textFields(entry.item), entry.item.tags ?? []));
+
+  return [
+    ...collect(listAllSpecifications(graph), (s) => [s.title, s.body]),
+    ...collect(steeringEntries, (d) => [d.title, d.body]),
+    ...collect(listAllPolicies(graph), (p) => [p.name, p.description]),
+    ...collect(searchMemory(graph), (m) => [m.title, m.body]),
+    ...collect(searchKnowledgeBase(graph), (k) => [k.title, k.body, k.category]),
+    ...collect(listAllPrompts(graph), (p) => [p.name, p.description, p.template]),
+    ...collect(listAllPlaybooks(graph), (p) => [p.name, p.documentation]),
+  ];
 }
 
 function relatedTeamIds(graph: OrgGraph, teamId: TeamId): TeamId[] {
@@ -136,16 +187,21 @@ function relatedTeamIds(graph: OrgGraph, teamId: TeamId): TeamId[] {
  * relevant to a stated `goal`, so an AI assistant doesn't have to fetch (or worse, guess at) the
  * whole org graph to get oriented.
  *
- * Relevance is a heuristic keyword-overlap score between `goal`'s tokens and each candidate
- * resource's text fields/tags, boosted for resources belonging to `teamId` when scoped. This is a
- * v1 scorer, not semantic search — nothing here stops swapping in embeddings-based ranking later
- * (see `docs/spec/teamapi-extended-v1.md`'s roadmap notes), but keyword overlap requires no
- * external model dependency and is transparent about *why* something was included (`matchedTerms`).
+ * Relevance is a keyword-overlap score between `goal`'s tokens and each candidate resource's text
+ * fields/tags, boosted for resources belonging to `teamId` when scoped. Keyword overlap needs no
+ * external model and is transparent about *why* something was included (`matchedTerms`), which is
+ * why it remains the default.
+ *
+ * `request.scorer` layers a second signal on top — `createEmbeddingScorer` builds one from
+ * embeddings — and is what surfaces the document that answers the goal while sharing none of its
+ * words. Additive rather than a replacement, so `matchedTerms` still says what it always said and
+ * a bundle stays explicable.
  */
 export function deriveContextBundle(graph: OrgGraph, request: ContextBundleRequest): ContextBundle {
   const goalTokens = tokenize(request.goal);
   const limit = request.limit ?? DEFAULT_LIMIT;
   const teamId = request.teamId;
+  const scorer = request.scorer;
 
   const team = teamId ? getTeam(graph, teamId) : undefined;
   const relatedTeams = teamId
@@ -164,13 +220,20 @@ export function deriveContextBundle(graph: OrgGraph, request: ContextBundleReque
     teamId,
     team: team ? toTeamSummaryDto(team) : undefined,
     relatedTeams,
-    specifications: rank(listAllSpecifications(graph), (s) => [s.title, s.body], goalTokens, teamId, limit),
-    steeringDocuments: rank(steeringEntries, (d) => [d.title, d.body], goalTokens, teamId, limit),
-    policies: rank(listAllPolicies(graph), (p) => [p.name, p.description], goalTokens, teamId, limit),
-    memory: rank(searchMemory(graph), (m) => [m.title, m.body], goalTokens, teamId, limit),
-    knowledgeBase: rank(searchKnowledgeBase(graph), (k) => [k.title, k.body, k.category], goalTokens, teamId, limit),
-    prompts: rank(listAllPrompts(graph), (p) => [p.name, p.description, p.template], goalTokens, teamId, limit),
-    playbooks: rank(listAllPlaybooks(graph), (p) => [p.name, p.documentation], goalTokens, teamId, limit),
+    specifications: rank(listAllSpecifications(graph), (s) => [s.title, s.body], goalTokens, teamId, limit, scorer),
+    steeringDocuments: rank(steeringEntries, (d) => [d.title, d.body], goalTokens, teamId, limit, scorer),
+    policies: rank(listAllPolicies(graph), (p) => [p.name, p.description], goalTokens, teamId, limit, scorer),
+    memory: rank(searchMemory(graph), (m) => [m.title, m.body], goalTokens, teamId, limit, scorer),
+    knowledgeBase: rank(
+      searchKnowledgeBase(graph),
+      (k) => [k.title, k.body, k.category],
+      goalTokens,
+      teamId,
+      limit,
+      scorer,
+    ),
+    prompts: rank(listAllPrompts(graph), (p) => [p.name, p.description, p.template], goalTokens, teamId, limit, scorer),
+    playbooks: rank(listAllPlaybooks(graph), (p) => [p.name, p.documentation], goalTokens, teamId, limit, scorer),
     services: teamId ? listServices(graph).filter((s) => s.teamId === teamId) : [],
     members: teamId ? listMembers(graph, teamId) : [],
   };
