@@ -4,15 +4,19 @@
 //   node scripts/build-docs.mjs --out site-out/latest --label latest
 //   node scripts/build-docs.mjs --out site-out/v0.5 --label v0.5 --source /tmp/worktree
 //
-// The README is 60KB of prose that answers every question this project has, and it answers them in
-// one scroll with no navigation — which means it is read once, by whoever is installing, and never
-// again. This turns it and everything under docs/ into pages with a sidebar, search, per-page
-// tables of contents and stable heading anchors, and stamps a version on the result so a reader on
-// 0.4 is not being told about a flag that shipped in 0.6.
+// The README is 118KB of prose that answers every question this project has, and it answers them
+// in one scroll with no navigation — which means it is read once, by whoever is installing, and
+// never again. This turns it into a page per section, plus everything under docs/, with a
+// sidebar, search, per-page tables of contents and stable heading anchors, and stamps a version
+// on the result so a reader on 0.4 is not being told about a flag that shipped in 0.6.
 //
-// Deliberately not a framework. A docs site that needs a build toolchain to survive is a docs site
-// that stops building the first time somebody upgrades Node, and the whole content set here is
-// markdown files that already exist. `marked` renders them; everything else is string
+// The spec deliberately stays one page. Half its sections are a paragraph long, specs are read
+// linearly and searched with Ctrl+F, and people cite them by fragment — splitting one improves
+// nothing and breaks citations.
+//
+// Deliberately not a framework. A docs site that needs a build toolchain to survive is a docs
+// site that stops building the first time somebody upgrades Node, and the whole content set here
+// is markdown files that already exist. `marked` renders them; everything else is string
 // concatenation and the CSS inherited from the landing page.
 //
 // The one external request the pages make is mermaid from jsDelivr, and only on pages that
@@ -21,7 +25,7 @@
 // is unreachable the diagram source stays visible as text, which is what GitHub showed for years.
 
 import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync, cpSync } from "node:fs";
-import { dirname, join, relative, resolve } from "node:path";
+import { dirname, join, posix, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { marked } from "marked";
 
@@ -38,13 +42,90 @@ const source = resolve(flag("source", REPO));
 const outDir = resolve(flag("out", join(REPO, "site-out", "latest")));
 const label = flag("label", "latest");
 
-/** Every page the site is built from, in sidebar order. */
+const escapeHtml = (text) =>
+  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+/** "🚀 Quick start" → "Quick start". The sidebar lists thirty of these; one emoji per line is
+ * texture on GitHub and noise in a navigation column. */
+const stripEmoji = (title) => title.replace(/^[^\p{L}\p{N}`]+/u, "").trim();
+
+const fileSlug = (title) =>
+  stripEmoji(title)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+/**
+ * Splits a markdown document at its `## ` headings, fence-aware.
+ *
+ * Two details matter. Heading levels are promoted (## → #, ### → ##) so each section page has a
+ * proper h1 — the slug only depends on the text, so every `#anchor` written against the original
+ * levels still resolves. And a trailing run of blank lines and `<a id=...>` anchors is peeled off
+ * each section and moved into the next one: the README writes its anchors *above* each heading,
+ * and a naive split would strand every one of them at the bottom of the previous page, sending
+ * each link one section too early.
+ */
+function splitByH2(markdown) {
+  const lines = markdown.split("\n");
+  const sections = [{ heading: null, lines: [] }];
+  let fence = false;
+
+  for (const line of lines) {
+    if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+    if (!fence && line.startsWith("## ")) {
+      const prev = sections[sections.length - 1].lines;
+      const carried = [];
+      while (prev.length && /^(\s*|<a id="[^"]*"><\/a>)$/.test(prev[prev.length - 1])) carried.unshift(prev.pop());
+      sections.push({ heading: line.slice(3).trim(), lines: [...carried, `# ${line.slice(3).trim()}`] });
+    } else if (!fence && sections.length > 1 && /^(#{3,6}) /.test(line)) {
+      sections[sections.length - 1].lines.push(line.replace(/^#/, ""));
+    } else {
+      sections[sections.length - 1].lines.push(line);
+    }
+  }
+
+  return {
+    intro: sections[0].lines.join("\n"),
+    sections: sections.slice(1).map((s) => ({ heading: s.heading, markdown: s.lines.join("\n") })),
+  };
+}
+
+function titleCase(slug) {
+  const special = { opentelemetry: "OpenTelemetry", codeowners: "CODEOWNERS", pagerduty: "PagerDuty", okta: "Okta" };
+  return (
+    special[slug] ?? slug.replace(/(^|[-/])([a-z])/g, (_, sep, ch) => (sep === "-" ? " " : sep) + ch.toUpperCase())
+  );
+}
+
+/**
+ * Every page the site is built from, in sidebar and reading order.
+ *
+ * Each entry carries its markdown directly. Most pages are whole files; the README becomes a
+ * landing page plus one page per section, all sharing `src` so fragment links written against
+ * the original single document can be re-aimed at whichever page their target ended up on.
+ */
 function collectPages() {
-  const pages = [{ src: "README.md", out: "index.html", title: "Overview", group: "Start here" }];
+  const pages = [];
+  const read = (rel) => readFileSync(join(source, rel), "utf-8");
+
+  const readme = splitByH2(read("README.md"));
+  pages.push({ src: "README.md", out: "index.html", title: "Overview", group: "Guide", markdown: readme.intro });
+  for (const section of readme.sections) {
+    const title = stripEmoji(section.heading);
+    // The Contents section is the README compensating for having no sidebar; this site has one.
+    if (/^contents$/i.test(title)) continue;
+    pages.push({
+      src: "README.md",
+      out: `guide/${fileSlug(section.heading)}.html`,
+      title,
+      group: "Guide",
+      markdown: section.markdown,
+    });
+  }
 
   const spec = "docs/spec/teamapi-extended-v1.md";
   if (existsSync(join(source, spec))) {
-    pages.push({ src: spec, out: "spec.html", title: "Specification", group: "Start here" });
+    pages.push({ src: spec, out: "spec.html", title: "Specification", group: "Reference", markdown: read(spec) });
   }
   for (const name of ["deployment.md", "code-quality.md"]) {
     if (existsSync(join(source, "docs", name))) {
@@ -52,7 +133,8 @@ function collectPages() {
         src: `docs/${name}`,
         out: `${name.replace(/\.md$/, "")}.html`,
         title: titleCase(name.replace(/\.md$/, "")),
-        group: "Start here",
+        group: "Reference",
+        markdown: read(`docs/${name}`),
       });
     }
   }
@@ -66,6 +148,7 @@ function collectPages() {
         out: `integrations/${name.replace(/\.md$/, "")}.html`,
         title: titleCase(name.replace(/\.md$/, "")),
         group: "Integrations",
+        markdown: read(`docs/integrations/${name}`),
       });
     }
   }
@@ -73,29 +156,19 @@ function collectPages() {
   const packagesDir = join(source, "packages");
   if (existsSync(packagesDir)) {
     for (const name of readdirSync(packagesDir).sort()) {
-      const readme = join(packagesDir, name, "README.md");
-      if (!existsSync(readme)) continue;
+      if (!existsSync(join(packagesDir, name, "README.md"))) continue;
       pages.push({
         src: `packages/${name}/README.md`,
         out: `packages/${name}.html`,
         title: name,
         group: "Packages",
+        markdown: read(`packages/${name}/README.md`),
       });
     }
   }
 
   return pages;
 }
-
-function titleCase(slug) {
-  const special = { opentelemetry: "OpenTelemetry", codeowners: "CODEOWNERS", pagerduty: "PagerDuty", okta: "Okta" };
-  return (
-    special[slug] ?? slug.replace(/(^|[-/])([a-z])/g, (_, sep, ch) => (sep === "-" ? " " : sep) + ch.toUpperCase())
-  );
-}
-
-const escapeHtml = (text) =>
-  text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /**
  * GitHub's heading-anchor algorithm, because the documents were written against it.
@@ -124,8 +197,7 @@ const pageState = { slugs: new Map(), toc: [], hasMermaid: false };
 const renderer = {
   heading({ tokens, depth }) {
     const inline = this.parser.parseInline(tokens);
-    const plain = this.parser
-      .parseInline(tokens)
+    const plain = inline
       .replace(/<[^>]+>/g, "")
       .replace(/&amp;/g, "&")
       .replace(/&lt;/g, "<")
@@ -152,28 +224,54 @@ marked.use({ gfm: true, renderer });
  * Rewrites the links markdown written for a repository into links that work on a site.
  *
  * The source files link at each other by repository path (`docs/integrations/slack.md`,
- * `packages/cli`), which is right for someone reading on GitHub and broken everywhere else. This
- * is the one piece of real work in the build: without it every cross-reference in a 60KB README
- * 404s, and a docs site whose internal links do not work is worse than the README it replaced.
+ * `../../README.md#apply`), which is right for someone reading on GitHub and broken everywhere
+ * else. Paths are resolved relative to the file that wrote them, then against the repo root —
+ * both spellings exist in these documents. A fragment is re-aimed at whichever page its target
+ * ended up on after splitting, because `#apply` now lives three pages away from the README's
+ * intro. Anything with no page of its own (a source file, an example) goes to GitHub rather
+ * than becoming a dead link.
  */
-function rewriteLinks(html, page, pages) {
-  const bySource = new Map(pages.map((entry) => [entry.src, entry.out]));
+function rewriteLinks(html, page, rendered, landingBySrc, anchorsBySrc) {
   const depth = page.out.split("/").length - 1;
   const prefix = depth === 0 ? "" : "../".repeat(depth);
+  const own = rendered.get(page.out).ids;
+
+  // Images move with their sections: a src written as `docs/assets/x.png` against the repo root
+  // must climb back out of guide/ or integrations/ to reach the copied assets directory.
+  html = html.replace(/src="([^"]+)"/g, (whole, src) => {
+    if (/^(https?:|data:)/.test(src)) return whole;
+    const cleaned = posix.normalize(src.replace(/^\.\//, ""));
+    return cleaned.startsWith("..") ? whole : `src="${prefix}${cleaned}"`;
+  });
 
   return html.replace(/href="([^"]+)"/g, (whole, href) => {
-    if (/^(https?:|mailto:|#)/.test(href)) return whole;
+    if (/^(https?:|mailto:)/.test(href)) return whole;
 
-    const clean = href.replace(/^\.\//, "");
-    const [path, fragment] = clean.split("#");
-    const hash = fragment ? `#${fragment}` : "";
-    // A link to a directory holding a README — `packages/cli` — means that README's page.
-    const target = bySource.get(path) ?? bySource.get(`${path.replace(/\/$/, "")}/README.md`);
-    if (target) return `href="${prefix}${target}${hash}"`;
+    if (href.startsWith("#")) {
+      const fragment = href.slice(1);
+      if (own.has(fragment)) return whole;
+      const owner = anchorsBySrc.get(page.src)?.get(fragment);
+      return owner ? `href="${prefix}${owner}#${fragment}"` : whole;
+    }
 
-    // Anything else is a repository path with no page of its own (a source file, an example);
-    // send it to GitHub rather than leaving a dead link.
-    return `href="https://github.com/JGalego/TeamAPI/blob/main/${clean}"`;
+    const [rawPath, fragment] = href.split("#");
+    const candidates = [
+      posix.normalize(posix.join(posix.dirname(page.src), rawPath)), // relative to the writing file
+      posix.normalize(rawPath.replace(/^\.\//, "")), // relative to the repo root
+    ];
+    for (const candidate of candidates) {
+      const src = landingBySrc.has(candidate)
+        ? candidate
+        : landingBySrc.has(`${candidate.replace(/\/$/, "")}/README.md`)
+          ? `${candidate.replace(/\/$/, "")}/README.md`
+          : undefined;
+      if (!src) continue;
+      const target = (fragment && anchorsBySrc.get(src)?.get(fragment)) ?? landingBySrc.get(src);
+      return `href="${prefix}${target}${fragment ? `#${fragment}` : ""}"`;
+    }
+
+    const repoPath = candidates.find((c) => !c.startsWith("..")) ?? candidates[1];
+    return `href="https://github.com/JGalego/TeamAPI/blob/main/${repoPath}"`;
   });
 }
 
@@ -216,6 +314,16 @@ function tocHtml(toc) {
     rail: `<aside class="toc" aria-label="On this page"><h3>On this page</h3><ol>${items}</ol></aside>`,
     inline: `<details class="onpage"><summary>On this page</summary><ol>${items}</ol></details>`,
   };
+}
+
+/** The landing page of a split document ends with a card per section — the Contents list it lost,
+ * rebuilt from what actually got generated so it cannot drift. */
+function chaptersHtml(pages, landing) {
+  const children = pages.filter((page) => page.src === landing.src && page.out !== landing.out);
+  if (!children.length) return "";
+  return `<nav class="chapters" aria-label="Sections"><ol>${children
+    .map((page) => `<li><a href="${page.out}">${escapeHtml(page.title)}</a></li>`)
+    .join("")}</ol></nav>`;
 }
 
 function pager(pages, current, prefix) {
@@ -313,7 +421,7 @@ const STYLE = `
      two are additive — both at once lands every anchor a full header-height too low. */
   article h2, article h3 { position:relative; }
   .hl { margin-left:.4rem; text-decoration:none; opacity:0; font-weight:400; }
-  h2:hover .hl, h3:hover .hl, .hl:focus { opacity:1; }
+  h1:hover .hl, h2:hover .hl, h3:hover .hl, .hl:focus { opacity:1; }
   article img { max-width:100%; height:auto; }
   article pre { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:.9rem 1rem; overflow-x:auto; font-size:.88em; }
   article pre.mermaid { text-align:center; }
@@ -335,6 +443,14 @@ const STYLE = `
   details.onpage li a, .toc li a { display:block; padding:.14rem 0; color:var(--fg); text-decoration:none; }
   details.onpage li a:hover, .toc li a:hover { color:var(--accent); }
   details.onpage li.sub, .toc li.sub { padding-left:.9rem; }
+
+  /* ---- section cards on a split document's landing page ---- */
+  .chapters ol { list-style:none; margin:2rem 0 0; padding:0; display:grid; grid-template-columns:repeat(auto-fill, minmax(13rem, 1fr)); gap:.6rem; }
+  .chapters a {
+    display:block; padding:.55rem .85rem; border:1px solid var(--line); border-radius:10px;
+    text-decoration:none; color:var(--fg); font-weight:600; font-size:.92rem;
+  }
+  .chapters a:hover { border-color:var(--accent); }
 
   /* ---- prev/next ---- */
   .pager { display:grid; grid-template-columns:1fr 1fr; gap:.8rem; margin-top:3rem; }
@@ -493,7 +609,7 @@ const MERMAID_SCRIPT = `
     .catch(function () { /* the diagram source stays readable as text */ });
 `;
 
-function page(pages, current, body, versions, toc) {
+function page(pages, current, body, versions, toc, hasMermaid) {
   const depth = current.out.split("/").length - 1;
   const prefix = depth === 0 ? "" : "../".repeat(depth);
   const parts = tocHtml(toc);
@@ -534,7 +650,7 @@ function page(pages, current, body, versions, toc) {
 </div>
 <script>var PREFIX = ${JSON.stringify(prefix)};</script>
 <script>${APP_SCRIPT}</script>
-${pageState.hasMermaid ? `<script type="module">${MERMAID_SCRIPT}</script>` : ""}
+${hasMermaid ? `<script type="module">${MERMAID_SCRIPT}</script>` : ""}
 </body>
 </html>
 `;
@@ -546,26 +662,46 @@ const pages = collectPages();
 const versionsFile = join(dirname(outDir), "versions.json");
 const versions = existsSync(versionsFile) ? JSON.parse(readFileSync(versionsFile, "utf-8")) : [label];
 
-const searchIndex = [];
+// Pass 1 — render every page and record where each anchor ended up. Link rewriting cannot happen
+// until all of this is known: a fragment written against the single-file README may now live on
+// any of its section pages.
+const rendered = new Map(); // out -> { html, toc, hasMermaid, ids }
+const landingBySrc = new Map(); // src -> first (landing) page for that document
+const anchorsBySrc = new Map(); // src -> Map(fragment -> out)
 
 for (const entry of pages) {
   pageState.slugs = new Map();
   pageState.toc = [];
   pageState.hasMermaid = false;
 
-  const markdown = readFileSync(join(source, entry.src), "utf-8");
-  const html = rewriteLinks(marked.parse(markdown), entry, pages);
+  const html = marked.parse(entry.markdown);
+  const ids = new Set([...pageState.slugs.keys(), ...[...html.matchAll(/(?:id|name)="([^"]+)"/g)].map((m) => m[1])]);
+  rendered.set(entry.out, { html, toc: pageState.toc, hasMermaid: pageState.hasMermaid, ids });
+
+  if (!landingBySrc.has(entry.src)) landingBySrc.set(entry.src, entry.out);
+  const anchors = anchorsBySrc.get(entry.src) ?? new Map();
+  for (const id of ids) if (!anchors.has(id)) anchors.set(id, entry.out);
+  anchorsBySrc.set(entry.src, anchors);
+}
+
+// Pass 2 — rewrite links now that every target is known, and write the pages out.
+const searchIndex = [];
+
+for (const entry of pages) {
+  const { html, toc, hasMermaid } = rendered.get(entry.out);
+  let body = rewriteLinks(html, entry, rendered, landingBySrc, anchorsBySrc);
+  if (landingBySrc.get(entry.src) === entry.out) body += chaptersHtml(pages, entry);
 
   searchIndex.push({
     t: entry.title,
     g: entry.group,
     u: entry.out,
-    h: pageState.toc.map((item) => ({ t: item.text, s: item.slug })),
+    h: toc.map((item) => ({ t: item.text, s: item.slug })),
   });
 
   const file = join(outDir, entry.out);
   mkdirSync(dirname(file), { recursive: true });
-  writeFileSync(file, page(pages, entry, html, versions, pageState.toc), "utf-8");
+  writeFileSync(file, page(pages, entry, body, versions, toc, hasMermaid), "utf-8");
 }
 
 writeFileSync(join(outDir, "search-index.json"), JSON.stringify(searchIndex), "utf-8");
