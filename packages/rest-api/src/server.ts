@@ -8,6 +8,7 @@ import fastifyRateLimit from "@fastify/rate-limit";
 import type { OrgGraphStore } from "@jgalego/teamapi-core";
 import { registerOrgGraphStore } from "./plugins/org-graph";
 import { registerAuth } from "./plugins/auth";
+import { registerEtag } from "./plugins/etag";
 import { teamsRoutes } from "./routes/teams";
 import { servicesRoutes } from "./routes/services";
 import { searchRoutes } from "./routes/search";
@@ -65,6 +66,10 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
 
   registerOrgGraphStore(app, store);
 
+  // Before the routes, so every GET — including any added later — gets a validator without having
+  // to remember to ask for one.
+  registerEtag(app);
+
   if (options.corsOrigins && options.corsOrigins.length > 0) {
     await app.register(fastifyCors, { origin: options.corsOrigins, methods: ["GET", "POST"] });
   }
@@ -89,6 +94,13 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
           "cross-resource " +
           "knowledge graph.",
         version: packageVersion,
+      },
+      // Documented once here rather than per route: every GET carries a content-derived `ETag` and
+      // honours `If-None-Match`, and every collection route accepts `limit`/`offset` and answers
+      // with `X-Total-Count` plus RFC 8288 `Link`.
+      externalDocs: {
+        description: "Caching and pagination",
+        url: "https://github.com/JGalego/TeamAPI#rest-api",
       },
       tags: [
         { name: "Teams", description: "Team lookup, roles, interactions, dependencies" },

@@ -11,8 +11,9 @@ import {
 } from "@jgalego/teamapi-core";
 import { TeamTypeSchema } from "@jgalego/teamapi-schema";
 import { errorResponseSchema } from "../schemas/error";
+import { pageQuerySchema, paginate, type PageQuery } from "../pagination";
 
-interface ListTeamsQuery {
+interface ListTeamsQuery extends PageQuery {
   type?: string;
   search?: string;
 }
@@ -60,14 +61,15 @@ export async function teamsRoutes(app: FastifyInstance): Promise<void> {
               description: "Filter by Team Topologies team type",
             },
             search: { type: "string", description: "Case-insensitive substring match on name/focus" },
+            ...pageQuerySchema,
           },
         },
       },
     },
-    async (req) => {
+    async (req, reply) => {
       const graph = app.orgGraphStore.current;
       const teams = listTeams(graph, { type: req.query.type, search: req.query.search });
-      return teams.map(toTeamSummaryDto);
+      return paginate(teams.map(toTeamSummaryDto), req.query, req, reply);
     },
   );
 

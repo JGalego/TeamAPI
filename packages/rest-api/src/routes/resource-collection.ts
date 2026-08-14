@@ -1,6 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import { getTeam, type OrgGraph, type ResourceEntry } from "@jgalego/teamapi-core";
 import { errorResponseSchema } from "../schemas/error";
+import { pageQuerySchema, paginate, type PageQuery } from "../pagination";
 
 const teamIdParam = {
   type: "object",
@@ -32,7 +33,7 @@ export interface ResourceRouteOptions<T> {
 export function registerResourceRoutes<T>(app: FastifyInstance, opts: ResourceRouteOptions<T>): void {
   const { tag, collectionPath, resourceLabel, listInTeam, getById, listAcrossOrg } = opts;
 
-  app.get<{ Querystring: { search?: string } }>(
+  app.get<{ Querystring: PageQuery & { search?: string } }>(
     `/${collectionPath}`,
     {
       schema: {
@@ -41,27 +42,31 @@ export function registerResourceRoutes<T>(app: FastifyInstance, opts: ResourceRo
         description: `Every ${resourceLabel} declared across every team, each annotated with its owning team id.`,
         querystring: {
           type: "object",
-          properties: { search: { type: "string", description: "Case-insensitive substring match on name/text/tags" } },
+          properties: {
+            search: { type: "string", description: "Case-insensitive substring match on name/text/tags" },
+            ...pageQuerySchema,
+          },
         },
       },
     },
-    async (req) => listAcrossOrg(app.orgGraphStore.current, req.query.search),
+    async (req, reply) => paginate(listAcrossOrg(app.orgGraphStore.current, req.query.search), req.query, req, reply),
   );
 
-  app.get<{ Params: { id: string } }>(
+  app.get<{ Params: { id: string }; Querystring: PageQuery }>(
     `/teams/:id/${collectionPath}`,
     {
       schema: {
         tags: [tag],
         summary: `List a team's ${resourceLabel}s`,
         params: teamIdParam,
+        querystring: { type: "object", properties: { ...pageQuerySchema } },
         response: { 404: errorResponseSchema },
       },
     },
     async (req, reply) => {
       const graph = app.orgGraphStore.current;
       if (!getTeam(graph, req.params.id)) return reply.code(404).send({ error: `Unknown team id '${req.params.id}'` });
-      return listInTeam(graph, req.params.id);
+      return paginate(listInTeam(graph, req.params.id), req.query, req, reply);
     },
   );
 

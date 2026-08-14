@@ -1,9 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { findServiceOwner, listServices } from "@jgalego/teamapi-core";
 import { errorResponseSchema } from "../schemas/error";
+import { pageQuerySchema, paginate, type PageQuery } from "../pagination";
 
 export async function servicesRoutes(app: FastifyInstance): Promise<void> {
-  app.get<{ Querystring: { search?: string } }>(
+  app.get<{ Querystring: PageQuery & { search?: string } }>(
     "/services",
     {
       schema: {
@@ -12,12 +13,15 @@ export async function servicesRoutes(app: FastifyInstance): Promise<void> {
         description: "All services declared across the org, each annotated with its owning team.",
         querystring: {
           type: "object",
-          properties: { search: { type: "string", description: "Case-insensitive substring match on service name" } },
+          properties: {
+            search: { type: "string", description: "Case-insensitive substring match on service name" },
+            ...pageQuerySchema,
+          },
         },
       },
     },
-    async (req) => {
-      return listServices(app.orgGraphStore.current, req.query.search);
+    async (req, reply) => {
+      return paginate(listServices(app.orgGraphStore.current, req.query.search), req.query, req, reply);
     },
   );
 

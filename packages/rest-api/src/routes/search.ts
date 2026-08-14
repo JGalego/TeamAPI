@@ -1,9 +1,10 @@
 import type { FastifyInstance } from "fastify";
 import { searchOrg } from "@jgalego/teamapi-core";
 import { errorResponseSchema } from "../schemas/error";
+import { pageQuerySchema, paginate, type PageQuery } from "../pagination";
 
 export async function searchRoutes(app: FastifyInstance): Promise<void> {
-  app.get<{ Querystring: { q?: string } }>(
+  app.get<{ Querystring: PageQuery & { q?: string } }>(
     "/search",
     {
       schema: {
@@ -15,7 +16,7 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
           "knowledge base, workflows, sessions).",
         querystring: {
           type: "object",
-          properties: { q: { type: "string", description: "Search query" } },
+          properties: { q: { type: "string", description: "Search query" }, ...pageQuerySchema },
         },
         response: { 400: errorResponseSchema },
       },
@@ -26,7 +27,7 @@ export async function searchRoutes(app: FastifyInstance): Promise<void> {
       // (less friendly, AJV-generated) error body than the one below — so both "absent" and
       // "present but empty" land on the same, single error message here.
       if (!req.query.q) return reply.code(400).send({ error: "Missing required query parameter 'q'" });
-      return searchOrg(app.orgGraphStore.current, req.query.q);
+      return paginate(searchOrg(app.orgGraphStore.current, req.query.q), req.query, req, reply);
     },
   );
 }

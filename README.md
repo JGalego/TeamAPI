@@ -34,6 +34,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
   - [🧑‍💼 Role hierarchy](#role-hierarchy)
   - [🏢 Org-wide role hierarchy](#org-wide-role-hierarchy)
 - [🔌 REST API](#rest-api)
+  - [📄 Paging and caching](#rest-api)
   - [📈 Scale](#scale)
 - [🖥️ Dashboard](#dashboard)
 - [🐳 Docker](#docker)
@@ -325,6 +326,30 @@ flowchart TD
   }
 ]
 ```
+
+### 📄 Paging and caching
+
+Every collection route takes `limit` and `offset`, and answers with `X-Total-Count` plus an RFC 8288 `Link` header carrying `first`/`prev`/`next`/`last`:
+
+```bash
+curl -sD- 'http://127.0.0.1:3000/teams?limit=2&offset=2' -o /dev/null | grep -i '^link\|^x-total'
+```
+
+```text
+x-total-count: 4
+link: </teams?limit=2&offset=0>; rel="first", </teams?limit=2&offset=0>; rel="prev", </teams?limit=2&offset=2>; rel="last"
+```
+
+The body stays an array. Headers rather than an `{ items, total, next }` envelope, because an envelope would break every existing consumer — the dashboard, the generators, anyone's script — on the day pagination shipped, in exchange for information the headers already carry. And there is **no default page size**: a caller who wrote `GET /teams` last month and silently reads 100 of their 400 teams this month has no way to notice. Asking for a page is how you get one.
+
+Every `GET` also carries a strong `ETag` and honours `If-None-Match`:
+
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' -H 'If-None-Match: "<etag>"' http://127.0.0.1:3000/graph
+# 304
+```
+
+The validator is derived from the response body, not from the graph's `resolvedAt`. That timestamp changes on every reload — every `--watch` trigger, every `POST /reload`, every SIGHUP — including the common case where a document was touched and nothing a given endpoint returns actually changed. Hashing the body means the graph can be re-resolved a hundred times and `/teams` keeps the same `ETag` until `/teams` genuinely differs.
 
 ### 🔒 Exposing it beyond localhost
 
