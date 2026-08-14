@@ -61,6 +61,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
   - [⚔️ Name conflicts](#name-conflicts)
 - [✍️ Editor support](#editor-support)
 - [🕰️ Org history](#org-history)
+  - [📉 Trends](#org-history)
 - [🕳️ Gaps](#gaps)
   - [🧾 Severity overrides and waivers](#gap-rules)
 - [📋 Policy](#policy)
@@ -873,6 +874,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi fmt [patterns...] [--check]`                                                                                                                                                                                 | [Canonical formatting](#fmt) for Team API documents                                                                                                                                                                                      |
 | `teamapi schema [--out <file>]`                                                                                                                                                                                       | Print the [JSON Schema](#editor-support) for the document format                                                                                                                                                                         |
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>`                                                           | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
+| `teamapi history <patterns...> [--period commit\|day\|week\|month\|quarter] [--since <when>] [--format text\|json\|csv]`                                                                                              | Track how the org changed over git history ([trends](#org-history))                                                                                                                                                                      |
 | `teamapi diff <patterns...> --against <ref>`                                                                                                                                                                          | Diff the resolved org graph against a git revision                                                                                                                                                                                       |
 | `teamapi import github-org <org> --out <dir> [--token <token>]`                                                                                                                                                       | Bootstrap `teamapi.yml` document(s) from an existing GitHub org                                                                                                                                                                          |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]`                                                                                                                                            | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes)                                                                                                                                                |
@@ -1078,6 +1080,29 @@ Role edges:
 ```
 
 When nothing has changed, it prints a single line rather than an empty report. Either way it exits 0 — this is an inspection tool, not a validation gate (see [CI integration](#ci-integration) for that).
+
+### 📉 Trends
+
+`diff` compares two points. Some questions only have an answer over time, and therefore had none: is cognitive load creeping up across quarters, is agent adoption accelerating, is supervision load growing without anybody scoring it, how much team churn is there really. `teamapi history` resolves the org at a series of past revisions and reports the series.
+
+```bash
+teamapi history examples/acme-org --period quarter --since "2 years ago"
+```
+
+```text
+      date  teams  people  services  vacant  load~  load^  over  agents  sup~  unscored  gaps!
+2026-07-26      4       9         4       1  15.67     18     1       5     0         1      0
+2026-07-31      4       9         4       1  15.67     18     1       5     6         0      0
+2026-08-13      4       9         4       1  15.67     18     1       5     6         0      0
+
+    change      0       0         0       0      0      0     0       0    +6        -1      0
+```
+
+That `+6` in `sup~` is the case this exists for: supervision load went from unmeasured to a mean of 6 across the org, and no single snapshot could have told you.
+
+`--period commit | day | week | month | quarter` keeps the **last** commit in each period, so a row reads as "where the org ended up". `--format csv` for the spreadsheet this is going to end up in anyway, `--format json` for everything else. Revisions the current seed list can't resolve — the org had fewer teams then — are skipped with a note rather than failing the report.
+
+Everything it reports is already in git. It just needed resolving at more than one point, with the same resolver the live graph uses: a historical snapshot built by a simpler one would differ from today's for reasons that have nothing to do with the org changing.
 
 <a id="gaps"></a>
 

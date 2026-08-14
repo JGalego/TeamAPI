@@ -17,6 +17,7 @@ import { runMigrate } from "./commands/migrate";
 import { runSchema } from "./commands/schema";
 import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
+import { HISTORY_PERIODS, runHistory, type HistoryPeriod } from "./commands/history";
 import { runApply } from "./commands/apply";
 import { runSlackSync } from "./commands/slack-sync";
 import { runPagerDutyDrift } from "./commands/pagerduty-drift";
@@ -276,6 +277,34 @@ export function createProgram(): Command {
     .action(async (patterns: string[], opts: { against: string; format: "text" | "json" }) => {
       process.exitCode = await runDiff(patterns, { against: opts.against, format: opts.format });
     });
+
+  const historyCommand = program
+    .command("history")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
+    .description("Track how the org changed over git history — cognitive load, agent adoption, supervision, churn");
+  historyCommand
+    .addOption(
+      historyCommand
+        .createOption("--period <period>", "one snapshot per: commit | day | week | month | quarter")
+        .choices(HISTORY_PERIODS)
+        .default("month"),
+    )
+    .addOption(new Option("--format <format>", "text | json | csv").choices(["text", "json", "csv"]).default("text"))
+    .option("--since <when>", 'only commits since this point, e.g. "1 year ago" or 2026-01-01')
+    .option("--limit <n>", "max commits to consider before sampling", parsePositiveInt)
+    .action(
+      async (
+        patterns: string[],
+        opts: { period: string; since?: string; limit?: number; format: "text" | "json" | "csv" },
+      ) => {
+        process.exitCode = await runHistory(patterns, {
+          period: opts.period as HistoryPeriod,
+          since: opts.since,
+          limit: opts.limit,
+          format: opts.format,
+        });
+      },
+    );
 
   program
     .command("apply")
