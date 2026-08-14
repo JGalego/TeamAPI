@@ -1,5 +1,90 @@
 # @jgalego/teamapi-rest-api
 
+## 0.6.0
+
+### Minor Changes
+
+- 817a21f: Every collection route accepts `limit`/`offset` and answers with `X-Total-Count` and an RFC 8288 `Link` header; every `GET` carries a content-derived `ETag` and honours `If-None-Match`. Both are additive — an existing client that passes neither sees exactly what it saw before.
+- 8abf5c8: `GET /backstage/catalog` serves the org as Backstage entities — the same generator `teamapi generate backstage` writes, served rather than written. The new `@jgalego/teamapi-backstage` package is a catalog entity provider that polls it, with no `@backstage/*` dependency.
+- b047116: The dashboard covers the AI-native half of the API it had been ignoring: an agent roster with unowned agents marked, AI session history, the context map's conflicts alongside the diagram, and a walkable knowledge graph. `/health` reports which optional surfaces the server has.
+- 6152e09: Keep the long-running servers current with `--watch`.
+
+  `OrgGraphStore.reload()` existed and nothing ever called it, so both servers answered from a
+  startup snapshot for as long as they ran — worst for `serve-mcp`, where an assistant holds the
+  connection open for a whole session.
+
+  `--watch` re-resolves on change, `POST /reload` (or `--reload-endpoint` on its own) covers
+  webhook-driven refreshes, and `SIGHUP` covers process supervisors. Seed discovery re-runs on every
+  reload, so documents _added_ after startup are picked up too.
+
+  A failed reload never replaces a working graph: the store publishes only on success, so a document
+  caught mid-write is reported and skipped while the server keeps answering from the last good state.
+
+- 9f25986: `teamapi serve-api --metrics` mounts `GET /metrics` in the Prometheus exposition format: teams by type, cognitive and supervision load per team, agents by status, gaps/policy/topology findings, unresolved references, graph age, and the server's own request counts and latencies. `collectOrgMetrics`/`renderPrometheus` are exported from core for other exporters to reuse.
+- 6d7b1e9: `teamapi serve-api --propose-to owner/repo` mounts `POST /teams/:id/proposals`: a small, closed patch to one team becomes a pull request against the repository the documents came from, re-validated and re-formatted first. The dashboard's team panel grows an edit form when the server reports the capability. `GET /health` now reports which optional surfaces are mounted.
+- 54f0325: Embedding-backed search. `semanticSearchOrg` unions substring matching with cosine similarity; `createEmbeddingScorer` layers the same signal onto `deriveContextBundle` without making it async. `teamapi serve-api --embeddings` enables `GET /search?mode=hybrid|semantic` and `POST /context {semantic:true}`, against any OpenAI-compatible `/embeddings` endpoint, with vectors cached on disk.
+- 5da3465: Make the REST API safe to expose: bearer auth, CORS and rate limiting.
+
+  `serve-api` had no authentication, no CORS control and no rate limiting, which meant the only
+  correct place to run it was localhost — and nothing stopped anyone from binding `0.0.0.0` anyway.
+
+  Auth is opt-in (`--token`, or `TEAMAPI_API_TOKEN`) so the local workflow is unchanged, and binding
+  a non-loopback address without one is now refused outright rather than warned about, since an
+  exposed server looks exactly like a working one. `--allow-anonymous` is the deliberate escape
+  hatch. `/health` stays open for liveness probes and `/slack/*` keeps its own request signature.
+
+  Token comparison is constant-time, rejections never echo the presented credential, and the auth
+  hook runs at `preParsing` so the rate limiter counts failed attempts — at `onRequest` it could
+  not, leaving token guessing effectively unlimited.
+
+- a98a31e: Serve policy and topology over HTTP, and show all three checks in the dashboard.
+
+  `/gaps` was already served on the argument that a check needing no credentials should be
+  answerable without anyone running a report; `policy` and `topology` are the same shape and were
+  unreachable only because they were written after the routes were. Both are now `GET /policy` and
+  `GET /topology`.
+
+  The dashboard gains a Health section running all three at once — counts plus one finding list
+  sorted most-serious-first — and a team detail panel behind each card: roles with vacancies marked,
+  members, services, agents and their owners, interactions and dependencies. Each check is fetched
+  independently, so an older server missing the new routes degrades to "unavailable" rather than a
+  blank section.
+
+- a932887: Serve MCP over Streamable HTTP with `serve-api --mcp`.
+
+  MCP was stdio-only, which requires the documents on the same machine as the model — so every
+  laptop held its own copy of the org graph, each as current as the last time somebody pulled. The
+  same tools are now served at `POST /mcp` on the REST API's port, behind the same bearer token,
+  alongside `--watch` so one endpoint answers with the org as of the last commit.
+
+  Stateless: a fresh server and transport per request, no session id issued or required. Every tool
+  is a pure read of the graph, so there is no per-client state worth keeping, and any instance
+  behind a load balancer can answer any request.
+
+  The handler is injected into `buildServer`, so the REST API package keeps no MCP dependency.
+
+### Patch Changes
+
+- Updated dependencies [36e83c6]
+- Updated dependencies [543da37]
+- Updated dependencies [d4d0372]
+- Updated dependencies [ec29a2c]
+- Updated dependencies [41f5fe3]
+- Updated dependencies [f41844d]
+- Updated dependencies [6152e09]
+- Updated dependencies [a276764]
+- Updated dependencies [9f25986]
+- Updated dependencies [23c56b3]
+- Updated dependencies [7bfb3d1]
+- Updated dependencies [eca4cde]
+- Updated dependencies [b6b5a86]
+- Updated dependencies [6d7b1e9]
+- Updated dependencies [0d6d857]
+- Updated dependencies [54f0325]
+- Updated dependencies [a713d92]
+  - @jgalego/teamapi-core@0.8.0
+  - @jgalego/teamapi-schema@0.6.0
+
 ## 0.5.0
 
 ### Minor Changes
