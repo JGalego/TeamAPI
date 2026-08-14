@@ -4,4 +4,5 @@ dist/
 *.tsbuildinfo
 .teamapi-cache/
 coverage/
+site-out/
 .DS_Store

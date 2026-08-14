@@ -1,11 +1,30 @@
 name: Site
 
-# Publishes site/ to GitHub Pages. Inert until Pages is enabled for the repository
-# (Settings → Pages → Source: GitHub Actions) and teamapi.dev's DNS points at it.
+# Publishes the landing page and a versioned documentation site to GitHub Pages.
+#
+# The docs are generated from the repository's own markdown — the README, docs/, and each
+# package's README — so there is one copy of every explanation rather than a site that drifts from
+# the files people actually edit.
+#
+# Versions come from git tags rather than from committed output. Each published version is built
+# by checking that tag out into a worktree and running the generator against it, which means an
+# older version's docs describe that version's behaviour, and nothing has to be regenerated and
+# committed on every release.
+#
+# Inert until Pages is enabled for the repository (Settings → Pages → Source: GitHub Actions) and
+# teamapi.dev's DNS points at it.
 on:
   push:
     branches: [main]
-    paths: ["site/**", ".github/workflows/site.yml"]
+    paths:
+      - "site/**"
+      - "docs/**"
+      - "README.md"
+      - "packages/*/README.md"
+      - "scripts/build-docs.mjs"
+      - ".github/workflows/site.yml"
+  release:
+    types: [published]
   workflow_dispatch:
 
 permissions:
@@ -18,6 +37,11 @@ concurrency:
   group: pages
   cancel-in-progress: false
 
+# How many past releases keep a published copy of their docs. Beyond this the tags still exist and
+# the docs can be rebuilt; what expires is only the published copy.
+env:
+  KEEP_VERSIONS: 5
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -26,9 +50,48 @@ jobs:
       url: ${{ steps.deploy.outputs.page_url }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          # Tags, and enough history to check them out — a shallow clone has neither.
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: ".nvmrc"
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build the site
+        run: |
+          set -euo pipefail
+          mkdir -p site-out
+          cp -r site/* site-out/
+
+          # The latest release tags, newest first. `sort -V` so v0.10 comes after v0.9 rather than
+          # before it, which a lexical sort would get exactly backwards.
+          VERSIONS=$(git tag --list 'v*' | sort -Vr | head -n "$KEEP_VERSIONS" || true)
+
+          # Written before any page is generated, so every page's version switcher lists all of
+          # them rather than only the ones built before it.
+          printf '%s\n' latest $VERSIONS | jq -R . | jq -sc . > site-out/versions.json
+          cat site-out/versions.json
+
+          node scripts/build-docs.mjs --out site-out/latest --label latest
+
+          for TAG in $VERSIONS; do
+            # A worktree rather than a checkout, so the build script and its dependencies stay at
+            # the version that can actually run — an old tag's generator may not exist at all.
+            git worktree add --detach "../tag-$TAG" "$TAG"
+            node scripts/build-docs.mjs --out "site-out/$TAG" --label "$TAG" --source "../tag-$TAG"
+            git worktree remove --force "../tag-$TAG"
+          done
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: site-out
       - id: deploy
         uses: actions/deploy-pages@v4

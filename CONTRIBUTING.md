@@ -27,6 +27,7 @@ Run from the repo root; each fans out across all packages via [Turborepo](https:
 | `pnpm typecheck`     | Type-check the shipped sources and the tests, without emitting  |
 | `pnpm deadcode`      | Unreachable exports, unused and undeclared dependencies         |
 | `pnpm format`        | Apply Prettier (`pnpm format:check` to check without writing)   |
+| `pnpm docs:build`    | Render the documentation site from this repo's markdown         |
 
 `pnpm install` also installs a pre-commit hook that runs formatting and lint over your staged files.
 `git commit --no-verify` skips it.
@@ -50,10 +51,11 @@ This is a pnpm/Turborepo monorepo:
 - `packages/cli` — the `teamapi` command (`validate`, `render`, `scaffold`, `generate`, `serve-api`, `serve-mcp`, `chat`).
 - `packages/rest-api` — the read-only REST API (Fastify).
 - `packages/mcp-server` — the MCP server exposing the org graph as tools for LLM assistants.
-- `packages/chat` — the Anthropic tool-use loop backing `teamapi chat`.
+- `packages/chat` — the tool-use loop backing `teamapi chat`, over Anthropic or any OpenAI-compatible endpoint.
 - `examples/acme-org` — the sample org every README example and most tests run against. If you add a feature, prefer demonstrating it here over inventing new fixtures.
 - `examples/reelstream-org`, `examples/meridian-pay-org`, `examples/cartwell-org`, `examples/wavelength-org` — additional showcase orgs modeled after recognizable real-world team topologies (streaming, fintech, marketplace, and squad-based product orgs), for the README gallery and for exercising org-diff/multi-org scenarios. Not test fixtures — extend `acme-org` for those.
 - `docs/spec/teamapi-extended-v1.md` — the human-readable spec; keep it in sync with `packages/schema/src/v1` when you change a field's shape or add a new one.
+- `site/` — the landing page, hand-written HTML. `scripts/build-docs.mjs` renders everything else on the site from the markdown already in this repo (the README, `docs/`, each package's README), so documentation is edited where it lives and never has a second copy to keep in sync. `pnpm docs:build` produces the whole thing in `site-out/`; `.github/workflows/site.yml` publishes `latest` from `main` and one version per recent release tag.
 
 ## Making a change
 

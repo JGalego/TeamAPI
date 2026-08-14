@@ -23,6 +23,8 @@ Every team has an API: what it owns, who's accountable for what, how to ask it f
 
 The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/TeamTopologies/TeamAPI-As-Code), adding roles, people, and cognitive load. The concept comes from [Team Topologies](https://teamtopologies.com/); the bounded-context and context-map vocabulary from [Domain-Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design).
 
+> 📖 Everything below is also published, with navigation and a version for each release, at **[teamapi.dev/latest](https://teamapi.dev/latest/)**. If you are on an older version, read that version's page rather than this one — this file describes `main`.
+
 ## 🧭 Contents
 
 - [🚀 Quick start](#quick-start)
