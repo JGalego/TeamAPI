@@ -1,5 +1,31 @@
 # @jgalego/teamapi-chat
 
+## 0.3.0
+
+### Minor Changes
+
+- 81e6c7b: Chat is no longer hardwired to one vendor. `ChatTool` is a provider-neutral tool definition, `createChatSession` picks an adapter, and `--provider openai --base-url ...` reaches any OpenAI-compatible server (Azure, Ollama, vLLM, Together, Groq, OpenRouter, …) with no vendor SDK. `teamapi chat --ask "<question>"` runs one turn, prints the answer on stdout with everything else on stderr, and exits 2 if the answer is incomplete.
+
+### Patch Changes
+
+- Updated dependencies [36e83c6]
+- Updated dependencies [543da37]
+- Updated dependencies [d4d0372]
+- Updated dependencies [ec29a2c]
+- Updated dependencies [41f5fe3]
+- Updated dependencies [f41844d]
+- Updated dependencies [6152e09]
+- Updated dependencies [9f25986]
+- Updated dependencies [23c56b3]
+- Updated dependencies [7bfb3d1]
+- Updated dependencies [eca4cde]
+- Updated dependencies [b6b5a86]
+- Updated dependencies [6d7b1e9]
+- Updated dependencies [0d6d857]
+- Updated dependencies [54f0325]
+- Updated dependencies [a713d92]
+  - @jgalego/teamapi-core@0.8.0
+
 ## 0.2.0
 
 ### Minor Changes

@@ -1,5 +1,134 @@
 # @jgalego/teamapi-core
 
+## 0.8.0
+
+### Minor Changes
+
+- 36e83c6: Add `teamapi topology` — the Team Topologies design smells.
+
+  `gaps` asks what nobody owns. This asks whether the shape is right when everything _is_ owned:
+  collaborations past the duration they declared for themselves or with no duration at all, teams
+  past the size at which they hold shared context, teams in more concurrent collaborations than they
+  can sustain, platform teams depending on the teams they exist to serve, and dependencies a team has
+  itself labelled blocking.
+
+  The collaboration checks are the point — Team Topologies is emphatic that collaboration is the
+  expensive, deliberately temporary mode, and a collaboration with no end date is two teams that have
+  merged without saying so. Nothing here was visible until something read the dates.
+
+  Everything is a warning and exits 0; thresholds and per-kind severities are configurable in
+  `teamapi.config.yml`. These are prompts for a conversation, not defects.
+
+- 543da37: Add `teamapi fmt` — canonical formatting for Team API documents.
+
+  Documents edited by hand across an org accumulate their authors' habits about where a section
+  goes, so two teams adding the same thing produce diffs that look nothing alike. `fmt` orders
+  top-level keys the way the schema declares them (not alphabetically — the document is meant to be
+  read top to bottom), keeps unknown keys rather than dropping them, and `--check` fails a build
+  without writing.
+
+  Built on a comment-preserving document tree rather than a load/dump round trip, which would have
+  deleted every comment in every file it touched. The bundled examples are now canonical and
+  `pnpm fmt:check` guards them in this repo's own gate.
+
+- d4d0372: Add severity overrides and expiring waivers for `teamapi gaps`, via a `teamapi.config.yml`.
+
+  Run the check against an org that has existed for years and it reports the whole accumulated
+  history at once — and a check that goes red on the day it's switched on gets switched back off.
+  `severity` re-grades a whole kind (including `off`), waivers exempt one specific finding with a
+  mandatory reason.
+
+  Waivers expire, because an exemption that doesn't is a deletion with extra steps, and a lapsed one
+  is reported as its own finding rather than silently turning a build red. Waivers matching nothing
+  are reported so the file doesn't accumulate dead exemptions, and an unknown gap kind is an error —
+  a typo that quietly does nothing while the org believes a rule is in force is worse than no config.
+
+- ec29a2c: `teamapi digest` merges gaps, policy and topology findings with what moved since the last run, and posts it to a Slack/Teams webhook, an HTML file for email, or stdout. State is a JSON file rather than a database, so a scheduled run can keep it in a workflow cache. `.github/workflows/digest.yml` runs it weekly, opt-in.
+- 41f5fe3: Fail validation on org-wide name conflicts.
+
+  The schema enforces uniqueness within a document, because that is all one document can see. Names
+  that have to be unique across the whole org — service names, channels — were never checked, so two
+  teams could both declare `payments-api` and `findServiceOwner` would answer with whichever team id
+  sorted first. Silently, and for every consumer downstream of it: the REST route, the MCP tool, the
+  Slack command, generated CODEOWNERS.
+
+  `teamapi validate` now reports both claimants and exits non-zero. The tie-break stays — a query
+  has to return something — but the org no longer has to discover it by noticing that a service it
+  owns answers with someone else's team.
+
+  **Breaking for orgs that currently have duplicates**: validation that passed before will now fail
+  until the duplicate name is resolved.
+
+- 6152e09: Keep the long-running servers current with `--watch`.
+
+  `OrgGraphStore.reload()` existed and nothing ever called it, so both servers answered from a
+  startup snapshot for as long as they ran — worst for `serve-mcp`, where an assistant holds the
+  connection open for a whole session.
+
+  `--watch` re-resolves on change, `POST /reload` (or `--reload-endpoint` on its own) covers
+  webhook-driven refreshes, and `SIGHUP` covers process supervisors. Seed discovery re-runs on every
+  reload, so documents _added_ after startup are picked up too.
+
+  A failed reload never replaces a working graph: the store publishes only on success, so a document
+  caught mid-write is reported and skipped while the server keeps answering from the last good state.
+
+- 9f25986: `teamapi serve-api --metrics` mounts `GET /metrics` in the Prometheus exposition format: teams by type, cognitive and supervision load per team, agents by status, gaps/policy/topology findings, unresolved references, graph age, and the server's own request counts and latencies. `collectOrgMetrics`/`renderPrometheus` are exported from core for other exporters to reuse.
+- 23c56b3: Four more `teamapi import` sources beyond `github-org`: `backstage` (a catalog file or the catalog API), `okta` (directory groups, also usable for Entra via `importDirectoryGroups`), `slack` (channels as team skeletons) and `csv` (an HRIS export — the only source that can populate `roles[]`).
+- 7bfb3d1: Add `--format json` and `--format sarif` to the reporting commands.
+
+  `validate`, `gaps`, `policy` and `shadow-ai` now take `--format text | json | sarif`, and `diff`
+  takes `--format text | json`. Everything printed human-readable text before, so a CI job could
+  gate on an exit code but never say _what_ was wrong on the diff that caused it.
+
+  The SARIF output is the point: uploaded with `github/codeql-action/upload-sarif` (the bundled
+  action gains a `sarif-dir` input that writes it), every finding becomes an inline annotation on
+  the pull request and an entry in the security tab. Paths are emitted relative to the working
+  directory, since consumers resolve them against the repository root.
+
+  `json` emits the report object the library returns rather than a re-rendering of the text, and the
+  unresolved-reference warning is suppressed for structured formats so the output stays parseable.
+  Exit codes are unchanged by the format.
+
+- eca4cde: Check declared `policies[]` against the org graph with `teamapi policy`.
+
+  Policies were declared but never evaluated — the schema said "external automation enforces this"
+  and nothing verified that any such automation existed. The new engine decides every rule it can
+  from the graph alone (agent bans and caps, owner requirements, provider allow-lists, cognitive
+  load ceilings, required steering/playbook categories, service repository and bounded-context
+  requirements, dependency caps), reports rules it can't as `delegated` when `enforcedBy` names an
+  enforcer, and — the point of the exercise — reports them as `unenforced` when nothing does.
+
+  A blocking policy that nothing enforces now exits non-zero, as does a violated one. Available in
+  CI via `check-policies: true` on the bundled action.
+
+- b6b5a86: `teamapi history` resolves the org at a series of past git revisions and reports the trend: cognitive load, agent adoption, supervision creep, vacancies, blocking gaps and team churn, sampled per commit/day/week/month/quarter, as a table, JSON or CSV. `GitRefLoaderRegistry` and `gitRepoRoot` move into core, where `diff` and `history` now share them.
+- 6d7b1e9: `teamapi serve-api --propose-to owner/repo` mounts `POST /teams/:id/proposals`: a small, closed patch to one team becomes a pull request against the repository the documents came from, re-validated and re-formatted first. The dashboard's team panel grows an edit form when the server reports the capability. `GET /health` now reports which optional surfaces are mounted.
+- 0d6d857: Resolve a whole BFS level at once instead of one document at a time, and cache `https://` refs on disk between runs. `buildOrgGraph` takes `concurrency` and `cache`; the CLI reads `TEAMAPI_CACHE_DIR`, `TEAMAPI_NO_CACHE` and `TEAMAPI_RESOLVE_CONCURRENCY`. `generateSyntheticOrg` builds an org of arbitrary size for benchmarking.
+- 54f0325: Embedding-backed search. `semanticSearchOrg` unions substring matching with cosine similarity; `createEmbeddingScorer` layers the same signal onto `deriveContextBundle` without making it async. `teamapi serve-api --embeddings` enables `GET /search?mode=hybrid|semantic` and `POST /context {semantic:true}`, against any OpenAI-compatible `/embeddings` endpoint, with vectors cached on disk.
+- a713d92: `teamapi apply-to <slack|okta|pagerduty>` reconciles membership in those systems with the org graph, behind the same plan-then-`--yes` shape as `apply`. Slack usergroups (created if missing), Okta group membership, and PagerDuty team membership. Schedules, escalation policies, directory groups and PagerDuty teams are never written — see each planner for why.
+
+### Patch Changes
+
+- f41844d: Add the schema migration mechanism, and version-aware diagnostics.
+
+  There is one `teamApiVersion`, so there is nothing to migrate yet — which is when the mechanism
+  has to exist. A format with one version and no migration path has a migration problem scheduled
+  for the day the second version ships, by which point documents are spread across every repository
+  in an org.
+
+  `MIGRATIONS` is an ordered chain a document walks toward `LATEST_TEAM_API_VERSION`, run by
+  `teamapi migrate`. It ships empty on purpose: a placeholder migration would be one real documents
+  could hit, so the runner is tested against fixtures instead.
+
+  The half that helps today is diagnosis. A version mismatch used to fail as `teamApiVersion:
+Invalid literal value, expected "1.0.0"`, which reads identically whether documents are behind the
+  toolchain or ahead of it — opposite problems needing opposite fixes. `assessVersion` tells them
+  apart, and both `migrate` and `validate` now say which one you have.
+
+- Updated dependencies [f41844d]
+- Updated dependencies [a276764]
+  - @jgalego/teamapi-schema@0.6.0
+
 ## 0.7.0
 
 ### Minor Changes

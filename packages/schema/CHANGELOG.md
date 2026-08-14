@@ -1,5 +1,33 @@
 # @jgalego/teamapi-schema
 
+## 0.6.0
+
+### Minor Changes
+
+- f41844d: Add the schema migration mechanism, and version-aware diagnostics.
+
+  There is one `teamApiVersion`, so there is nothing to migrate yet — which is when the mechanism
+  has to exist. A format with one version and no migration path has a migration problem scheduled
+  for the day the second version ships, by which point documents are spread across every repository
+  in an org.
+
+  `MIGRATIONS` is an ordered chain a document walks toward `LATEST_TEAM_API_VERSION`, run by
+  `teamapi migrate`. It ships empty on purpose: a placeholder migration would be one real documents
+  could hit, so the runner is tested against fixtures instead.
+
+  The half that helps today is diagnosis. A version mismatch used to fail as `teamApiVersion:
+Invalid literal value, expected "1.0.0"`, which reads identically whether documents are behind the
+  toolchain or ahead of it — opposite problems needing opposite fixes. `assessVersion` tells them
+  apart, and both `migrate` and `validate` now say which one you have.
+
+- a276764: Publish the JSON Schema so editors can validate `teamapi.yml` as you type.
+
+  The schema was already derived from the Zod definitions but had no way out of the codebase. It
+  now has a canonical home at `https://teamapi.dev/schema/v1.json`, a `teamapi schema` command that
+  prints or writes it, and a `# yaml-language-server: $schema=` modeline on every scaffolded and
+  bundled document. A test regenerates the published copy and fails when it has drifted, so the
+  hosted URL can never fall behind the code.
+
 ## 0.5.0
 
 ### Minor Changes

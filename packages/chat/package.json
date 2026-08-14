@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi-chat",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Chat as a team or a member of a Team API as Code org — a provider-neutral tool-use loop over the resolved org graph, for Anthropic or any OpenAI-compatible endpoint",
   "keywords": [
     "teamapi",

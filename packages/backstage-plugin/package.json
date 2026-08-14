@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi-backstage",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Backstage catalog entity provider that reads a live Team API as Code REST API",
   "keywords": [
     "teamapi",
