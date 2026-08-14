@@ -1,4 +1,5 @@
 import { buildOrgGraph, checkPolicies, formatPolicyReport, type OrgGraph } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
@@ -46,7 +47,7 @@ export async function runPolicy(patterns: string[], options: PolicyOptions = {})
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   if (format === "text") warnUnresolved(graph);
 
   const report = checkPolicies(graph);

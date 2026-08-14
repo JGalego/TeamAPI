@@ -10,6 +10,7 @@ import {
   toMermaid,
   type DiagramModel,
 } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
@@ -29,7 +30,7 @@ export async function runRender(patterns: string[], options: RenderOptions): Pro
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   warnUnresolved(graph);
 
   if (options.scope === "hierarchy" && !options.team) {

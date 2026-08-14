@@ -1,6 +1,7 @@
 import * as readline from "node:readline/promises";
 import Anthropic from "@anthropic-ai/sdk";
 import { buildOrgGraph } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { buildChatPersona, buildChatTools, DEFAULT_CHAT_MODEL, type ChatToolCall } from "@jgalego/teamapi-chat";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
@@ -79,7 +80,7 @@ export async function runChat(patterns: string[], options: ChatOptions): Promise
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   warnUnresolved(graph);
   if (!graph.teams.has(options.team)) {
     console.error(`Unknown team id: ${options.team}`);

@@ -8,6 +8,7 @@ import {
   type GapKind,
   type OrgGraph,
 } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
@@ -56,7 +57,7 @@ export async function runGaps(patterns: string[], options: GapsOptions = {}): Pr
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   // Machine-readable output goes to stdout alone: a warning interleaved into it would make the
   // document unparseable for the consumer the format exists for.
   if (format === "text") warnUnresolved(graph);

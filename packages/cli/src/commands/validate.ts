@@ -5,6 +5,7 @@ import {
   type NameConflict,
   type OrgGraph,
 } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { printReport, type ReportFormat } from "../report-format";
 import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
@@ -75,7 +76,7 @@ export async function runValidate(patterns: string[], options: ValidateOptions =
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   const report = toReport(graph);
 
   if (format === "text") {

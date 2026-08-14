@@ -48,3 +48,4 @@ export * from "./diff/diff-graph";
 export * from "./github/client";
 export * from "./apply/github-teams";
 export * from "./import/github-org";
+export * from "./scale/synthetic-org";

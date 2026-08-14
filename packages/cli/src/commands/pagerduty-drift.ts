@@ -5,6 +5,7 @@ import {
   planPagerDutyDrift,
   type PagerDutyService,
 } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { isConfigFailure, NO_PATTERNS_MESSAGE, resolveInput, type ConfigAwareOptions } from "../with-config";
@@ -42,7 +43,7 @@ export async function runPagerDutyDrift(patterns: string[], options: PagerDutyDr
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   warnUnresolved(graph);
 
   let services: PagerDutyService[];

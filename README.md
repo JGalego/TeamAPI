@@ -34,6 +34,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
   - [🧑‍💼 Role hierarchy](#role-hierarchy)
   - [🏢 Org-wide role hierarchy](#org-wide-role-hierarchy)
 - [🔌 REST API](#rest-api)
+  - [📈 Scale](#scale)
 - [🖥️ Dashboard](#dashboard)
 - [🐳 Docker](#docker)
 - [🤖 MCP tools](#mcp-tools)
@@ -378,6 +379,36 @@ Reloaded: 4 team(s), 0 unresolved reference(s).
 ```
 
 `--watch` matters most for `serve-mcp`: an assistant holds that connection open for an entire session, so without it the answers come from whatever the org looked like when the editor started.
+
+<a id="scale"></a>
+
+### 📈 Scale
+
+Resolution loads a whole BFS level at once instead of awaiting one document at a time. The levels of an org graph are wide — every team a platform team serves sits on one — so the serial version made resolution cost the _sum_ of every round trip rather than the sum of the slowest per level.
+
+Documents are still **processed** in a fixed order even though they're loaded concurrently, so first-writer-wins decisions (which document owns a duplicated team id, in what order unresolved references are reported) never depend on which fetch happened to return first. Two runs over the same seeds produce byte-identical graphs, and there's a test that pins exactly that against a 400-team fixture at concurrency 1, 8 and 64.
+
+`https://` refs also get an on-disk cache, on by default for the CLI. A fresh entry is served without a request at all; a stale one is revalidated with `If-None-Match`, and the 304 that nearly always comes back carries no body. It's advisory in both directions — an unwritable, missing or corrupt cache degrades to a plain fetch rather than failing a build.
+
+| Variable                      | Default               | Meaning                                              |
+| ----------------------------- | --------------------- | ---------------------------------------------------- |
+| `TEAMAPI_CACHE_DIR`           | `.teamapi-cache/http` | Where cached remote documents live.                  |
+| `TEAMAPI_NO_CACHE`            | unset                 | Any non-empty value resolves without the cache.      |
+| `TEAMAPI_RESOLVE_CONCURRENCY` | `8`                   | Documents in flight at once; `1` is strictly serial. |
+
+Environment variables rather than `teamapi.config.yml` on purpose: that file lives in the repository and describes the _org_, while a cache directory is a fact about the _machine_ — CI wants it where its cache action can restore it, a container wants it on a writable volume.
+
+**Where it actually breaks** is measurable rather than guessed at. `pnpm bench:resolve` generates a synthetic org of any size and resolves it at several concurrencies, both from a whole directory (what `teamapi validate ./org` does) and from a single root document whose `$ref`s reach the rest (what a remote org looks like). At 5ms per document — a modest round trip — a 200-team org resolves like this:
+
+```text
+200 teams @ 5ms/doc
+  seeds=all  concurrency      total   speedup
+                        1   1235ms
+                        8    185ms   6.7x
+                       32     95ms   13.0x
+```
+
+On a local filesystem the loads are already cheap enough that the win is nearer 1.6x, and 1000 teams resolve in about a third of a second.
 
 <a id="dashboard"></a>
 

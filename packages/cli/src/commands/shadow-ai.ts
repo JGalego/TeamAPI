@@ -5,6 +5,7 @@ import {
   scanForAiArtifacts,
   type ScannedRepo,
 } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
@@ -45,7 +46,7 @@ export async function runShadowAi(patterns: string[], options: ShadowAiOptions):
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   if (format === "text") warnUnresolved(graph);
 
   let repos: ScannedRepo[];

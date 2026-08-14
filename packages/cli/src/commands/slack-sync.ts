@@ -1,4 +1,5 @@
 import { buildOrgGraph, formatSlackPlan, planSlackSync, SlackClient } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
@@ -27,7 +28,7 @@ export async function runSlackSync(patterns: string[], options: SlackSyncOptions
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   warnUnresolved(graph);
 
   const client = new SlackClient({ token });

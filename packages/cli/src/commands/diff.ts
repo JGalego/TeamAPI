@@ -10,6 +10,7 @@ import {
   LoaderRegistry,
   type LoadedDocument,
 } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 
@@ -82,7 +83,7 @@ export async function runDiff(patterns: string[], options: DiffOptions): Promise
     return 1;
   }
 
-  const newGraph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const newGraph = await buildOrgGraph(resolveOptions(seeds));
   warnUnresolved(newGraph);
 
   let oldGraph;

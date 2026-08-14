@@ -30,6 +30,7 @@
     "example:render": "pnpm teamapi render examples/acme-org --scope topology",
     "example:serve-api": "pnpm teamapi serve-api examples/acme-org --port 3000",
     "example:serve-mcp": "pnpm teamapi serve-mcp examples/acme-org",
+    "bench:resolve": "node scripts/bench-resolve.mjs",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build && changeset publish"

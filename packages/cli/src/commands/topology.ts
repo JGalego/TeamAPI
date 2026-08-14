@@ -6,6 +6,7 @@ import {
   type OrgGraph,
   type TopologyKind,
 } from "@jgalego/teamapi-core";
+import { resolveOptions } from "../resolve-options";
 import { expandSeeds } from "../seeds";
 import { warnUnresolved } from "../warn-unresolved";
 import { printReport, sarifLevel, type ReportFormat } from "../report-format";
@@ -55,7 +56,7 @@ export async function runTopology(patterns: string[], options: TopologyOptions =
     return 1;
   }
 
-  const graph = await buildOrgGraph({ seedUris: seeds, allowPartial: true });
+  const graph = await buildOrgGraph(resolveOptions(seeds));
   if (format === "text") warnUnresolved(graph);
 
   const report = checkTopology(graph, config.topology);

@@ -204,7 +204,7 @@ describe.each(ORGS)("examples/%s", (org) => {
     const models = [
       buildTopologyDiagram(graph),
       buildOrgHierarchyDiagram(graph),
-      buildOrgHierarchyDiagram(graph, { withAgents: true }),
+      buildOrgHierarchyDiagram(graph, { includeAgents: true }),
       buildContextMapDiagram(graph, deriveContextMap(graph)),
     ];
     for (const model of models) {
