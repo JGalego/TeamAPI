@@ -2,6 +2,19 @@
   "name": "@jgalego/teamapi-core",
   "version": "0.7.0",
   "description": "Team API as Code resolution, graph building, cognitive load, context mapping, and diagram generation",
+  "keywords": [
+    "teamapi",
+    "team-api-as-code",
+    "team-topologies",
+    "org-graph",
+    "cognitive-load",
+    "ddd",
+    "context-map",
+    "mermaid",
+    "graphviz",
+    "gaps",
+    "platform-engineering"
+  ],
   "license": "MIT",
   "homepage": "https://github.com/JGalego/TeamAPI#readme",
   "repository": {

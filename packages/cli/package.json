@@ -1,7 +1,23 @@
 {
   "name": "@jgalego/teamapi",
   "version": "0.5.0",
-  "description": "CLI for the Team API as Code toolchain: validate, render, scaffold, generate, serve-api, serve-mcp, chat",
+  "description": "Team API as Code toolchain: one YAML file per team becomes diagrams, gap and policy checks, a REST API + dashboard, an MCP server, imports, reconciliation and chat",
+  "keywords": [
+    "teamapi",
+    "team-api-as-code",
+    "team-topologies",
+    "org-chart",
+    "cognitive-load",
+    "cli",
+    "diagrams",
+    "mermaid",
+    "backstage",
+    "crewai",
+    "mcp",
+    "codeowners",
+    "platform-engineering",
+    "devex"
+  ],
   "license": "MIT",
   "engines": {
     "node": ">=22"

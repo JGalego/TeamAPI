@@ -1,5 +1,10 @@
 # @jgalego/teamapi-chat
 
+[![npm](https://img.shields.io/npm/v/%40jgalego%2Fteamapi-chat?logo=npm&logoColor=white&color=cb3837)](https://www.npmjs.com/package/@jgalego/teamapi-chat)
+[![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml)
+[![Node](https://img.shields.io/node/v/%40jgalego%2Fteamapi-chat?logo=node.js&logoColor=white&color=339933)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](https://github.com/JGalego/TeamAPI/blob/main/LICENSE)
+
 Chat as a team or a specific team member from a
 [Team API as Code](https://github.com/JGalego/TeamAPI) org — backed by a live tool-use loop over
 the same ~12 org-graph operations `@jgalego/teamapi-mcp-server` exposes, so the persona can
@@ -60,6 +65,22 @@ a thrown error into a message the model can read and recover from rather than an
 ends the turn.
 
 Full docs and a sample transcript: **https://github.com/JGalego/TeamAPI**
+
+## The TeamAPI toolchain
+
+One org graph, seven doors into it — install only the ones you need:
+
+| Package                                                                                    | What it does                                                                        |
+| ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
+| [`@jgalego/teamapi`](https://www.npmjs.com/package/@jgalego/teamapi)                       | The CLI — validate, diagram, check, import, reconcile, serve and chat with your org |
+| [`@jgalego/teamapi-core`](https://www.npmjs.com/package/@jgalego/teamapi-core)             | The engine: `$ref` resolution, the org graph, scoring, checks, diagrams, generators |
+| [`@jgalego/teamapi-schema`](https://www.npmjs.com/package/@jgalego/teamapi-schema)         | Zod schemas and TypeScript types for the extended spec                              |
+| [`@jgalego/teamapi-rest-api`](https://www.npmjs.com/package/@jgalego/teamapi-rest-api)     | REST API, live dashboard, Swagger UI, Prometheus metrics                            |
+| [`@jgalego/teamapi-mcp-server`](https://www.npmjs.com/package/@jgalego/teamapi-mcp-server) | The org graph as MCP tools for LLM assistants                                       |
+| **`@jgalego/teamapi-chat`** (this package)                                                 | Chat as a team or member — Anthropic or any OpenAI-compatible endpoint              |
+| [`@jgalego/teamapi-backstage`](https://www.npmjs.com/package/@jgalego/teamapi-backstage)   | Live Backstage catalog entity provider                                              |
+
+Docs, examples and the extended spec: **[teamapi.dev](https://teamapi.dev/latest/index.html)** · **[github.com/JGalego/TeamAPI](https://github.com/JGalego/TeamAPI)**
 
 ## License
 

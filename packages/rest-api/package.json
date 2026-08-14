@@ -2,6 +2,19 @@
   "name": "@jgalego/teamapi-rest-api",
   "version": "0.5.0",
   "description": "Read-only REST API over a resolved Team API org graph",
+  "keywords": [
+    "teamapi",
+    "team-api-as-code",
+    "team-topologies",
+    "fastify",
+    "rest-api",
+    "openapi",
+    "swagger",
+    "dashboard",
+    "prometheus",
+    "etag",
+    "pagination"
+  ],
   "license": "MIT",
   "homepage": "https://github.com/JGalego/TeamAPI#readme",
   "repository": {

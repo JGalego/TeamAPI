@@ -1,5 +1,10 @@
 # @jgalego/teamapi-mcp-server
 
+[![npm](https://img.shields.io/npm/v/%40jgalego%2Fteamapi-mcp-server?logo=npm&logoColor=white&color=cb3837)](https://www.npmjs.com/package/@jgalego/teamapi-mcp-server)
+[![CI](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/JGalego/TeamAPI/actions/workflows/ci.yml)
+[![Node](https://img.shields.io/node/v/%40jgalego%2Fteamapi-mcp-server?logo=node.js&logoColor=white&color=339933)](https://nodejs.org)
+[![License: MIT](https://img.shields.io/github/license/JGalego/TeamAPI)](https://github.com/JGalego/TeamAPI/blob/main/LICENSE)
+
 An [MCP](https://modelcontextprotocol.io/) server exposing a resolved
 [Team API as Code](https://github.com/JGalego/TeamAPI) org graph as tools for LLM assistants:
 `list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`,
@@ -54,6 +59,22 @@ on the system-wide `PATH` (e.g. installed via `npm install -g @jgalego/teamapi`)
 `command` at the full path to the installed binary (e.g. from `which teamapi`).
 
 Full docs and examples: **https://github.com/JGalego/TeamAPI**
+
+## The TeamAPI toolchain
+
+One org graph, seven doors into it — install only the ones you need:
+
+| Package                                                                                  | What it does                                                                        |
+| ---------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| [`@jgalego/teamapi`](https://www.npmjs.com/package/@jgalego/teamapi)                     | The CLI — validate, diagram, check, import, reconcile, serve and chat with your org |
+| [`@jgalego/teamapi-core`](https://www.npmjs.com/package/@jgalego/teamapi-core)           | The engine: `$ref` resolution, the org graph, scoring, checks, diagrams, generators |
+| [`@jgalego/teamapi-schema`](https://www.npmjs.com/package/@jgalego/teamapi-schema)       | Zod schemas and TypeScript types for the extended spec                              |
+| [`@jgalego/teamapi-rest-api`](https://www.npmjs.com/package/@jgalego/teamapi-rest-api)   | REST API, live dashboard, Swagger UI, Prometheus metrics                            |
+| **`@jgalego/teamapi-mcp-server`** (this package)                                         | The org graph as MCP tools for LLM assistants                                       |
+| [`@jgalego/teamapi-chat`](https://www.npmjs.com/package/@jgalego/teamapi-chat)           | Chat as a team or member — Anthropic or any OpenAI-compatible endpoint              |
+| [`@jgalego/teamapi-backstage`](https://www.npmjs.com/package/@jgalego/teamapi-backstage) | Live Backstage catalog entity provider                                              |
+
+Docs, examples and the extended spec: **[teamapi.dev](https://teamapi.dev/latest/index.html)** · **[github.com/JGalego/TeamAPI](https://github.com/JGalego/TeamAPI)**
 
 ## License
 
