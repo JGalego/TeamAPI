@@ -810,6 +810,24 @@ Cross-team `interactions[]`/`dependencies[]` aren't translated into Backstage's 
 
 <a id="codeowners"></a>
 
+#### Or: don't generate it at all
+
+A generated file is a snapshot. It's correct until somebody changes a team document, and wrong until somebody remembers to regenerate — which is exactly where a catalog stops being trusted.
+
+`GET /backstage/catalog` serves the same entities live, and [`@jgalego/teamapi-backstage`](packages/backstage-plugin) is a catalog entity provider that polls it:
+
+```ts
+import { TeamApiEntityProvider } from "@jgalego/teamapi-backstage";
+
+builder.addEntityProvider(
+  new TeamApiEntityProvider({ baseUrl: "http://teamapi:3000", token: process.env.TEAMAPI_API_TOKEN }),
+);
+```
+
+The catalog is then never further behind than one refresh interval, and there's no second mapping between the two models to keep in sync — it's the same generator, served rather than written.
+
+The plugin has **no `@backstage/*` dependency**. `EntityProvider` is a structural interface, and depending on the framework to get it would pin this to one Backstage version — the thing most likely to be wrong for any given installation. It applies a `full` mutation under one stable location, so a team removed from the org graph leaves the catalog too; and a failed refresh leaves the previously ingested entities alone, because a briefly unreachable server is not a reason to empty somebody's service catalog.
+
 ### 👥 CODEOWNERS
 
 `teamapi generate codeowners examples/acme-org --out ./codeowners --org acme` writes one `CODEOWNERS` per repository, so every pull request routes to the team that declared the service. Owners are written as `@acme/<team-id>` — the same slug [`teamapi apply`](#apply) provisions — or as members' `githubUsername` handles when no `--org` is given.

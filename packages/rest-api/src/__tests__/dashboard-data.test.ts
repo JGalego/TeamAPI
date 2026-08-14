@@ -122,3 +122,41 @@ describe("dashboard data contract", () => {
     expect(deep.nodes.length).toBeGreaterThanOrEqual(shallow.nodes.length);
   });
 });
+
+describe("GET /backstage/catalog", () => {
+  it("serves the same entities `teamapi generate backstage` writes", async () => {
+    const entities = (await get("/backstage/catalog")) as Array<{ kind: string; metadata: { name: string } }>;
+    const kinds = new Set(entities.map((entity) => entity.kind));
+    expect(kinds).toContain("Group");
+    expect(kinds).toContain("User");
+    for (const entity of entities) {
+      // The provider rejects an entity with no kind or name; the server must never produce one.
+      expect(typeof entity.metadata.name).toBe("string");
+      expect(entity.metadata.name.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("scopes to one team without disagreeing with the unscoped answer", async () => {
+    const all = (await get("/backstage/catalog")) as Array<{ metadata: { name: string } }>;
+    const scoped = (await get("/backstage/catalog?teamId=stream-checkout")) as Array<{ metadata: { name: string } }>;
+
+    expect(scoped.length).toBeGreaterThan(0);
+    expect(scoped.length).toBeLessThan(all.length);
+    // A subset, not a re-derivation: a scoped request and an unscoped one describing a team
+    // differently would be worse than having no scoping at all.
+    const allNames = new Set(all.map((entity) => entity.metadata.name));
+    for (const entity of scoped) expect(allNames.has(entity.metadata.name)).toBe(true);
+  });
+
+  it("404s an unknown team", async () => {
+    const res = await app.inject({ method: "GET", url: "/backstage/catalog?teamId=nope" });
+    expect(res.statusCode).toBe(404);
+  });
+
+  it("emits catalog-info.yaml on request", async () => {
+    const res = await app.inject({ method: "GET", url: "/backstage/catalog?format=yaml" });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers["content-type"]).toContain("text/yaml");
+    expect(res.body).toContain("kind: Group");
+  });
+});

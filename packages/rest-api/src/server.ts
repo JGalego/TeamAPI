@@ -22,6 +22,7 @@ import { checksRoutes } from "./routes/checks";
 import { healthRoutes } from "./routes/health";
 import { metricsRoutes } from "./routes/metrics";
 import { proposalRoutes, type ProposalRouteOptions } from "./routes/proposals";
+import { backstageRoutes } from "./routes/backstage";
 import { dashboardRoutes } from "./routes/dashboard";
 import { knowledgeRoutes } from "./routes/knowledge";
 import { contextRoutes } from "./routes/context";
@@ -150,6 +151,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Health", description: "Liveness check" },
         { name: "Metrics", description: "Prometheus metrics for the org graph and this server" },
         { name: "Proposals", description: "Propose a change to a team as a pull request" },
+        { name: "Backstage", description: "The org as Backstage catalog entities, served live" },
       ],
     },
   });
@@ -185,6 +187,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   await app.register(knowledgeRoutes);
   await app.register(contextRoutes);
   await app.register(knowledgeGraphRoutes);
+  await app.register(backstageRoutes);
   const slackSigningSecret = options.slackSigningSecret ?? process.env.SLACK_SIGNING_SECRET;
   if (slackSigningSecret) {
     await app.register(slackRoutes, { signingSecret: slackSigningSecret });
