@@ -493,6 +493,15 @@ open http://127.0.0.1:3000/dashboard
 
 ![Searching the dashboard for "oauth" and "architecture" surfaces steering docs, prompts, ADRs, sessions, a specification, an AI agent, and a memory entry — all through the same search box.](docs/assets/dashboard-demo.gif)
 
+Four more sections cover what the API had been answering all along with nobody asking:
+
+- **AI agents** — the whole fleet, with counts by status and provider, and every agent with **no human owner** marked in red. That one matters: an unowned agent presents to every downstream consumer — `AGENTS.md`, a context bundle, a generated crew — exactly like one with a real owner, so a list that says otherwise is the only way to see it.
+- **Sessions** — what was actually built with an assistant, newest first.
+- **Context map** — as a list beside the diagram, because the diagram can show the relationships but not the **conflicts**: two teams describing one relationship differently. Conflicts are listed first, unconditionally; a disagreement buried under thirty healthy relationships is a disagreement nobody acts on.
+- **Knowledge graph** — a node picker and a depth control rather than a picture. The whole graph is far too much to draw and exactly the right amount to walk, and "what's connected to this ADR?" is the question people actually have.
+
+Every section fetches independently and says so when it fails, so a server built before one of these routes existed degrades to a message rather than to a box that stays on "Loading…".
+
 <a id="proposals"></a>
 
 ## ✏️ Editing a team without opening an editor

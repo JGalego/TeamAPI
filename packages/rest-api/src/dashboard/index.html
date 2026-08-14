@@ -308,6 +308,53 @@
   .propose-result { font-size: 0.85rem; }
   .propose-result.error { color: #b45309; }
 
+  /* The AI-native sections. Same visual language as the team cards, because they answer the same
+     shape of question — what exists, who owns it, what is unaccounted for. */
+  .stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 12px; }
+  .stat {
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 8px 12px;
+    background: var(--panel);
+    min-width: 110px;
+  }
+  .stat .value { font-size: 1.4rem; font-weight: 600; }
+  .stat .label { font-size: 0.75rem; color: var(--ink-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat.warn .value { color: var(--warning); }
+
+  .row-list { display: grid; gap: 4px; font-size: 0.86rem; }
+  .row-list .row {
+    display: flex;
+    gap: 8px;
+    align-items: baseline;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--panel);
+  }
+  .row-list .row .team { color: var(--ink-muted); font-size: 0.78rem; }
+  .row-list .row .grow { flex: 1; }
+  .chip {
+    font-size: 0.72rem;
+    padding: 1px 6px;
+    border-radius: 999px;
+    border: 1px solid var(--line);
+    color: var(--ink-muted);
+    white-space: nowrap;
+  }
+  .chip.unowned { color: var(--critical); border-color: var(--critical); }
+  .chip.inactive { opacity: 0.65; }
+
+  .kg-controls { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+  .kg-controls select, .kg-controls input {
+    font: inherit;
+    padding: 5px 8px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--ink);
+  }
+
   footer {
     text-align: center;
     color: var(--ink-muted);
@@ -344,6 +391,34 @@
   <section>
     <h2>Teams</h2>
     <div class="teams-grid" id="teams-grid"></div>
+  </section>
+
+  <section>
+    <h2>AI agents</h2>
+    <div class="stat-row" id="agent-stats"></div>
+    <div class="row-list" id="agent-list"></div>
+  </section>
+
+  <section>
+    <h2>Sessions</h2>
+    <div class="row-list" id="session-list"></div>
+  </section>
+
+  <section>
+    <h2>Knowledge graph</h2>
+    <div class="kg-controls">
+      <select id="kg-node"></select>
+      <label class="propose-note">depth
+        <input id="kg-depth" type="number" min="1" max="4" value="2" style="width:60px" />
+      </label>
+      <span class="propose-note" id="kg-summary"></span>
+    </div>
+    <div class="row-list" id="kg-list"></div>
+  </section>
+
+  <section>
+    <h2>Context map</h2>
+    <div class="row-list" id="context-map-list"></div>
   </section>
 
   <section>
@@ -779,6 +854,160 @@
     return form;
   }
 
+  /** One row in a list section: a label, a team attribution, and any number of chips. */
+  function row(label, teamId, chips = []) {
+    return h("div", { class: "row" }, [
+      h("span", { class: "grow", text: label }),
+      ...chips.filter(Boolean),
+      h("span", { class: "team", text: teamId }),
+    ]);
+  }
+
+  function stat(value, label, warn = false) {
+    return h("div", { class: warn && Number(value) > 0 ? "stat warn" : "stat" }, [
+      h("div", { class: "value", text: String(value) }),
+      h("div", { class: "label", text: label }),
+    ]);
+  }
+
+  function fillList(id, rows, empty) {
+    const list = document.getElementById(id);
+    list.innerHTML = "";
+    if (rows.length === 0) {
+      list.appendChild(h("div", { class: "placeholder", text: empty }));
+      return;
+    }
+    for (const node of rows) list.appendChild(node);
+  }
+
+  /**
+   * The org's agent fleet.
+   *
+   * The API has answered `/agents` since the AI-native sections landed and the dashboard never
+   * asked. It is the section most worth having: an agent with no human owner presents to every
+   * downstream consumer exactly like one with a real owner, so the only way to see the difference
+   * is a list that says so — which is also what `gaps` escalates.
+   */
+  async function loadAgents() {
+    // The org-wide collection routes answer with `{ teamId, item }` — the resource itself is one
+    // level down. Reading `entry.name` here would render a list of blanks, silently.
+    const agents = (await getJson("/agents")).map((entry) => ({ ...entry.item, teamId: entry.teamId }));
+    const active = agents.filter((a) => (a.status ?? "active") === "active");
+    const unowned = agents.filter((a) => !a.ownerId);
+    const providers = new Set(agents.map((a) => a.provider).filter(Boolean));
+
+    const stats = document.getElementById("agent-stats");
+    stats.innerHTML = "";
+    stats.appendChild(stat(agents.length, "declared"));
+    stats.appendChild(stat(active.length, "active"));
+    stats.appendChild(stat(providers.size, "providers"));
+    stats.appendChild(stat(unowned.length, "no owner", true));
+
+    fillList(
+      "agent-list",
+      agents.map((agent) =>
+        row(agent.name, agent.teamId, [
+          agent.provider ? h("span", { class: "chip", text: agent.provider }) : null,
+          (agent.status ?? "active") === "active"
+            ? null
+            : h("span", { class: "chip inactive", text: agent.status }),
+          agent.ownerId
+            ? h("span", { class: "chip", text: `owned by ${agent.ownerId}` })
+            : h("span", { class: "chip unowned", title: "Nobody is accountable for what this produces", text: "no owner" }),
+        ]),
+      ),
+      "No agents declared anywhere in the org.",
+    );
+  }
+
+  /** AI collaboration sessions, newest first — the record of what was actually built with an
+   * assistant, which is the other half of the agent roster and just as unexposed. */
+  async function loadSessions() {
+    const sessions = (await getJson("/sessions")).map((entry) => ({ ...entry.item, teamId: entry.teamId }));
+    const sorted = [...sessions].sort((a, b) => String(b.startedAt ?? "").localeCompare(String(a.startedAt ?? "")));
+    fillList(
+      "session-list",
+      sorted.map((session) =>
+        row(session.objective ?? session.id, session.teamId, [
+          session.assistant ? h("span", { class: "chip", text: session.assistant }) : null,
+          session.startedAt ? h("span", { class: "chip", text: String(session.startedAt).slice(0, 10) }) : null,
+          session.agentId ? h("span", { class: "chip", text: session.agentId }) : null,
+        ]),
+      ),
+      "No sessions recorded.",
+    );
+  }
+
+  /**
+   * The context map as a list, alongside the diagram tab.
+   *
+   * The diagram shows the relationships; it cannot show the *conflicts*, which are two teams
+   * describing one relationship differently — and that disagreement is the single most useful
+   * thing this derivation produces, because it is organizational signal nobody wrote down.
+   */
+  async function loadContextMap() {
+    const map = await getJson("/context-map");
+    const conflicts = (map.conflicts ?? []).map((conflict) =>
+      row(conflict.description, `${conflict.teamA} ↔ ${conflict.teamB}`, [
+        h("span", { class: "chip unowned", text: "conflict" }),
+      ]),
+    );
+    const relationships = (map.relationships ?? []).map((rel) =>
+      row(`${rel.from} → ${rel.to}`, rel.mode, [
+        rel.pattern ? h("span", { class: "chip", text: rel.pattern }) : null,
+        rel.source === "heuristic" ? h("span", { class: "chip inactive", title: "Inferred from the interaction mode, not declared", text: "inferred" }) : null,
+      ]),
+    );
+    // Conflicts first, unconditionally: a disagreement buried under thirty healthy relationships
+    // is a disagreement nobody acts on.
+    fillList("context-map-list", [...conflicts, ...relationships], "No interactions declared.");
+  }
+
+  /**
+   * The knowledge graph, as a neighbourhood rather than a picture.
+   *
+   * `/knowledge-graph` returns every team, person, role, service, agent and document as one linked
+   * graph, which is far too much to draw and exactly the right amount to walk. Picking a node and
+   * traversing from it answers the question people actually have — "what is connected to this
+   * ADR?" — which no diagram of the whole thing ever does.
+   */
+  async function loadKnowledgeGraph() {
+    const graph = await getJson("/knowledge-graph");
+    const select = document.getElementById("kg-node");
+    const depth = document.getElementById("kg-depth");
+    const summary = document.getElementById("kg-summary");
+
+    const nodes = [...(graph.nodes ?? [])].sort((a, b) => `${a.kind}${a.label}`.localeCompare(`${b.kind}${b.label}`));
+    summary.textContent = `${nodes.length} nodes, ${(graph.edges ?? []).length} edges`;
+
+    select.innerHTML = "";
+    for (const node of nodes) {
+      select.appendChild(h("option", { value: node.id, text: `${node.kind}: ${node.label}` }));
+    }
+
+    async function traverse() {
+      const nodeId = select.value;
+      if (!nodeId) return;
+      const scoped = await getJson(`/knowledge-graph/${encodeURIComponent(nodeId)}/traverse?depth=${depth.value}`);
+      const byId = new Map((scoped.nodes ?? []).map((node) => [node.id, node]));
+      fillList(
+        "kg-list",
+        (scoped.edges ?? []).map((edge) => {
+          const from = byId.get(edge.from);
+          const to = byId.get(edge.to);
+          return row(`${from ? from.label : edge.from} → ${to ? to.label : edge.to}`, edge.relation, [
+            to ? h("span", { class: "chip", text: to.kind }) : null,
+          ]);
+        }),
+        "Nothing is connected to this node.",
+      );
+    }
+
+    select.addEventListener("change", () => void traverse());
+    depth.addEventListener("change", () => void traverse());
+    if (nodes.length > 0) await traverse();
+  }
+
   async function loadDiagram(scope) {
     const container = document.getElementById("diagram");
     container.innerHTML = "";
@@ -880,8 +1109,29 @@
       loadSummary().then(renderTeamCards),
       loadCognitiveLoad(),
       loadChecks(),
+      loadAgents(),
+      loadSessions(),
+      loadContextMap(),
+      loadKnowledgeGraph(),
       loadDiagram("topology"),
     ]);
+
+    // Each AI-native section says so itself when it fails, rather than sitting on "Loading…":
+    // these routes are newer than the rest of the API, and a server built before them should
+    // degrade to a message rather than to silence.
+    const sections = [
+      [3, "agent-list", "AI agents"],
+      [4, "session-list", "Sessions"],
+      [5, "context-map-list", "Context map"],
+      [6, "kg-list", "Knowledge graph"],
+    ];
+    for (const [index, id, label] of sections) {
+      if (results[index].status === "rejected") {
+        const node = document.getElementById(id);
+        node.innerHTML = "";
+        node.appendChild(h("div", { class: "placeholder", text: `${label} unavailable: ${results[index].reason}` }));
+      }
+    }
 
     const summaryResult = results[0];
     if (summaryResult.status === "rejected") {
