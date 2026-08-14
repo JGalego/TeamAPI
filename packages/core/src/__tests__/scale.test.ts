@@ -11,52 +11,73 @@ import { generateSyntheticOrg, type SyntheticOrg } from "../scale/synthetic-org"
 
 const TEAM_COUNT = 400;
 
+/**
+ * Vitest's 5s default is a sensible ceiling for a unit test and the wrong one for these. Building a
+ * 400-team graph takes well under a second here and repeatedly blew past five on CI, where two
+ * cores run every package's suite at once under v8 coverage instrumentation — so the timeout was
+ * measuring the runner's load, not the resolver. Generous enough to survive that, short enough that
+ * an actual hang still fails rather than running until the job is killed.
+ */
+const SLOW = 60_000;
+
 let tmp: string;
 let org: SyntheticOrg;
 
 beforeAll(() => {
   tmp = fs.mkdtempSync(path.join(os.tmpdir(), "teamapi-scale-"));
   org = generateSyntheticOrg(tmp, { teams: TEAM_COUNT });
-});
+}, SLOW);
 
 afterAll(() => {
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
 describe(`a synthetic org of ~${TEAM_COUNT} teams`, () => {
-  it("resolves every team from a single seed, through $refs alone", async () => {
-    const graph = await buildOrgGraph({ seedUris: [org.streamFiles[0]!], allowPartial: true });
-    expect(graph.unresolved).toEqual([]);
-    expect(graph.teams.size).toBe(org.files.length);
-  });
+  it(
+    "resolves every team from a single seed, through $refs alone",
+    async () => {
+      const graph = await buildOrgGraph({ seedUris: [org.streamFiles[0]!], allowPartial: true });
+      expect(graph.unresolved).toEqual([]);
+      expect(graph.teams.size).toBe(org.files.length);
+    },
+    SLOW,
+  );
 
-  it("produces an identical graph at every concurrency, including serial", async () => {
-    // The reason to assert this rather than just "it's faster": loading a level concurrently means
-    // completion order is nondeterministic, and every first-writer-wins decision in the resolver
-    // (duplicate team ids, the order of unresolved reports) would silently start depending on
-    // which fetch returned first. Processing is ordered separately from loading precisely so this
-    // holds, and nothing else would notice if it stopped holding.
-    const shape = async (concurrency: number): Promise<string> => {
-      const graph = await buildOrgGraph({ seedUris: org.files, allowPartial: true, concurrency });
-      return JSON.stringify({
-        teams: [...graph.teams.keys()],
-        edges: graph.edges,
-        roleEdges: graph.roleEdges,
-        unresolved: graph.unresolved,
-      });
-    };
-    const serial = await shape(1);
-    expect(await shape(8)).toBe(serial);
-    expect(await shape(64)).toBe(serial);
-  });
+  it(
+    "produces an identical graph at every concurrency, including serial",
+    async () => {
+      // The reason to assert this rather than just "it's faster": loading a level concurrently means
+      // completion order is nondeterministic, and every first-writer-wins decision in the resolver
+      // (duplicate team ids, the order of unresolved reports) would silently start depending on
+      // which fetch returned first. Processing is ordered separately from loading precisely so this
+      // holds, and nothing else would notice if it stopped holding.
+      const shape = async (concurrency: number): Promise<string> => {
+        const graph = await buildOrgGraph({ seedUris: org.files, allowPartial: true, concurrency });
+        return JSON.stringify({
+          teams: [...graph.teams.keys()],
+          edges: graph.edges,
+          roleEdges: graph.roleEdges,
+          unresolved: graph.unresolved,
+        });
+      };
+      const serial = await shape(1);
+      expect(await shape(8)).toBe(serial);
+      expect(await shape(64)).toBe(serial);
+    },
+    SLOW,
+  );
 
-  it("keeps the graph-wide analyses working at this size", async () => {
-    const graph = await buildOrgGraph({ seedUris: org.files, allowPartial: true });
-    expect(orgWideCognitiveLoadReport(graph)).toHaveLength(graph.teams.size);
-    // Every synthetic service publishes an event nothing subscribes to, so this is a real report
-    // rather than an empty one — the O(services²)-shaped code paths are actually exercised.
-    expect(planGaps(graph).findings.length).toBeGreaterThan(0);
-  });
+  it(
+    "keeps the graph-wide analyses working at this size",
+    async () => {
+      const graph = await buildOrgGraph({ seedUris: org.files, allowPartial: true });
+      expect(orgWideCognitiveLoadReport(graph)).toHaveLength(graph.teams.size);
+      // Every synthetic service publishes an event nothing subscribes to, so this is a real report
+      // rather than an empty one — the O(services²)-shaped code paths are actually exercised.
+      expect(planGaps(graph).findings.length).toBeGreaterThan(0);
+    },
+    SLOW,
+  );
 });
 
 describe("resolution concurrency", () => {
@@ -81,12 +102,16 @@ describe("resolution concurrency", () => {
     }
   }
 
-  it("loads a BFS level concurrently, up to the limit", async () => {
-    const loaders = new CountingRegistry();
-    await buildOrgGraph({ seedUris: org.files, allowPartial: true, loaders, concurrency: 6 });
-    expect(loaders.peak).toBeGreaterThan(1);
-    expect(loaders.peak).toBeLessThanOrEqual(6);
-  });
+  it(
+    "loads a BFS level concurrently, up to the limit",
+    async () => {
+      const loaders = new CountingRegistry();
+      await buildOrgGraph({ seedUris: org.files, allowPartial: true, loaders, concurrency: 6 });
+      expect(loaders.peak).toBeGreaterThan(1);
+      expect(loaders.peak).toBeLessThanOrEqual(6);
+    },
+    SLOW,
+  );
 
   it("stays strictly serial at concurrency 1", async () => {
     const loaders = new CountingRegistry();
