@@ -41,6 +41,8 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [🤖 MCP tools](#mcp-tools)
   - [🌐 One endpoint for the whole org](#mcp-http)
 - [💬 Chat](#chat)
+  - [🔀 Which model](#chat)
+  - [🤖 One question, one answer](#chat)
 - [⚙️ Generators](#generators)
   - [▶️ Running it](#running-it)
   - [🗂️ Backstage catalog](#backstage-catalog)
@@ -537,7 +539,7 @@ It's **stateless**: a fresh server and transport per request, no session id issu
 
 ## 💬 Chat
 
-`teamapi chat examples/acme-org --team stream-checkout` starts an interactive session where the assistant speaks as that team — or, with `--member <id>`, as one specific person on it. It's backed by a live tool-use loop over the same org-graph operations the MCP server exposes, so it can accurately answer questions about any team, not just its own. Requires `ANTHROPIC_API_KEY` in your environment; add `--debug` to see the persona's system prompt and every tool call as it happens.
+`teamapi chat examples/acme-org --team stream-checkout` starts an interactive session where the assistant speaks as that team — or, with `--member <id>`, as one specific person on it. It's backed by a live tool-use loop over the same org-graph operations the MCP server exposes, so it can accurately answer questions about any team, not just its own. Add `--debug` to see the persona's system prompt and every tool call as it happens.
 
 ```bash
 export ANTHROPIC_API_KEY=sk-ant-...
@@ -547,7 +549,8 @@ teamapi chat examples/acme-org --team stream-checkout --member diego-alves
 **Example:**
 
 ```
-Chatting as Diego Alves (model: claude-opus-4-8). Type 'exit' or Ctrl+D to quit.
+Chatting as Diego Alves via anthropic (claude-opus-4-8).
+Type 'exit' or Ctrl+D to quit.
 
 You> is payments overloaded right now?
 Diego Alves> Checked Platform Payments' latest self-assessment — they're running "elevated,"
@@ -559,7 +562,8 @@ could use work, but nothing critical right now.
 
 ```
 $ teamapi chat examples/acme-org --team stream-checkout --member diego-alves --debug
-Chatting as Diego Alves (model: claude-opus-4-8). Type 'exit' or Ctrl+D to quit.
+Chatting as Diego Alves via anthropic (claude-opus-4-8).
+Type 'exit' or Ctrl+D to quit.
 
 --- system prompt ---
 You are Diego Alves (Checkout Tech Lead) on Stream Checkout, a stream-aligned team focused on:
@@ -592,6 +596,42 @@ Diego Alves> Honestly? We're carrying real extraneous load — three upstream in
 translating between them instead of building. Our own self-assessment flags us as "overloaded."
 An anticorruption layer would help a lot.
 ```
+
+### 🔀 Which model
+
+Two providers, which is what the landscape actually has: the Anthropic API, and the OpenAI Chat Completions wire format that everything else speaks.
+
+```bash
+# Anthropic (the default). Needs ANTHROPIC_API_KEY.
+teamapi chat examples/acme-org --team stream-checkout
+
+# OpenAI, or Azure, or Together, or Groq, or OpenRouter — anything speaking that format.
+teamapi chat examples/acme-org --team stream-checkout \
+  --provider openai --model gpt-4o
+
+# A model on your own machine. No key, no account, no data leaving the laptop.
+teamapi chat examples/acme-org --team stream-checkout \
+  --provider openai --base-url http://localhost:11434/v1 --model llama3.1
+```
+
+The OpenAI path is `fetch` against a base URL rather than a vendor SDK, which is the point: a base URL and an optional bearer token reach Azure OpenAI, Ollama, vLLM, llama.cpp, Together, Groq, Fireworks, OpenRouter and most self-hosted gateways. A third provider is a `--base-url`, not a release.
+
+### 🤖 One question, one answer
+
+`--ask` runs a single turn and exits, which is what makes this usable from something other than a keyboard:
+
+```bash
+teamapi chat examples/acme-org --team stream-checkout --ask "who owns checkout-api, and are they overloaded?"
+```
+
+Everything except the answer goes to **stderr** — the banner, the tool-call progress, the note about a turn that ended early — so stdout is exactly the answer and the command composes with a pipe:
+
+```bash
+OWNER=$(teamapi chat ./org --team platform-payments --quiet \
+  --ask "reply with only the team id that owns the ledger service")
+```
+
+It exits `2`, not `0`, when the answer is incomplete — the model hit the tool-call ceiling, or the response was truncated. A script acting on half a reply is the failure this mode is most likely to cause and least likely to notice.
 
 <a id="generators"></a>
 
@@ -812,7 +852,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi paperclip-drift <patterns...> --url <url> --company <id> [--token <token>]`                                                                                                                   | Report drift between the org graph and a running [Paperclip](#paperclip) company (read-only)                                                                                                                                             |
 | `teamapi serve-api <patterns...> [--port 3000] [--host <host>] [--token <token>] [--cors-origin <origin...>] [--rate-limit <n>] [--allow-anonymous] [--watch] [--reload-endpoint] [--mcp] [--metrics]` | Start the read-only REST API ([exposing it beyond localhost](#rest-api))                                                                                                                                                                 |
 | `teamapi serve-mcp <patterns...> [--watch]`                                                                                                                                                            | Start the MCP server ([staying current](#rest-api))                                                                                                                                                                                      |
-| `teamapi chat <patterns...> --team <id> [--member <id>] [--model <id>] [--debug]`                                                                                                                      | Chat as a team or team member (requires `ANTHROPIC_API_KEY`)                                                                                                                                                                             |
+| `teamapi chat <patterns...> --team <id> [--member <id>] [--provider anthropic\|openai] [--model <id>] [--base-url <url>] [--api-key <key>] [--ask <question>] [--quiet] [--debug]`                     | Chat as a team or team member, interactively or one-shot ([which model](#chat))                                                                                                                                                          |
 
 `<patterns...>` accepts file paths, globs, or a directory (auto-discovers every `teamapi.yml`/`.yaml` under it).
 

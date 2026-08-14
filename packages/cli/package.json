@@ -39,7 +39,6 @@
     "@jgalego/teamapi-rest-api": "workspace:*",
     "@jgalego/teamapi-mcp-server": "workspace:*",
     "@jgalego/teamapi-chat": "workspace:*",
-    "@anthropic-ai/sdk": "^0.112.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "commander": "^12.1.0",
     "fast-glob": "^3.3.2",

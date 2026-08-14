@@ -63,9 +63,6 @@ importers:
 
   packages/cli:
     dependencies:
-      '@anthropic-ai/sdk':
-        specifier: ^0.112.3
-        version: 0.112.3(zod@3.25.76)
       '@jgalego/teamapi-chat':
         specifier: workspace:*
         version: link:../chat

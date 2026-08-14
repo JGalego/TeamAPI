@@ -2,7 +2,7 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { Argument, Command, InvalidArgumentError, Option } from "commander";
-import { DEFAULT_CHAT_MODEL } from "@jgalego/teamapi-chat";
+import { CHAT_PROVIDERS, type ChatProviderName } from "@jgalego/teamapi-chat";
 import { runValidate } from "./commands/validate";
 import { REPORT_FORMATS, type ReportFormat } from "./report-format";
 import { runGaps } from "./commands/gaps";
@@ -432,24 +432,56 @@ export function createProgram(): Command {
       await runServeMcp(patterns, { watch: opts.watch, ...configFlags(opts) });
     });
 
-  program
+  const chatCommand = program
     .command("chat")
     .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
-    .description(
-      "Chat as a team or a team member, backed by a live tool-use loop over the org graph (requires ANTHROPIC_API_KEY)",
-    )
+    .description("Chat as a team or a team member, backed by a live tool-use loop over the org graph")
     .requiredOption("--team <id>", "team id to chat as")
-    .option("--member <id>", "chat as a specific member on that team instead of the team as a whole")
-    .option("--model <id>", "Anthropic model id", DEFAULT_CHAT_MODEL)
+    .option("--member <id>", "chat as a specific member on that team instead of the team as a whole");
+  chatCommand
+    .addOption(
+      chatCommand
+        .createOption("--provider <name>", "anthropic | openai (any OpenAI-compatible server)")
+        .choices(CHAT_PROVIDERS)
+        .default("anthropic"),
+    )
+    .option("--model <id>", "model id (defaults to the provider's own default)")
+    .option("--api-key <key>", "API key (defaults to ANTHROPIC_API_KEY / OPENAI_API_KEY)")
+    .option(
+      "--base-url <url>",
+      "OpenAI-compatible endpoint, e.g. http://localhost:11434/v1 (defaults to OPENAI_BASE_URL)",
+    )
+    .option("--ask <question>", "ask one question, print the answer on stdout, and exit")
+    .option("--quiet", "--ask only: print just the answer, with no banner or progress")
     .option("--debug", "print the persona's system prompt and every tool call")
-    .action(async (patterns: string[], opts: { team: string; member?: string; model: string; debug?: boolean }) => {
-      process.exitCode = await runChat(patterns, {
-        team: opts.team,
-        member: opts.member,
-        model: opts.model,
-        debug: opts.debug,
-      });
-    });
+    .action(
+      async (
+        patterns: string[],
+        opts: {
+          team: string;
+          member?: string;
+          provider: string;
+          model?: string;
+          apiKey?: string;
+          baseUrl?: string;
+          ask?: string;
+          quiet?: boolean;
+          debug?: boolean;
+        },
+      ) => {
+        process.exitCode = await runChat(patterns, {
+          team: opts.team,
+          member: opts.member,
+          provider: opts.provider as ChatProviderName,
+          model: opts.model,
+          apiKey: opts.apiKey,
+          baseUrl: opts.baseUrl,
+          ask: opts.ask,
+          quiet: opts.quiet,
+          debug: opts.debug,
+        });
+      },
+    );
 
   return program;
 }

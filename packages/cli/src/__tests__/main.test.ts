@@ -494,15 +494,62 @@ describe("createProgram — import", () => {
 });
 
 describe("createProgram — chat", () => {
-  it("uses the shared DEFAULT_CHAT_MODEL as the --model default", async () => {
+  it("defaults to the anthropic provider and leaves the model to it", async () => {
+    // No `--model` default here on purpose: the right default depends on which provider was
+    // chosen, and a shared constant would have sent an Anthropic model id to an OpenAI endpoint.
     const { program } = freshProgram();
     await program.parseAsync(["node", "teamapi", "chat", "some/path", "--team", "stream-checkout"]);
     expect(runChat).toHaveBeenCalledWith(["some/path"], {
       team: "stream-checkout",
       member: undefined,
-      model: "claude-opus-4-8",
+      provider: "anthropic",
+      model: undefined,
+      apiKey: undefined,
+      baseUrl: undefined,
+      ask: undefined,
+      quiet: undefined,
       debug: undefined,
     });
+  });
+
+  it("passes provider, base URL and the one-shot question through", async () => {
+    const { program } = freshProgram();
+    await program.parseAsync([
+      "node",
+      "teamapi",
+      "chat",
+      "some/path",
+      "--team",
+      "stream-checkout",
+      "--provider",
+      "openai",
+      "--base-url",
+      "http://localhost:11434/v1",
+      "--model",
+      "llama3.1",
+      "--ask",
+      "who owns checkout-api?",
+      "--quiet",
+    ]);
+    expect(runChat).toHaveBeenCalledWith(["some/path"], {
+      team: "stream-checkout",
+      member: undefined,
+      provider: "openai",
+      model: "llama3.1",
+      apiKey: undefined,
+      baseUrl: "http://localhost:11434/v1",
+      ask: "who owns checkout-api?",
+      quiet: true,
+      debug: undefined,
+    });
+  });
+
+  it("rejects an unknown provider rather than falling back to a default", async () => {
+    const { program } = freshProgram();
+    await expect(
+      program.parseAsync(["node", "teamapi", "chat", "p", "--team", "t", "--provider", "gemini"]),
+    ).rejects.toThrow();
+    expect(runChat).not.toHaveBeenCalled();
   });
 
   it("requires --team", async () => {

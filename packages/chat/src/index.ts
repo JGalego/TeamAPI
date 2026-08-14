@@ -1,5 +1,14 @@
 export * from "./tools";
+export * from "./tool";
+export * from "./session";
 export * from "./persona";
+export * from "./providers";
 
-/** Per the current model catalog: always use Opus 4.8 unless the caller names a different model. */
-export const DEFAULT_CHAT_MODEL = "claude-opus-4-8";
+/**
+ * The default model for `teamapi chat`, kept for callers that imported it before the package
+ * learned about more than one provider.
+ *
+ * @deprecated Prefer `PROVIDER_DEFAULTS[provider].model`, which answers the same question for
+ * whichever provider is actually in use.
+ */
+export { DEFAULT_ANTHROPIC_MODEL as DEFAULT_CHAT_MODEL } from "./providers/anthropic";

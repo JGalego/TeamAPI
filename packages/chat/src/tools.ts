@@ -1,12 +1,12 @@
-// `betaZodTool` (below) is typed against zod v4's `ZodType` specifically (it imports from
-// `zod/v4` internally), so these schemas are built with the same v4 API rather than the plain
-// `zod` root import (which resolves to the classic v3 API `@jgalego/teamapi-core`/`-schema`/
-// `-mcp-server` use) — otherwise a v3 schema passed where a v4 `ZodType` is expected can silently
-// produce a wrong/incomplete JSON input schema sent to the model instead of a type error. Zod
+// Schemas are built with zod's v4 API rather than the plain `zod` root import (which resolves to
+// the classic v3 API `@jgalego/teamapi-core`/`-schema`/`-mcp-server` use), because both provider
+// adapters want v4: the Anthropic helper is typed against v4's `ZodType`, and the
+// OpenAI-compatible adapter needs `z.toJSONSchema`. A v3 schema passed where a v4 one is expected
+// silently produces a wrong or incomplete input schema for the model instead of a type error. Zod
 // 3.25+ bundles both APIs in one package, so this and the sibling packages' plain `zod` import
 // still resolve to a single deduped `zod` install workspace-wide — not two coexisting majors.
 import { z } from "zod/v4";
-import { betaZodTool } from "@anthropic-ai/sdk/helpers/beta/zod";
+import type { ChatTool } from "./tool";
 import {
   buildContextMapDiagram,
   buildHierarchyDiagram,
@@ -41,6 +41,12 @@ function json(data: unknown): string {
   return JSON.stringify(data, null, 2);
 }
 
+/** Identity, but it pins each tool's `run` input to its own `inputSchema` at the definition site.
+ * Without it, `run`'s parameter is inferred as the widened union of every tool's input. */
+function defineTool<S extends z.ZodType>(tool: ChatTool<S>): ChatTool<S> {
+  return tool;
+}
+
 export interface ChatToolCall {
   name: string;
   input: unknown;
@@ -53,10 +59,15 @@ export interface ChatToolsOptions {
 }
 
 /**
- * Builds the same ~12 org-graph operations `@jgalego/teamapi-mcp-server` exposes over MCP, as Anthropic
- * tool-use tools instead — same underlying `@jgalego/teamapi-core` query functions, different protocol
- * adapter. Each tool closes over a single resolved `graph`: chat sessions are one-shot, unlike the
- * long-running REST/MCP servers, so there's no need for `OrgGraphStore`'s reload.
+ * Builds the same ~12 org-graph operations `@jgalego/teamapi-mcp-server` exposes over MCP, as
+ * provider-neutral tool definitions — same underlying `@jgalego/teamapi-core` query functions,
+ * different protocol adapter. Each tool closes over a single resolved `graph`: chat sessions are
+ * one-shot, unlike the long-running REST/MCP servers, so there's no need for `OrgGraphStore`'s
+ * reload.
+ *
+ * Neutral rather than Anthropic-shaped because the shape was the only thing tying this package to
+ * one vendor. A tool is a name, a description, a zod schema and a function; the SDK-specific part
+ * is a dozen lines per provider in `providers/`.
  */
 export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) {
   const { onToolCall } = options;
@@ -70,7 +81,7 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
   }
 
   return [
-    betaZodTool({
+    defineTool({
       name: "list_teams",
       description: "List all teams in the org, optionally filtered by team type or a free-text search term.",
       inputSchema: z.object({ type: TeamTypeSchema.optional(), search: z.string().optional() }),
@@ -79,7 +90,7 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       ),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "get_team",
       description: "Get full detail for one team by id: info, roles, members, services, cognitive load, meetings.",
       inputSchema: z.object({ teamId: z.string() }),
@@ -90,7 +101,7 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       }),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "get_team_roles",
       description:
         "Get the role/reporting hierarchy for one team (positions, independent of who fills them) plus the members currently assigned to each role.",
@@ -105,7 +116,7 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       }),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "get_team_cognitive_load",
       description: "Get a team's cognitive load self-assessment and derived sustainable/elevated/overloaded label.",
       inputSchema: z.object({ teamId: z.string() }),
@@ -117,7 +128,7 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       }),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "find_service_owner",
       description: "Find which team owns a named service, including its DDD bounded-context info if declared.",
       inputSchema: z.object({ serviceName: z.string() }),
@@ -128,14 +139,14 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       }),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "list_services",
       description: "List all services declared across the org, optionally filtered by a search term.",
       inputSchema: z.object({ search: z.string().optional() }),
       run: withDebug("list_services", async ({ search }) => json(listServices(graph, search))),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "get_team_interactions",
       description: "Get a team's Team Topologies interactions (collaboration / x-as-a-service / facilitating).",
       inputSchema: z.object({ teamId: z.string(), direction: DirectionSchema.optional() }),
@@ -146,7 +157,7 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       }),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "get_context_map",
       description:
         "Derive a DDD context map from declared interactions, optionally scoped to one team. Surfaces conflicting mode declarations between two teams.",
@@ -157,7 +168,7 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       }),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "render_org_diagram",
       description:
         "Render a Mermaid or DOT diagram: 'topology' (team interaction organigram, optionally scoped to one team's neighborhood), 'hierarchy' (one team's role/reporting chart, requires teamId), 'org-hierarchy' (every team's role hierarchy grouped into one box per team, with cross-team reportsTo/alignsWith relationships), or 'context-map' (DDD relationship diagram).",
@@ -182,14 +193,14 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       }),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "search_org",
       description: "Unified search across team names/focus, services, roles, members, and search terms.",
       inputSchema: z.object({ query: z.string() }),
       run: withDebug("search_org", async ({ query }) => json(searchOrg(graph, query))),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "get_org_graph",
       description:
         "Get the full resolved org graph (all teams + all edges) as JSON. Heavier; prefer narrower tools when possible.",
@@ -204,14 +215,14 @@ export function buildChatTools(graph: OrgGraph, options: ChatToolsOptions = {}) 
       ),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "get_org_cognitive_load_report",
       description: "Get every team's cognitive load assessment and label, sorted highest total first.",
       inputSchema: z.object({}),
       run: withDebug("get_org_cognitive_load_report", async () => json(orgWideCognitiveLoadReport(graph))),
     }),
 
-    betaZodTool({
+    defineTool({
       name: "get_org_gaps",
       description:
         "Find the accountability holes between teams rather than inside any one of them: services subscribing " +
