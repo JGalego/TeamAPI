@@ -51,7 +51,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
   - [🤖 AGENTS.md](#agents-md)
   - [🚢 Port](#port)
   - [📡 OpenTelemetry](#opentelemetry)
-- [📥 Import from GitHub](#import)
+- [📥 Import](#import)
 - [🔄 Sync with GitHub teams](#apply)
 - [💻 CLI reference](#cli-reference)
   - [🤖 Machine-readable output](#machine-readable)
@@ -825,7 +825,7 @@ Values are percent-encoded — `OTEL_RESOURCE_ATTRIBUTES` is W3C Baggage, so a c
 
 <a id="import"></a>
 
-## 📥 Import from GitHub
+## 📥 Import
 
 `teamapi import github-org <org> --out <dir>` bootstraps `teamapi.yml` files from an org that already exists on GitHub, instead of hand-writing them: one `<team-id>/teamapi.yml` per GitHub team, with members resolved from GitHub's user profiles (name, email, and the `githubUsername` that [Sync with GitHub teams](#apply) needs) and a `services[]` entry per repo the team owns.
 
@@ -835,6 +835,41 @@ Wrote 4 team(s) to ./imported/ — every team defaulted to type: stream-aligned 
 ```
 
 GitHub teams carry no Team Topologies typing or role hierarchy, so every generated team defaults to `type: stream-aligned` with an empty `roles[]` — both are meant to be corrected by hand, not taken as ground truth. Run `teamapi validate ./imported` next, then fill in `roles[]`, fix each team's `type`, and add `cognitiveLoad`/`interactions`/`dependencies` as you would for any hand-authored team. Requires a GitHub token via `--token` or `GITHUB_TOKEN`/`GH_TOKEN`.
+
+### 🗃️ Five sources, because the answer depends on what you already have
+
+The first question any org asks is "do we have to type all of this". The honest answer depends entirely on what's already written down somewhere:
+
+| source       | argument              | needs             | gets you                                                       |
+| ------------ | --------------------- | ----------------- | -------------------------------------------------------------- |
+| `github-org` | the org login         | `GITHUB_TOKEN`    | teams, members with `githubUsername`, services from repos      |
+| `backstage`  | a catalog file or URL | —                 | groups, members, owned components/APIs, a guessed team type    |
+| `okta`       | your Okta org URL     | `OKTA_TOKEN`      | one team per directory group, with its people                  |
+| `slack`      | —                     | `SLACK_BOT_TOKEN` | a skeleton per channel: name, topic as focus, channel declared |
+| `csv`        | a file                | —                 | teams, people, **and `roles[]`** from a job-title column       |
+
+```bash
+# Already have a Backstage catalog? Everything a Team API document wants is in it.
+teamapi import backstage http://backstage.internal/api/catalog/entities --out ./teams
+
+# Four hundred teams in Okta, none of them written down anywhere else.
+teamapi import okta https://acme.okta.com --prefix eng- --out ./teams
+
+# An HRIS export. The only source that can populate roles[].
+teamapi import csv ./people.csv --out ./teams
+
+# The list of teams exists nowhere but a channel sidebar. It happens.
+teamapi import slack --match '^team-' --prefix team- --out ./teams
+```
+
+A few decisions worth knowing about:
+
+- **CSV creates one role per distinct job title, shared by everybody holding it.** A job-title column is the one place an org routinely writes down what a person's _position_ is rather than only who they are — which is exactly the [role/member distinction](docs/spec/teamapi-extended-v1.md#roles-vs-members) this schema is built around. Job-sharing therefore comes out right for free, which a role-per-person model gets wrong. Its CSV reader handles quoted fields properly, because `"Engineer, Payments"` is in most HR exports.
+- **Okta drops deactivated accounts.** `okta-drift` reports those as findings on an _existing_ org, because a name still listed for somebody who left is the dangerous case. On a fresh import there's nothing to report against, and importing them would create the exact drift the tool exists to catch.
+- **Slack imports no members**, even though the API would list them. A channel's membership isn't a team — it's everybody who ever wanted visibility — and importing it produces a `members[]` that's wrong in a way that looks authoritative.
+- **Backstage reads `spec.memberOf` and `relations[]` alike**, so a raw `catalog-info.yaml` and the processed entities the catalog API returns behave the same. `--prefix` strips a naming convention off group and channel names, and matches what `okta-drift` already takes.
+
+Every source is deliberately incomplete in the same way: nothing outside the source is invented, and what each one couldn't know is printed after the run.
 
 <a id="apply"></a>
 
@@ -876,7 +911,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi generate crewai\|backstage\|paperclip\|codeowners\|agents-md\|port\|otel <patterns...> [--team <id>] [--company <name>] [--org <org>] --out <dir>`                                                           | Generate CrewAI agent/task config, a Backstage `catalog-info.yaml`, an [Agent Companies](#paperclip) package, [CODEOWNERS](#codeowners), [AGENTS.md](#agents-md), a [Port](#port) catalog, or [OpenTelemetry](#opentelemetry) attributes |
 | `teamapi history <patterns...> [--period commit\|day\|week\|month\|quarter] [--since <when>] [--format text\|json\|csv]`                                                                                              | Track how the org changed over git history ([trends](#org-history))                                                                                                                                                                      |
 | `teamapi diff <patterns...> --against <ref>`                                                                                                                                                                          | Diff the resolved org graph against a git revision                                                                                                                                                                                       |
-| `teamapi import github-org <org> --out <dir> [--token <token>]`                                                                                                                                                       | Bootstrap `teamapi.yml` document(s) from an existing GitHub org                                                                                                                                                                          |
+| `teamapi import <source> [argument] --out <dir> [--token <token>] [--url <url>] [--prefix <prefix>] [--match <regex>]`                                                                                                | Bootstrap `teamapi.yml` document(s) from GitHub, Backstage, Okta, Slack or a CSV ([import](#import))                                                                                                                                     |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]`                                                                                                                                            | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes)                                                                                                                                                |
 | `teamapi slack-sync <patterns...> [--token <token>] [--yes]`                                                                                                                                                          | Set each declared [Slack](#slack) channel's topic to name the team that owns it                                                                                                                                                          |
 | `teamapi doctor github\|slack\|pagerduty\|okta\|paperclip [--token <token>] [--url <url>] [--org <org>] [--company <id>]`                                                                                             | [Check a live integration](#doctor): auth, the read, field shapes, pagination                                                                                                                                                            |

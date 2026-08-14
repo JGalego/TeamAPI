@@ -68,7 +68,12 @@ vi.mock("../commands/schema", () => ({ runSchema }));
 vi.mock("../commands/generate", () => ({ runGenerate }));
 vi.mock("../commands/diff", () => ({ runDiff }));
 vi.mock("../commands/apply", () => ({ runApply }));
-vi.mock("../commands/import", () => ({ runImport }));
+// Partial: `main.ts` reads IMPORT_SOURCES from this module to build the argument's choices, so a
+// mock replacing the whole module leaves Commander with nothing to validate against.
+vi.mock("../commands/import", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../commands/import")>()),
+  runImport,
+}));
 vi.mock("../commands/serve-api", () => ({ runServeApi }));
 vi.mock("../commands/serve-mcp", () => ({ runServeMcp }));
 vi.mock("../commands/chat", () => ({ runChat }));

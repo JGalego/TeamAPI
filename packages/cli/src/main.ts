@@ -24,7 +24,7 @@ import { runPagerDutyDrift } from "./commands/pagerduty-drift";
 import { runOktaDrift } from "./commands/okta-drift";
 import { runDoctor, type DoctorIntegration } from "./commands/doctor";
 import { runPaperclipDrift } from "./commands/paperclip-drift";
-import { runImport, type ImportSource } from "./commands/import";
+import { IMPORT_SOURCES, runImport, type ImportSource } from "./commands/import";
 import { runServeApi } from "./commands/serve-api";
 import { runServeMcp } from "./commands/serve-mcp";
 import { runChat } from "./commands/chat";
@@ -388,18 +388,38 @@ export function createProgram(): Command {
       process.exitCode = await runPaperclipDrift(patterns, opts);
     });
 
-  const IMPORT_SOURCES = ["github-org"] as const;
   const importCommand = program
     .command("import")
     .description("Bootstrap Team API document(s) from an existing system")
-    .option("--token <token>", "GitHub token (defaults to GITHUB_TOKEN/GH_TOKEN env var)")
+    .option("--token <token>", "API token (defaults to the source's usual environment variable)")
+    .option("--url <url>", "Okta org URL, when not given as the argument")
+    .option("--prefix <prefix>", "strip this from group/channel names before they become team ids")
+    .option("--match <regex>", "slack: only import channels whose name matches this pattern")
     .requiredOption("--out <dir>", "output directory, one <team-id>/teamapi.yml per team");
   importCommand
-    .addArgument(importCommand.createArgument("<source>", "github-org").choices(IMPORT_SOURCES))
-    .argument("<org>", "GitHub organization login to import teams from")
-    .action(async (source: ImportSource, org: string, opts: { token?: string; out: string }) => {
-      process.exitCode = await runImport(source, org, { token: opts.token, out: opts.out });
-    });
+    .addArgument(
+      importCommand.createArgument("<source>", "github-org | backstage | okta | slack | csv").choices(IMPORT_SOURCES),
+    )
+    .argument(
+      "[argument]",
+      "github-org: the org login. backstage: a catalog file or URL. okta: the org URL. csv: a file. slack: unused.",
+      "",
+    )
+    .action(
+      async (
+        source: ImportSource,
+        argument: string,
+        opts: { token?: string; out: string; url?: string; prefix?: string; match?: string },
+      ) => {
+        process.exitCode = await runImport(source, argument, {
+          token: opts.token,
+          out: opts.out,
+          url: opts.url,
+          prefix: opts.prefix,
+          match: opts.match,
+        });
+      },
+    );
 
   program
     .command("serve-api")
