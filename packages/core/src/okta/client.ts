@@ -67,6 +67,14 @@ export class OktaClient {
     return out;
   }
 
+  private async write(method: "PUT" | "DELETE", path: string): Promise<void> {
+    const res = await fetch(`${this.baseUrl}${path}`, {
+      method,
+      headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
+    });
+    if (!res.ok) throw new Error(`Okta returned ${res.status} ${res.statusText} for ${method} ${path}`);
+  }
+
   /** The org this token belongs to. */
   async verify(): Promise<string> {
     const res = await fetch(`${this.baseUrl}/api/v1/org`, {
@@ -83,6 +91,32 @@ export class OktaClient {
    * `pageSize` exists so `teamapi doctor` can force the Link-header walk with a couple of groups
    * rather than needing two hundred.
    */
+  /** Group ids by name, so a plan built from names can be executed against ids. */
+  async listGroupIds(pageSize = 200): Promise<Map<string, string>> {
+    const groups = await this.page<RawGroup>(`${this.baseUrl}/api/v1/groups?limit=${pageSize}`);
+    return new Map(groups.filter((group) => group.profile?.name).map((group) => [group.profile!.name!, group.id]));
+  }
+
+  /** Resolves an address to a user id. Okta's search is eventually consistent, so this uses the
+   * exact-match `q` filter and checks the address it got back rather than trusting the first hit. */
+  async findUserIdByEmail(email: string): Promise<string | undefined> {
+    const users = await this.page<RawUser & { id?: string }>(
+      `${this.baseUrl}/api/v1/users?limit=5&search=${encodeURIComponent(`profile.email eq "${email}"`)}`,
+    );
+    const match = users.find(
+      (user) => (user.profile?.email ?? user.profile?.login ?? "").toLowerCase() === email.toLowerCase(),
+    );
+    return match?.id;
+  }
+
+  async addUserToGroup(groupId: string, userId: string): Promise<void> {
+    await this.write("PUT", `/api/v1/groups/${groupId}/users/${userId}`);
+  }
+
+  async removeUserFromGroup(groupId: string, userId: string): Promise<void> {
+    await this.write("DELETE", `/api/v1/groups/${groupId}/users/${userId}`);
+  }
+
   async listGroups(pageSize = 200): Promise<DirectoryGroup[]> {
     const groups = await this.page<RawGroup>(`${this.baseUrl}/api/v1/groups?limit=${pageSize}`);
     const out: DirectoryGroup[] = [];

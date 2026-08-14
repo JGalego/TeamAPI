@@ -53,6 +53,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
   - [📡 OpenTelemetry](#opentelemetry)
 - [📥 Import](#import)
 - [🔄 Sync with GitHub teams](#apply)
+- [✍️ Write back to Slack, Okta and PagerDuty](#apply-to)
 - [💻 CLI reference](#cli-reference)
   - [🤖 Machine-readable output](#machine-readable)
   - [🔀 Versions and migration](#migrate)
@@ -890,6 +891,44 @@ Re-run with --yes to apply this plan.
 
 Nothing is written until you re-run with `--yes`. A team that doesn't exist yet in GitHub is created (named after the team `id`, so its slug matches — rename it in GitHub afterward for a friendlier display name); an existing team's membership is diffed and only the difference (adds/removes) is applied. Requires a GitHub token with `admin:org` scope, via `--token` or `GITHUB_TOKEN`/`GH_TOKEN`.
 
+<a id="apply-to"></a>
+
+## ✍️ Write back to Slack, Okta and PagerDuty
+
+`apply` has always written to GitHub teams. Slack, Okta and PagerDuty were read-only drift reports — which is the right default, and is also how the drift got there: every finding was fixed by hand, in a UI, one person at a time, which nobody keeps up with.
+
+`teamapi apply-to <slack|okta|pagerduty>` closes those loops, with the same plan-then-`--yes` shape as `apply`:
+
+```bash
+teamapi apply-to slack ./org
+```
+
+```text
++ create @stream-checkout (stream-checkout)
+  + add diego.alves@acme.example to @stream-checkout
+  - remove U03KX9 from @platform-payments
+  ! @enabling-devex: 1 member(s) with no matching Slack account: alex-tran
+
+Re-run with --yes to apply this plan.
+```
+
+| target      | what's written                                 | never written                             |
+| ----------- | ---------------------------------------------- | ----------------------------------------- |
+| `slack`     | usergroup membership, and the usergroup itself | channels, channel membership              |
+| `okta`      | group membership                               | groups themselves — created or deleted    |
+| `pagerduty` | team membership                                | **schedules, escalation policies**, teams |
+
+The Slack one is the one that pays for itself: `@platform-payments` in a message is how people actually reach a team, it's maintained by hand, and it's wrong within weeks of anybody joining or leaving — silently, in the one place where being wrong means the message reaches nobody.
+
+**What isn't written matters more than what is.**
+
+- **PagerDuty schedules, never.** A schedule is a statement about _time_ — who swapped, who's on holiday — and a `teamapi.yml` is a statement about _structure_. Generating one from the other means an override somebody arranged at 2am gets reverted by CI at 9am, silently, until an incident pages nobody. Team membership carries none of that: it's the same fact the org graph already holds, and getting it wrong is why an escalation policy routinely reaches somebody who moved teams a quarter ago. The plan says this every time it runs, not just here.
+- **Directory groups are never created or deleted.** A missing group is reported, because creating one is how a directory quietly acquires a second grouping scheme nobody governs; and deleting one can revoke access to everything mapped onto it, which no static document should do as a side effect.
+- **Deactivated accounts aren't removals.** `okta-drift` reports those, because offboarding is a different operation usually owned by somebody else.
+- **Members are matched by email**, the only field both systems reliably carry. Anything unresolved is listed rather than guessed at — a fuzzy name match that picks the wrong Ana is worse than a line in a report.
+
+None of these APIs has a transaction, so a failure partway through says so and tells you to re-run, rather than reporting success over a half-applied change.
+
 <a id="cli-reference"></a>
 
 ## 💻 CLI reference
@@ -912,6 +951,7 @@ Nothing is written until you re-run with `--yes`. A team that doesn't exist yet 
 | `teamapi history <patterns...> [--period commit\|day\|week\|month\|quarter] [--since <when>] [--format text\|json\|csv]`                                                                                              | Track how the org changed over git history ([trends](#org-history))                                                                                                                                                                      |
 | `teamapi diff <patterns...> --against <ref>`                                                                                                                                                                          | Diff the resolved org graph against a git revision                                                                                                                                                                                       |
 | `teamapi import <source> [argument] --out <dir> [--token <token>] [--url <url>] [--prefix <prefix>] [--match <regex>]`                                                                                                | Bootstrap `teamapi.yml` document(s) from GitHub, Backstage, Okta, Slack or a CSV ([import](#import))                                                                                                                                     |
+| `teamapi apply-to <slack\|okta\|pagerduty> <patterns...> [--token <token>] [--url <url>] [--prefix <prefix>] [--yes]`                                                                                                 | Reconcile Slack/Okta/PagerDuty membership with the org graph ([write back](#apply-to))                                                                                                                                                   |
 | `teamapi apply <patterns...> --org <github-org> [--token <token>] [--yes]`                                                                                                                                            | Reconcile GitHub teams/memberships with the org graph (plan by default; `--yes` executes)                                                                                                                                                |
 | `teamapi slack-sync <patterns...> [--token <token>] [--yes]`                                                                                                                                                          | Set each declared [Slack](#slack) channel's topic to name the team that owns it                                                                                                                                                          |
 | `teamapi doctor github\|slack\|pagerduty\|okta\|paperclip [--token <token>] [--url <url>] [--org <org>] [--company <id>]`                                                                                             | [Check a live integration](#doctor): auth, the read, field shapes, pagination                                                                                                                                                            |

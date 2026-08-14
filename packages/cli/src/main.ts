@@ -19,6 +19,7 @@ import { runGenerate } from "./commands/generate";
 import { runDiff } from "./commands/diff";
 import { HISTORY_PERIODS, runHistory, type HistoryPeriod } from "./commands/history";
 import { runApply } from "./commands/apply";
+import { APPLY_TARGETS, runApplyIntegration, type ApplyTarget } from "./commands/apply-integration";
 import { runSlackSync } from "./commands/slack-sync";
 import { runPagerDutyDrift } from "./commands/pagerduty-drift";
 import { runOktaDrift } from "./commands/okta-drift";
@@ -316,6 +317,36 @@ export function createProgram(): Command {
     .action(async (patterns: string[], opts: { org?: string; token?: string; yes?: boolean }) => {
       process.exitCode = await runApply(patterns, { org: opts.org, token: opts.token, yes: opts.yes });
     });
+
+  const applyToCommand = program
+    .command("apply-to")
+    .description(
+      "Reconcile membership in Slack, Okta or PagerDuty with the org graph (prints a plan; --yes to execute)",
+    );
+  applyToCommand
+    .addArgument(applyToCommand.createArgument("<target>", "slack | okta | pagerduty").choices(APPLY_TARGETS))
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
+    .option("--token <token>", "API token (defaults to SLACK_BOT_TOKEN / OKTA_TOKEN / PAGERDUTY_TOKEN)")
+    .option("--url <url>", "Okta org URL, or a PagerDuty API base URL")
+    .option("--prefix <prefix>", "prefix on the Slack usergroup handle / Okta group name")
+    .option("--yes", "execute the plan instead of just printing it")
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
+    .action(
+      async (
+        target: ApplyTarget,
+        patterns: string[],
+        opts: { token?: string; url?: string; prefix?: string; yes?: boolean; config?: string | boolean },
+      ) => {
+        process.exitCode = await runApplyIntegration(target, patterns, {
+          token: opts.token,
+          url: opts.url,
+          prefix: opts.prefix,
+          yes: opts.yes,
+          ...configFlags(opts),
+        });
+      },
+    );
 
   const DOCTOR_INTEGRATIONS = ["github", "slack", "pagerduty", "okta", "paperclip"] as const;
   program

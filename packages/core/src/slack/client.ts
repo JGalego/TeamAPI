@@ -1,4 +1,5 @@
 import type { SlackChannel } from "../apply/slack";
+import type { SlackUser, SlackUsergroup } from "../apply/slack-usergroups";
 
 const DEFAULT_BASE_URL = "https://slack.com/api";
 
@@ -83,5 +84,63 @@ export class SlackClient {
 
   async setTopic(channelId: string, topic: string): Promise<void> {
     await this.call("conversations.setTopic", { channel: channelId, topic });
+  }
+
+  /**
+   * Every usergroup the token can see, with its current members.
+   *
+   * `include_users` asks Slack to inline the member list, which turns one call per group into
+   * one call for all of them — the difference between a plan taking a second and a plan taking a
+   * minute on a workspace with two hundred groups. Disabled groups are included: a team whose
+   * usergroup was disabled should show as needing one, not silently as missing.
+   */
+  async listUsergroups(): Promise<SlackUsergroup[]> {
+    const payload = await this.call<{
+      usergroups: Array<{ id: string; handle: string; name: string; users?: string[] }>;
+    }>("usergroups.list", { include_users: "true", include_disabled: "true" });
+    return payload.usergroups.map((group) => ({
+      id: group.id,
+      handle: group.handle,
+      name: group.name,
+      userIds: group.users ?? [],
+    }));
+  }
+
+  /** Workspace members with their addresses, following `next_cursor` to the end. Addresses are
+   * the only field a Team API member and a Slack account reliably share. */
+  async listUsers(pageSize = 200): Promise<SlackUser[]> {
+    const users: SlackUser[] = [];
+    let cursor = "";
+    do {
+      const page = await this.call<{
+        members: Array<{ id: string; deleted?: boolean; is_bot?: boolean; profile?: { email?: string } }>;
+        response_metadata?: { next_cursor?: string };
+      }>("users.list", { limit: String(pageSize), ...(cursor ? { cursor } : {}) });
+      for (const member of page.members) {
+        users.push({
+          id: member.id,
+          email: member.profile?.email,
+          deleted: member.deleted,
+          isBot: member.is_bot,
+        });
+      }
+      cursor = page.response_metadata?.next_cursor ?? "";
+    } while (cursor);
+    return users;
+  }
+
+  async createUsergroup(handle: string, name: string, description?: string): Promise<string> {
+    const created = await this.call<{ usergroup: { id: string } }>("usergroups.create", {
+      handle,
+      name,
+      ...(description ? { description } : {}),
+    });
+    return created.usergroup.id;
+  }
+
+  /** Replaces a usergroup's membership wholesale, which is the only shape Slack offers — there is
+   * no add-one/remove-one endpoint, so the caller has to send the full desired list. */
+  async setUsergroupUsers(usergroupId: string, userIds: string[]): Promise<void> {
+    await this.call("usergroups.users.update", { usergroup: usergroupId, users: userIds.join(",") });
   }
 }
