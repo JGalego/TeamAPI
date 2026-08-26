@@ -32,6 +32,7 @@ import { reloadRoutes } from "./routes/reload";
 import { mcpRoutes, type McpRequestHandler } from "./routes/mcp";
 import { evidenceRoutes } from "./routes/evidence";
 import { reconciliationRoutes } from "./routes/reconciliation";
+import { agentControlPlaneRoutes } from "./routes/agent-control-plane";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -192,6 +193,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   await app.register(cognitiveLoadRoutes);
   await app.register(gapsRoutes);
   await app.register(checksRoutes);
+  await app.register(agentControlPlaneRoutes);
   await app.register(knowledgeRoutes);
   await app.register(contextRoutes);
   await app.register(knowledgeGraphRoutes);

@@ -52,6 +52,7 @@ export * from "./diff/diff-graph";
 export * from "./git/ref-loader";
 export * from "./history/trends";
 export * from "./history/temporal-graph";
+export * from "./agents/control-plane";
 export * from "./evidence/ledger";
 export * from "./reconcile/policy-gate";
 export * from "./digest/build";
