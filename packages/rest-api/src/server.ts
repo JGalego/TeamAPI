@@ -34,6 +34,7 @@ import { evidenceRoutes } from "./routes/evidence";
 import { reconciliationRoutes } from "./routes/reconciliation";
 import { agentControlPlaneRoutes } from "./routes/agent-control-plane";
 import { recommendationRoutes } from "./routes/recommendations";
+import { digitalTwinRoutes } from "./routes/digital-twin";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -162,6 +163,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Evidence", description: "Observed facts and finding-to-outcome provenance" },
         { name: "Reconciliation", description: "Evidence- and policy-gated external-system change plans" },
         { name: "Recommendations", description: "Explainable improvements derived from graph and observed evidence" },
+        { name: "Digital Twin", description: "Replayable organization scenes for live visualization" },
         { name: "Backstage", description: "The org as Backstage catalog entities, served live" },
       ],
     },
@@ -195,6 +197,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   await app.register(cognitiveLoadRoutes);
   await app.register(gapsRoutes);
   await app.register(checksRoutes);
+  await app.register(digitalTwinRoutes);
   await app.register(agentControlPlaneRoutes);
   await app.register(knowledgeRoutes);
   await app.register(contextRoutes);

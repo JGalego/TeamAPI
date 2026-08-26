@@ -66,6 +66,18 @@ describe("agent control-plane routes", () => {
   });
 });
 
+describe("live digital twin route", () => {
+  it("returns a replayable declared-state scene", async () => {
+    const response = await plain.inject({ method: "GET", url: "/digital-twin" });
+    expect(response.statusCode).toBe(200);
+    const scene = response.json<{ teams: unknown[]; actors: unknown[]; links: unknown[]; events: unknown[] }>();
+    expect(scene.teams.length).toBeGreaterThan(0);
+    expect(scene.actors.length).toBeGreaterThan(0);
+    expect(scene.links.length).toBeGreaterThan(0);
+    expect(scene.events.length).toBeGreaterThan(0);
+  });
+});
+
 describe("recommendation route", () => {
   it("is opt-in with evidence and returns a Mermaid pressure map", async () => {
     expect((await plain.inject({ method: "GET", url: "/recommendations" })).statusCode).toBe(404);

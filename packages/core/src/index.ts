@@ -53,6 +53,7 @@ export * from "./diff/diff-graph";
 export * from "./git/ref-loader";
 export * from "./history/trends";
 export * from "./history/temporal-graph";
+export * from "./digital-twin/live-scene";
 export * from "./agents/control-plane";
 export * from "./evidence/ledger";
 export * from "./recommendations/engine";
