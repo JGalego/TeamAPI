@@ -1,8 +1,8 @@
 # AGENTS.md
 
-An agent opening one of your repositories knows the code and nothing else. Not whose it is, not
-what the words mean here, not which decisions the team already made and doesn't want relitigated.
-It guesses, plausibly, and a reviewer corrects it — every time, in every repo.
+An agent opening one of your repositories sees the code but lacks its ownership, local vocabulary,
+and settled team decisions. It makes plausible guesses that reviewers must correct in every
+repository.
 
 The team that owns the service has already written all of it down.
 
@@ -52,27 +52,23 @@ Subscribes to: ApplicantActivated, ChargeAuthorized
 
 Sections a team has nothing for are omitted rather than left as empty headings.
 
-## Why this one matters most
+## Reach
 
-Of everything here, this is the AI integration with the widest reach, precisely because it needs
-no runtime. No gateway to configure, no server to keep up, no adoption decision by anyone. The
-file is already the convention — any coding agent that opens the repository reads it.
+This AI integration reaches the most repositories because it needs no runtime, gateway, or server.
+Coding agents already look for the file when they open a repository.
 
 Compare [Paperclip](paperclip.md) or the MCP server: both are better at _governed_ access, and
 both require someone to wire them up first.
 
 ## Nothing is summarised
 
-Policies and steering documents are reproduced in the team's own words. That's deliberate: an
-agent reading them is reading exactly what a reviewer would quote back in a pull request. A
-paraphrase would drift from the thing being enforced, which is the failure this whole project is
-about.
+Policies and steering documents are reproduced in the team's own words. The agent sees exactly
+what a reviewer would quote in a pull request, avoiding the drift introduced by a paraphrase.
 
-The **ubiquitous language** block earns its place at the top for the same reason. It's the
-difference between an agent naming a thing the way the team names it and inventing a synonym that
-then spreads through the codebase.
+The **ubiquitous language** block appears near the top so the agent uses the team's names instead
+of spreading an invented synonym through the codebase.
 
-## Deliberate limits
+## Limits
 
 - **A repo claimed by two teams gets no file.** Two teams' policies rendered into one document
   would read as one team's. Same call [CODEOWNERS](codeowners.md) makes, and the command exits

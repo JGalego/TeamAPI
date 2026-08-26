@@ -1,8 +1,8 @@
 # Deployment
 
-The toolchain ships as a single container image: the `teamapi` CLI with `serve-api` as the default
-command. Org documents are never baked in — they are mounted, because they are your source of
-truth and live in your git repository, not in someone else's image.
+The toolchain ships as a single container image containing the `teamapi` CLI, with `serve-api` as
+the default command. Org documents stay in your git repository as the source of truth and are
+mounted into the container read-only.
 
 ## Build
 
@@ -58,10 +58,10 @@ export TEAMAPI_DOCS=./examples/acme-org
 docker compose up api
 ```
 
-The `api` service also mounts MCP over Streamable HTTP at `POST /mcp` and `POST /reload` for a
-deploy hook to call. `POST /reload` rather than `--watch` on purpose: the documents are a read-only
-bind mount, and inotify does not propagate across every bind-mount implementation, so a filesystem
-watch is the one reload trigger that might quietly never fire.
+The `api` service also mounts MCP over Streamable HTTP at `POST /mcp` and exposes `POST /reload`
+for a deploy hook. It uses the endpoint because the documents are on a read-only bind mount and
+inotify does not propagate across every bind-mount implementation. A filesystem watch could
+silently miss a change.
 
 The `mcp` service is a stdio subprocess, not a server, so it sits behind a profile and is meant to
 be `run` rather than `up`:

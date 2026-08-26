@@ -1,13 +1,12 @@
 # Shadow AI
 
-[`paperclip-drift`](paperclip.md) already answers "which agents are running that nothing declares"
-— for one runtime, behind one gateway. Most shadow AI never reaches a runtime. It is a `.mcp.json`
-somebody committed during a delivery crunch, an SDK added to a manifest, a workflow step that calls
-a model. None of those needed anyone's approval, which is exactly why they spread faster than the
-process meant to sanction them.
+[`paperclip-drift`](paperclip.md) finds undeclared agents in one runtime behind one gateway. Most
+shadow AI appears earlier: a `.mcp.json` committed during a delivery crunch, an SDK added to a
+manifest, or a workflow step that calls a model. These changes can spread without going through
+the approval process intended for them.
 
-They are also, all of them, checked into git. So the invisible operating layer can be read off the
-same source of truth as everything else — no gateway to install, no runtime to adopt, no token.
+All of those artifacts are checked into git. TeamAPI can inspect that operating layer without a
+gateway, runtime, or token.
 
 ```bash
 teamapi shadow-ai examples/acme-org --scan ~/src
@@ -33,10 +32,9 @@ cloned or fetched; this reads what is already on disk.
 | `unowned`         | AI artifacts in a scanned directory no team declares                       | no       |
 | `declared-unseen` | a team declares active agents, but its scanned repos carry no trace of one | no       |
 
-**Only `forbidden` exits non-zero.** Undeclared AI usage is a conversation — somebody adopted
-something useful and the document has not caught up, which is ordinary and constant. A policy
-breach is different: a team wrote down that agents may not touch this code, in review, and
-something is there anyway. That is the one case where the answer is not "update the spec".
+**Only `forbidden` exits non-zero.** Undeclared AI usage often means the document has not caught up
+with an adoption. A policy breach means a team reviewed and recorded a ban on agents touching the
+code, yet an agent artifact is present. Updating the spec is not an acceptable fix for that case.
 
 `declared-unseen` runs the check in reverse, and only for teams whose repos were actually part of
 the scan. A team that declares five agents and shows no trace of them has a document describing an
@@ -66,9 +64,9 @@ repositories that are plainly declared.
 
 ## What it can't tell you
 
-**It reports declaration, not use.** A repository with no artifacts may still have a whole team
-pasting into a chat window all day, and nothing here would know. This is a floor on adoption, never
-a ceiling, and a clean report is not evidence that nobody is using anything.
+**The report covers declarations visible in repositories.** It cannot detect a team pasting into a
+chat window all day. The result gives a lower bound on adoption, and a clean report does not prove
+that nobody is using AI.
 
 That is why the summary counts `quiet` repos separately, and why the no-findings sentence names
 that number: a scan pointed at an empty tree would otherwise read exactly like a clean bill of

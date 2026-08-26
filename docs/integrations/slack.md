@@ -1,11 +1,9 @@
 # Slack
 
-Every other surface in this toolchain assumes someone already decided to go and look something
-up. Slack is where the question actually gets asked, usually as "does anyone know who owns
-checkout-api?" into a channel of 200 people.
+Most TeamAPI surfaces wait for someone to look up an answer. In Slack, people ask "does anyone know
+who owns checkout-api?" in a channel of 200 people.
 
-There are two halves: answer the question where it's asked, and make each channel say who it
-belongs to.
+The integration answers ownership questions in Slack and puts the owner in each channel topic.
 
 ## 1. `/whoowns` in Slack
 
@@ -30,10 +28,10 @@ Point a slash command at `https://<your-host>/slack/whoowns`, and:
 Unknown service names get the list of what _is_ declared, which is usually enough to spot the
 name someone half-remembered.
 
-**The route only exists when `SLACK_SIGNING_SECRET` is set.** Not "returns 401 when unset" —
-it isn't registered at all, so a misconfigured deployment can't expose an unauthenticated
-endpoint. Requests are checked against Slack's `v0:<timestamp>:<body>` HMAC in constant time, and
-anything more than five minutes old is rejected so a captured request can't be replayed.
+**The route only exists when `SLACK_SIGNING_SECRET` is set.** It is not registered when the secret
+is missing, preventing a misconfigured deployment from exposing an unauthenticated endpoint.
+Requests are checked against Slack's `v0:<timestamp>:<body>` HMAC in constant time, and anything
+more than five minutes old is rejected so a captured request cannot be replayed.
 
 ## 2. Channel topics that say who owns the channel
 
@@ -61,10 +59,10 @@ the repo, so it shows you first:
 Requires `channels:read` and `channels:manage` (plus the `groups:` equivalents for private
 channels).
 
-## What it deliberately doesn't do
+## Limits
 
-- **Only topics.** Not channel creation, not invites, not archiving. A channel is a social object
-  with history in it, and a spec file is the wrong thing to be quietly reorganising one.
+- **Only topics are changed.** The command does not create, invite people to, or archive channels.
+  A spec file should not quietly reorganise a social space with its own history.
 - **Channels nobody declares are left alone**, and counted in the output. Not every channel
   belongs to a team, and treating undeclared as unowned would be wrong.
 - **A channel claimed by two teams gets no topic.** Same call as

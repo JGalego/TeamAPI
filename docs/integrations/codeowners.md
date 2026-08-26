@@ -54,7 +54,7 @@ The command exits non-zero on a conflict, unlike the other `generate` targets, b
 is incomplete and shipping it would quietly hand the repo to whichever team the tool happened to
 sort first. Fix the ownership in `teamapi.yml` and run it again.
 
-## Deliberate limits
+## Limits
 
 - **Only the root `*` rule.** Team API models which team owns a service, not which directories
   inside a repository belong to whom. A path-level rule would be invented.

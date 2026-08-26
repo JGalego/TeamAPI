@@ -8,23 +8,23 @@
 Chat as a team or a specific team member from a
 [Team API as Code](https://github.com/JGalego/TeamAPI) org — backed by a live tool-use loop over
 the same ~12 org-graph operations `@jgalego/teamapi-mcp-server` exposes, so the persona can
-accurately answer questions about any team, not just its own.
+answer questions about any team in the org.
 
 Normally used via `teamapi chat --team <id> [--member <id>] [--ask <question>]`.
 
 ## Providers
 
-Two adapters, which is what the interoperability landscape actually has:
+The package includes two adapters:
 
 | provider    | endpoint                           | key                           |
 | ----------- | ---------------------------------- | ----------------------------- |
 | `anthropic` | the Anthropic Messages API         | `ANTHROPIC_API_KEY`, required |
 | `openai`    | any OpenAI Chat Completions server | `OPENAI_API_KEY`, optional    |
 
-The `openai` adapter is `fetch` against a configurable base URL rather than a vendor SDK, because
-that wire format is the de facto interoperability layer: Azure OpenAI, Ollama, vLLM, llama.cpp,
-Together, Groq, Fireworks, OpenRouter and most self-hosted gateways all speak it. The key is
-optional so a model running locally — which has none — is not the one case that fails.
+The `openai` adapter calls a configurable base URL with `fetch`. The shared wire format reaches
+Azure OpenAI, Ollama, vLLM, llama.cpp, Together, Groq, Fireworks, OpenRouter, and most self-hosted
+gateways without a vendor SDK. Authentication is optional because local models usually do not
+require it.
 
 ## Install
 
@@ -68,7 +68,7 @@ Full docs and a sample transcript: **https://github.com/JGalego/TeamAPI**
 
 ## The TeamAPI toolchain
 
-One org graph, seven doors into it — install only the ones you need:
+Seven packages expose the same org graph. Install the ones you need:
 
 | Package                                                                                    | What it does                                                                        |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |

@@ -1,6 +1,6 @@
 # `teamapi doctor`
 
-Every network integration here degrades **silently** rather than loudly.
+Network integration failures can look like valid empty or partial results.
 
 A rejected Slack token reads as an empty workspace, so every declared channel comes back
 `missing`. An Okta client that stops at page one makes everyone past the first batch look like a
@@ -8,9 +8,8 @@ leaver — and that's a _blocking_ finding, about people who never left. A Pager
 see services but not escalation policies reports every service as paging nobody, and fails the
 build for all of them.
 
-Those are wrong answers, delivered confidently, and nothing downstream can tell the difference.
-So the first question anyone has when a drift report surprises them — _is my token even right?_ —
-gets its own command.
+Nothing downstream can distinguish those wrong answers from real drift. `teamapi doctor` checks
+the connection and token before a surprising report is trusted.
 
 ```bash
 teamapi doctor slack --token xoxb-…
@@ -60,9 +59,9 @@ paperclip
 
 ## How the pagination check works
 
-It asks for **one item per page** and counts what comes back. Getting more than one item can only
-happen if the next page was actually fetched — no request counting, no mocking, no need for an
-account with two hundred channels in it.
+It asks for **one item per page** and counts what comes back. More than one item proves that the
+client fetched another page, without request counting, mocks, or an account containing hundreds
+of channels.
 
 With one item or none, it reports `skip`, not `pass`. A check that couldn't run shouldn't look
 like one that did.
@@ -72,9 +71,9 @@ like one that did.
 Read-only against every provider. It lists; it never writes. A failed prerequisite marks the
 checks after it as `not run` rather than letting them fail for the wrong reason.
 
-## A known unknown
+## Paperclip pagination
 
-Paperclip's `pagination` check reports `skip`, not `pass`. Its agents route returns the whole list
-in one response and documents no cursor, so there is nothing to follow — but that also means
-nothing here can distinguish a complete list from a silently truncated one. If Paperclip ever
-paginates that route, `paperclip-drift` will under-report and no check will catch it.
+Paperclip's `pagination` check reports `skip`. Its agents route documents no cursor and returns the
+whole list in one response, leaving nothing for the check to follow. The check therefore cannot
+detect silent truncation. If Paperclip adds pagination to that route, `paperclip-drift` will
+under-report until the client and check are updated.

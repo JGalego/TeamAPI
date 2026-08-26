@@ -1,8 +1,8 @@
 # Port
 
-[Port](https://www.getport.io/) is an internal developer portal built on blueprints and entities
-rather than a fixed catalog model. TeamAPI already knows your teams, services and people; this
-target hands them over.
+[Port](https://www.getport.io/) is an internal developer portal whose catalog is defined through
+blueprints and entities. This target exports the teams, services, and people already recorded in
+TeamAPI.
 
 ```bash
 teamapi generate port /path/to/your/org --out ./port
@@ -24,19 +24,18 @@ define the shape and change rarely, entities are the data and change every merge
 | `teamapi_service` | `services[]` | repository, versioning                      | `owner` → team     |
 | `teamapi_person`  | `members[]`  | email, GitHub username, allocation          | —                  |
 
-## Why this and not just Backstage
+## Compared with Backstage
 
-They overlap almost entirely, with one exception that matters: **cognitive load**.
+The two targets mostly overlap. Port also carries **cognitive load**.
 
-Port scores and colours numeric properties, so a team's self-assessed load becomes something you
-can sort a table by, set a threshold on, and alert from. Backstage's entity model has nowhere to
-put it, so the [Backstage target](../../README.md#backstage-catalog) drops it — the single most
-actionable number in a Team API document goes nowhere.
+Port scores and colours numeric properties, so a team's self-assessed load can drive table sorts,
+thresholds, and alerts. Backstage's entity model has nowhere to put it, so the
+[Backstage target](../../README.md#backstage-catalog) omits that number.
 
-If you run Backstage, keep using that target. If you're choosing, this one carries more of the
-spec.
+Existing Backstage installations can keep using that target. Port carries more of the TeamAPI
+spec when either portal is an option.
 
-## Deliberate limits
+## Limits
 
 - **No role blueprint.** Team API models roles independently of the people filling them; Port
   models entities and relations. A role with nobody in it has no natural Port shape, and inventing
@@ -51,5 +50,4 @@ spec.
 
 1. `teamapi generate port --out ./port` on merge.
 2. `POST port/blueprints.json` once, then upsert `entities.json` through Port's bulk entity API.
-3. Build a scorecard on `cognitiveLoad` — it's the field nothing else in the toolchain surfaces
-   quite so directly.
+3. Build a scorecard on `cognitiveLoad`, which Port exposes directly as a numeric property.

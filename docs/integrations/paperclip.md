@@ -1,15 +1,15 @@
 # Paperclip
 
-[Paperclip](https://github.com/paperclipai/paperclip) is an AI agent orchestration platform — a
+[Paperclip](https://github.com/paperclipai/paperclip) is an AI agent orchestration platform with a
 task manager, an org chart for agents, a skills studio, and a multi-provider runtime with
 sandboxing and cost controls.
 
-It overlaps with TeamAPI in one specific place: both model an organisation. That overlap is the
-opportunity and also the hazard, so the division of labour matters more than the wiring.
+Both products model an organisation. This integration assigns each product one source of
+authority to prevent their org charts from competing.
 
 ## The division of labour
 
-**TeamAPI declares. Paperclip enforces and executes.**
+**TeamAPI declares; Paperclip enforces and executes.**
 
 TeamAPI's `AgentSchema.permissions` field is documented as _"enforced by whatever external
 automation actually executes the agent's actions, not by this schema."_ Paperclip is that
@@ -21,14 +21,14 @@ Two org charts with two write paths is a classic failure mode; this integration 
 TeamAPI's as authoritative because it's the one with a diff and a reviewer, and treats Paperclip's
 as derived.
 
-Nothing here writes back into `teamapi.yml`. If you want runtime facts to inform the spec — say,
-observed agent load feeding `cognitiveLoad` — the right shape is a scheduled job that opens a
-**pull request**, so the change is reviewed like any other org change.
+Nothing here writes back into `teamapi.yml`. Runtime facts can inform the spec through a scheduled
+job that opens a **pull request**. For example, observed agent load could feed `cognitiveLoad`
+while remaining subject to the same review as any other org change.
 
 ## 1. Give every agent the org graph, through MCP
 
-Paperclip's tool gateway speaks MCP over local stdio. TeamAPI ships an MCP server, so this is
-configuration rather than code, and it is the highest-value step.
+Paperclip's tool gateway speaks MCP over local stdio, and TeamAPI ships an MCP server. Connecting
+them requires configuration only.
 
 ```bash
 teamapi serve-mcp /path/to/your/org
@@ -45,14 +45,13 @@ org graph as governed tools:
 | `get_context_bundle`                             | Everything relevant to a stated goal, in one call                   |
 | `list_policies`, `list_steering_documents`       | The standards this team actually holds                              |
 
-`get_context_bundle` is worth calling out. Given a goal — `{"goal": "Implement OAuth"}`, optionally
-scoped to a team — it returns the relevant specifications, steering documents, policies, memory and
-knowledge base entries, ranked by keyword overlap with the matched terms attached. It's designed to
-be the one call an assistant makes to get oriented, which is exactly what an agent picking up a
-Paperclip ticket needs. **This is why there is no separate Paperclip plugin in this integration:**
-the context-bundle use case is already served by a tool the MCP gateway can reach, and Paperclip's
-external plugin contract is still in flight. Registering the MCP server delivers it without
-building against a moving target.
+Given a goal such as `{"goal": "Implement OAuth"}`, optionally scoped to a team,
+`get_context_bundle` returns the matching specifications, steering documents, policies, memory,
+and knowledge base entries. Results are ranked by keyword overlap and include the matched terms.
+An agent picking up a Paperclip ticket can get the relevant part of the org graph in one call.
+There is no separate Paperclip plugin: the MCP gateway already reaches this tool, while
+Paperclip's external plugin contract is still in flight. Registering the MCP server avoids
+building against that changing contract.
 
 ## 2. Export the org as an Agent Companies package
 
@@ -80,7 +79,7 @@ skills/<team-id>-<prompt-id>/SKILL.md
 | `policies[]`                                  | rendered into the team body, where markdown is canonical |
 | `provider`, `model`, `ownerId`, `permissions` | `metadata.teamapi`                                       |
 
-Three deliberate gaps, each because the source data doesn't support the alternative:
+The export omits three things that the source data cannot represent:
 
 - **No `reportsTo` on agents.** TeamAPI models reporting between _roles_ — people — not between
   agents. Any agent hierarchy here would be invented, so the runtime arranges them.
@@ -94,8 +93,7 @@ within a team while the package flattens agents and skills into root-level direc
 
 ## 3. Detect drift
 
-Paperclip's org is editable from its UI; the spec is only editable through review. Drift is
-therefore guaranteed, not hypothetical.
+Paperclip's org is editable from its UI, while the spec changes through review. The two will drift.
 
 ```bash
 export PAPERCLIP_API_KEY=...

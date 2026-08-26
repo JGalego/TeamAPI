@@ -1,8 +1,7 @@
 # Prometheus
 
-The [OpenTelemetry generator](opentelemetry.md) emits resource attributes so _other_ services can
-say which team owns them. This is the other direction: the org graph as a thing you can chart and
-alert on.
+The [OpenTelemetry generator](opentelemetry.md) adds team ownership to service telemetry.
+`--metrics` exports the org graph itself for charts and alerts.
 
 ```bash
 teamapi serve-api /path/to/your/org --metrics
@@ -95,6 +94,6 @@ groups:
         for: 7d
 ```
 
-The `for:` durations are days rather than minutes on purpose. These are org measurements, not
-service measurements: nothing here is an incident, and a page about cognitive load at 3am would be
-both useless and the fastest way to get the whole endpoint muted.
+The `for:` durations use days because these metrics describe the organization, not live service
+health. None represents an incident. Paging about cognitive load at 3am would be useless and would
+quickly get the alerts muted.

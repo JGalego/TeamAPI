@@ -45,7 +45,7 @@ const doc = TeamApiDocumentSchema.parse(yourParsedYaml);
 
 ## Validation beyond field types
 
-A few cross-field rules are enforced at parse time, not just field shapes:
+Parsing also enforces several cross-field rules:
 
 - A role's `reportsTo` and `reportsToRef` are mutually exclusive.
 - A role's `reportsTo` must match another role's `id` within the same team, and same-team

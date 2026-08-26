@@ -1,14 +1,12 @@
 # Gaps
 
-Every other check in this toolchain compares the spec to an outside system — a directory, a pager,
-a running agent fleet. `teamapi gaps` compares the spec to itself, because the holes it looks for
-are invisible from any single `teamapi.yml`.
+Most checks compare the spec with an outside system such as a directory, pager, or running agent
+fleet. `teamapi gaps` finds holes that appear only after the documents are resolved into one graph.
 
-That is the point. Each team's document is individually valid; the gap only appears once the graph
-is resolved. A service subscribing to an event nobody publishes reads as complete from inside the
-subscriber. A vacant seat reads as an ordinary staffing question from inside the team that declared
-it — it is the two _other_ teams reporting into it that make the vacancy load-bearing. Nobody owns
-the space between the boxes, so nobody was ever going to notice.
+Each team document can be valid on its own while the combined graph is incomplete. A subscriber
+looks complete until the graph shows that nobody publishes its event. A vacant seat becomes
+load-bearing only when two other teams report into it. These gaps sit between teams and have no
+obvious owner.
 
 ```bash
 teamapi gaps examples/acme-org
@@ -35,9 +33,9 @@ teamapi gaps examples/acme-org
 | `unaccountable-agent`  | an `agents[]` entry naming no `ownerId` at all                 | no       |
 | `unscored-supervision` | active agents, but no `cognitiveLoad.supervision` score        | no       |
 
-**Two findings exit non-zero, and they have the same shape as each other:** the declaration _looks_
-complete and isn't. This is the argument [`okta.md`](okta.md) makes about deactivated accounts —
-the dangerous finding is never the missing name, it is the name that is still there.
+**Two findings exit non-zero:** `orphan-subscription` and `dangling-owner`. Both declarations look
+complete while pointing to something that does not exist. [`okta.md`](okta.md) treats deactivated
+accounts the same way because a stale name still appears authoritative.
 
 An agent carrying an `ownerId` that resolves to nobody presents, to every downstream consumer —
 `AGENTS.md`, the context bundle, a generated CrewAI crew, a reviewer reading the file — exactly
@@ -82,12 +80,12 @@ a `conflict` by `deriveContextMap`, so this check stays silent rather than repor
 team's resolved `reportsTo`/`reportsToRef` edge terminates in are reported — a vacancy inside one
 team is that team's business.
 
-## Deliberately not a validator
+## Separate from validation
 
-`teamapi validate` answers "is this document well-formed and do its references resolve". This
-answers "does the org these documents describe have someone on both sides of every seam". Keeping
-them apart means `validate` stays a hard gate on syntax while `gaps` can report judgement calls
-without blocking anyone's build.
+`teamapi validate` checks document structure and reference resolution. `teamapi gaps` checks
+whether the resolved org has someone on both sides of each seam. Keeping the commands separate
+lets validation remain a hard syntax gate while most gap findings remain non-blocking judgement
+calls.
 
 It is also pure: no network, no token, no filesystem beyond reading the documents themselves. The
 whole check is a function of the resolved graph — which is why, unlike the drift checks, it is also

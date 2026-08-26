@@ -1,10 +1,8 @@
 # Okta
 
-Every other check in this toolchain compares the spec to a system the spec is supposed to drive.
-This one compares it to the only system that is authoritative _over_ it.
-
-People join, move and leave whether or not anyone opens a pull request. A team document starts
-rotting the day it's written, and nothing else here can tell.
+Okta is authoritative for who has joined, moved, or left, regardless of whether anyone updated a
+team document. `okta-drift` finds changes in the directory that the documents have not caught up
+with.
 
 ```bash
 export OKTA_TOKEN=...
@@ -30,10 +28,9 @@ teamapi okta-drift /path/to/your/org --url https://acme.okta.com
 | `no-group`    | team with no matching directory group             | no       |
 | `unmatched`   | member with no `contact` address to match on      | no       |
 
-**Only `deactivated` exits non-zero.** The dangerous finding isn't the missing name — it's the one
-that's _still there_. A deactivated account listed as accountable for a service reads, to
-everything downstream (CODEOWNERS, the dashboard, an agent answering "who owns this"), as an
-owner. Someone who left three months ago is silently on the hook.
+**Only `deactivated` exits non-zero.** A missing name is ordinary drift; a deactivated account
+still listed as accountable is actively misleading. CODEOWNERS, the dashboard, and an agent
+answering "who owns this" all continue to treat that person as an owner.
 
 `joined` and `left` are ordinary lag and shouldn't fail a build; they're a pull request waiting to
 be written.
@@ -51,12 +48,12 @@ absent — a guess either way would be worse than saying so.
 An inactive account that nobody declares is _not_ reported as a joiner. It's an old account, not a
 new colleague.
 
-## Read-only, and deliberately so
+## Why it is read-only
 
-Nothing is written back to `teamapi.yml`. A reconciler that edited the file would put a second
-write path on the thing the whole project treats as the source of truth — the same rule the
-[Paperclip integration](paperclip.md) sets out. If you want this automated, have a scheduled job
-open a **pull request**, so a joiner is reviewed like any other org change.
+Nothing is written back to `teamapi.yml`. Letting a reconciler edit it would create a second write
+path to the project's source of truth, violating the same rule used by the
+[Paperclip integration](paperclip.md). A scheduled job can automate updates by opening a **pull
+request**, keeping each joiner subject to normal review.
 
 ## Suggested loop
 
