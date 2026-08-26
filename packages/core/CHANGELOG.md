@@ -1,5 +1,23 @@
 # @jgalego/teamapi-core
 
+## 0.9.0
+
+### Minor Changes
+
+- b6b668f: Add deterministic AI agent fleet inventory, governance health, and capability-aware task routing without invoking agents.
+- 6d0296a: Add deterministic organization recommendations backed by graph findings and observed evidence, including a Mermaid pressure map.
+- 15a86ad: Add idempotent evidence ingestion, provenance chains, and opt-in REST endpoints for organizational observations.
+- dbc711d: Add a replayable organization scene and an animated dashboard digital twin for teams, people, agents, services, and relationships.
+- 1e40e3a: Add deterministic proposal risk scores with evidence for blast radius, accountability, load, agent governance, and policy impact.
+- 7b88c09: Add immutable proposal overlays with graph diffs, load snapshots, gap changes, and policy changes.
+- 5367863: Add deterministic evidence and policy gates for external-system reconciliation plans, with a dry-run REST evaluator.
+- f9c29ca: Add proposal impact diagrams and a read-only scenario analysis endpoint with explainable risk, diffs, and evidence deltas.
+- ca65ddf: Add point-in-time org queries and team lifecycle analysis over resolved graph revisions.
+
+### Patch Changes
+
+- 7a57e8a: Report unresolved references against their declaring document and handle unavailable watch paths without crashing long-running servers.
+
 ## 0.8.0
 
 ### Minor Changes
