@@ -42,7 +42,8 @@ jobs:
 
       # `id-token: write` is deliberately omitted. npm prefers OIDC whenever GitHub exposes it,
       # but each package must first trust this exact workflow on npmjs.com. Until that registry
-      # configuration is in place, publishing uses the repository's scoped automation token.
+      # configuration is in place, publishing uses the repository's scoped automation token and
+      # disables provenance, which also requires an OIDC identity.
       #
       # If there are pending changesets, opens/updates a "Version Packages" PR instead of
       # publishing. Merging that PR (with no changesets left) re-runs this workflow and this
@@ -54,3 +55,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "false"
