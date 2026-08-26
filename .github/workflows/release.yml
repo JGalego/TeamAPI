@@ -11,7 +11,6 @@ concurrency:
 permissions:
   contents: write
   pull-requests: write
-  id-token: write # enables npm provenance attestations on publish
 
 jobs:
   release:
@@ -41,6 +40,10 @@ jobs:
       - name: Verify
         run: pnpm verify
 
+      # `id-token: write` is deliberately omitted. npm prefers OIDC whenever GitHub exposes it,
+      # but each package must first trust this exact workflow on npmjs.com. Until that registry
+      # configuration is in place, publishing uses the repository's scoped automation token.
+      #
       # If there are pending changesets, opens/updates a "Version Packages" PR instead of
       # publishing. Merging that PR (with no changesets left) re-runs this workflow and this
       # step publishes any package whose package.json version isn't yet on the npm registry.
