@@ -33,6 +33,7 @@ import { mcpRoutes, type McpRequestHandler } from "./routes/mcp";
 import { evidenceRoutes } from "./routes/evidence";
 import { reconciliationRoutes } from "./routes/reconciliation";
 import { agentControlPlaneRoutes } from "./routes/agent-control-plane";
+import { recommendationRoutes } from "./routes/recommendations";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -160,6 +161,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Proposals", description: "Propose a change to a team as a pull request" },
         { name: "Evidence", description: "Observed facts and finding-to-outcome provenance" },
         { name: "Reconciliation", description: "Evidence- and policy-gated external-system change plans" },
+        { name: "Recommendations", description: "Explainable improvements derived from graph and observed evidence" },
         { name: "Backstage", description: "The org as Backstage catalog entities, served live" },
       ],
     },
@@ -210,6 +212,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   }
   if (options.evidence) {
     await app.register(evidenceRoutes, { ledger: options.evidence });
+    await app.register(recommendationRoutes, { ledger: options.evidence });
   }
   if (options.reconciliation) {
     await app.register(reconciliationRoutes, options.reconciliation);
