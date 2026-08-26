@@ -5,7 +5,7 @@ import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import fastifyCors from "@fastify/cors";
 import fastifyRateLimit from "@fastify/rate-limit";
-import type { EmbeddingProvider, OrgGraphStore } from "@jgalego/teamapi-core";
+import type { EmbeddingProvider, EvidenceLedger, OrgGraphStore } from "@jgalego/teamapi-core";
 import { registerEmbeddings, registerOrgGraphStore } from "./plugins/org-graph";
 import { registerAuth } from "./plugins/auth";
 import { registerEtag } from "./plugins/etag";
@@ -30,6 +30,7 @@ import { knowledgeGraphRoutes } from "./routes/knowledge-graph";
 import { slackRoutes } from "./routes/slack";
 import { reloadRoutes } from "./routes/reload";
 import { mcpRoutes, type McpRequestHandler } from "./routes/mcp";
+import { evidenceRoutes } from "./routes/evidence";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -58,6 +59,8 @@ export interface BuildServerOptions {
   /** When supplied, mounts `POST /mcp` and routes it to this handler. Injected so this package
    * stays free of an MCP dependency; the CLI, which depends on both, supplies it. */
   mcpHandler?: McpRequestHandler;
+  /** Mounts evidence ingestion and remediation-chain routes against the supplied ledger. */
+  evidence?: EvidenceLedger;
 }
 
 // Read at runtime (not imported as a TS module) so this keeps working both from `dist/` in the
@@ -151,6 +154,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Health", description: "Liveness check" },
         { name: "Metrics", description: "Prometheus metrics for the org graph and this server" },
         { name: "Proposals", description: "Propose a change to a team as a pull request" },
+        { name: "Evidence", description: "Observed facts and finding-to-outcome provenance" },
         { name: "Backstage", description: "The org as Backstage catalog entities, served live" },
       ],
     },
@@ -197,6 +201,9 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   }
   if (options.proposals) {
     await app.register(proposalRoutes, options.proposals);
+  }
+  if (options.evidence) {
+    await app.register(evidenceRoutes, { ledger: options.evidence });
   }
   await app.register(dashboardRoutes);
 

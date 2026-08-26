@@ -52,6 +52,7 @@ export * from "./diff/diff-graph";
 export * from "./git/ref-loader";
 export * from "./history/trends";
 export * from "./history/temporal-graph";
+export * from "./evidence/ledger";
 export * from "./digest/build";
 export * from "./github/client";
 export * from "./apply/github-teams";
