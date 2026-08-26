@@ -22,6 +22,7 @@ export * from "./diagrams/topology";
 export * from "./diagrams/hierarchy";
 export * from "./diagrams/org-hierarchy";
 export * from "./diagrams/context-map";
+export * from "./diagrams/scenario";
 export * from "./diagrams/mermaid";
 export * from "./diagrams/dot";
 export * from "./serialize/team-dto";

@@ -87,6 +87,26 @@ describe("POST /teams/:id/proposals", () => {
     expect(calls).toHaveLength(0);
   });
 
+  it("analyzes a proposal without touching GitHub", async () => {
+    const calls = stubGithub();
+    const res = await writable.inject({
+      method: "POST",
+      url: "/teams/stream-checkout/proposals/analyze",
+      payload: { patch: { cognitiveLoad: { intrinsic: 10, extraneous: 10, germane: 10, supervision: 10 } } },
+    });
+
+    expect(res.statusCode).toBe(200);
+    const body = res.json<{
+      score: { total: number; risk: string };
+      diagram: string;
+      diff: { teamsChanged: unknown[] };
+    }>();
+    expect(body.score.total).toBeGreaterThan(0);
+    expect(body.diagram).toContain("flowchart LR");
+    expect(body.diff.teamsChanged).toHaveLength(1);
+    expect(calls).toHaveLength(0);
+  });
+
   it("opens a pull request and answers with its URL", async () => {
     const calls = stubGithub();
     const res = await writable.inject({

@@ -307,6 +307,12 @@
   .propose-note { font-size: 0.8rem; color: var(--ink-muted); }
   .propose-result { font-size: 0.85rem; }
   .propose-result.error { color: #b45309; }
+  .proposal-impact { display: grid; gap: 10px; margin-top: 8px; }
+  .proposal-impact header { display: flex; align-items: baseline; gap: 8px; }
+  .proposal-impact strong { font-size: 1.4rem; }
+  .proposal-impact .components { display: grid; grid-template-columns: repeat(5, minmax(90px, 1fr)); gap: 6px; }
+  .proposal-impact .component { border: 1px solid var(--line); border-radius: 6px; padding: 6px; text-align: center; }
+  .proposal-impact .diagram { overflow-x: auto; padding: 6px; background: var(--bg); border-radius: 6px; }
 
   /* The AI-native sections. Same visual language as the team cards, because they answer the same
      shape of question — what exists, who owns it, what is unaccounted for. */
@@ -804,6 +810,7 @@
         h("input", { type: "text", name: "author" }),
       ]),
       h("div", { class: "propose-actions" }, [
+        h("button", { type: "button", class: "preview-proposal", text: "Preview impact" }),
         h("button", { type: "submit", text: "Open a pull request" }),
         h("span", { class: "propose-note", text: "Nothing changes until somebody reviews and merges it." }),
       ]),
@@ -812,19 +819,11 @@
 
     form.querySelector('textarea[name="notes"]').value = load.notes ?? "";
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const result = form.querySelector(".propose-result");
-      result.className = "propose-result";
-      result.textContent = "Opening…";
-
-      const value = (name) => form.querySelector(`[name="${name}"]`).value.trim();
-      const number = (name) => (value(name) === "" ? undefined : Number(value(name)));
-
+    const value = (name) => form.querySelector(`[name="${name}"]`).value.trim();
+    const number = (name) => (value(name) === "" ? undefined : Number(value(name)));
+    const patchFromForm = () => {
       const patch = {};
       if (value("focus") && value("focus") !== (team.focus ?? "")) patch.info = { focus: value("focus") };
-      // All four scores travel together or not at all: the assessment is one judgement made at one
-      // time, and sending a new intrinsic alone would merge it into last quarter's extraneous.
       if (number("intrinsic") && number("extraneous") && number("germane")) {
         patch.cognitiveLoad = {
           intrinsic: number("intrinsic"),
@@ -834,6 +833,55 @@
           ...(value("notes") ? { notes: value("notes") } : {}),
         };
       }
+      return patch;
+    };
+
+    form.querySelector(".preview-proposal").addEventListener("click", async () => {
+      const result = form.querySelector(".propose-result");
+      result.className = "propose-result";
+      result.textContent = "Simulating…";
+      try {
+        const res = await fetch(`/teams/${teamId}/proposals/analyze`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ patch: patchFromForm() }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.error ?? `${res.status}`);
+        const components = Object.entries(body.score.components).map(([name, entry]) =>
+          h("div", { class: "component" }, [
+            h("strong", { text: `${entry.score}` }),
+            h("div", { text: name.replace(/([A-Z])/g, " $1") }),
+          ]),
+        );
+        const diagram = h("div", { class: "diagram" });
+        result.innerHTML = "";
+        result.appendChild(
+          h("div", { class: "proposal-impact" }, [
+            h("header", {}, [
+              h("strong", { text: `${body.score.total}/100` }),
+              h("span", { text: `${body.score.risk} risk` }),
+            ]),
+            h("div", { class: "components" }, components),
+            diagram,
+          ]),
+        );
+        const mermaid = await loadMermaid();
+        const { svg } = await mermaid.render(`proposal-${teamId}-${Date.now()}`, body.diagram);
+        diagram.innerHTML = svg;
+      } catch (err) {
+        result.className = "propose-result error";
+        result.textContent = String(err.message ?? err);
+      }
+    });
+
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const result = form.querySelector(".propose-result");
+      result.className = "propose-result";
+      result.textContent = "Opening…";
+
+      const patch = patchFromForm();
 
       try {
         const res = await fetch(`/teams/${teamId}/proposals`, {

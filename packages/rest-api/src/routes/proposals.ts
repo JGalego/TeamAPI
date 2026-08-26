@@ -1,11 +1,15 @@
 import * as fs from "node:fs/promises";
 import type { FastifyInstance } from "fastify";
 import {
+  analyzeProposalScenario,
+  buildScenarioDiagram,
   buildTeamProposal,
   getTeam,
   GithubClient,
   openTeamProposal,
   ProposalError,
+  scoreProposalImpact,
+  toMermaid,
   type ProposalRepo,
 } from "@jgalego/teamapi-core";
 import { errorResponseSchema } from "../schemas/error";
@@ -34,6 +38,52 @@ export interface ProposalRouteOptions {
  */
 export async function proposalRoutes(app: FastifyInstance, options: ProposalRouteOptions): Promise<void> {
   const client = new GithubClient({ token: options.token });
+
+  app.post<{ Params: { id: string }; Body: { patch?: unknown } }>(
+    "/teams/:id/proposals/analyze",
+    {
+      schema: {
+        tags: ["Proposals"],
+        summary: "Preview a proposal's organizational impact",
+        description:
+          "Applies the patch to an immutable graph overlay and returns an explainable risk score, graph diff, " +
+          "accountability and policy changes, and a Mermaid impact diagram. Does not write to GitHub.",
+        params: {
+          type: "object",
+          properties: { id: { type: "string", description: "Team id (slug)" } },
+          required: ["id"],
+        },
+        body: {
+          type: "object",
+          properties: { patch: { type: "object", description: "The fields to simulate" } },
+          required: ["patch"],
+        },
+        response: { 400: errorResponseSchema, 404: errorResponseSchema },
+      },
+    },
+    async (req, reply) => {
+      try {
+        const scenario = analyzeProposalScenario(app.orgGraphStore.current, req.params.id, req.body?.patch);
+        const score = scoreProposalImpact(scenario);
+        return {
+          teamId: scenario.teamId,
+          score,
+          diff: scenario.diff,
+          gaps: scenario.gaps,
+          policies: scenario.policies,
+          before: scenario.before,
+          after: scenario.after,
+          diagram: toMermaid(buildScenarioDiagram(scenario, score)),
+        };
+      } catch (err) {
+        if (err instanceof ProposalError) {
+          const status = err.message.startsWith("Unknown team") ? 404 : 400;
+          return reply.code(status).send({ error: err.message });
+        }
+        throw err;
+      }
+    },
+  );
 
   app.post<{ Params: { id: string }; Body: { patch?: unknown; author?: string; dryRun?: boolean } }>(
     "/teams/:id/proposals",
