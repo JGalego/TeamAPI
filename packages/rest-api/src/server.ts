@@ -5,7 +5,7 @@ import fastifySwagger from "@fastify/swagger";
 import fastifySwaggerUi from "@fastify/swagger-ui";
 import fastifyCors from "@fastify/cors";
 import fastifyRateLimit from "@fastify/rate-limit";
-import type { EmbeddingProvider, EvidenceLedger, OrgGraphStore } from "@jgalego/teamapi-core";
+import type { EmbeddingProvider, EvidenceLedger, OrgGraphStore, ReconciliationGatePolicy } from "@jgalego/teamapi-core";
 import { registerEmbeddings, registerOrgGraphStore } from "./plugins/org-graph";
 import { registerAuth } from "./plugins/auth";
 import { registerEtag } from "./plugins/etag";
@@ -31,6 +31,7 @@ import { slackRoutes } from "./routes/slack";
 import { reloadRoutes } from "./routes/reload";
 import { mcpRoutes, type McpRequestHandler } from "./routes/mcp";
 import { evidenceRoutes } from "./routes/evidence";
+import { reconciliationRoutes } from "./routes/reconciliation";
 
 export interface BuildServerOptions {
   logger?: boolean;
@@ -61,6 +62,8 @@ export interface BuildServerOptions {
   mcpHandler?: McpRequestHandler;
   /** Mounts evidence ingestion and remediation-chain routes against the supplied ledger. */
   evidence?: EvidenceLedger;
+  /** Mounts dry-run reconciliation decisions. No external action is executed by this API. */
+  reconciliation?: { ledger: EvidenceLedger; policy: ReconciliationGatePolicy };
 }
 
 // Read at runtime (not imported as a TS module) so this keeps working both from `dist/` in the
@@ -155,6 +158,7 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
         { name: "Metrics", description: "Prometheus metrics for the org graph and this server" },
         { name: "Proposals", description: "Propose a change to a team as a pull request" },
         { name: "Evidence", description: "Observed facts and finding-to-outcome provenance" },
+        { name: "Reconciliation", description: "Evidence- and policy-gated external-system change plans" },
         { name: "Backstage", description: "The org as Backstage catalog entities, served live" },
       ],
     },
@@ -204,6 +208,9 @@ export async function buildServer(store: OrgGraphStore, options: BuildServerOpti
   }
   if (options.evidence) {
     await app.register(evidenceRoutes, { ledger: options.evidence });
+  }
+  if (options.reconciliation) {
+    await app.register(reconciliationRoutes, options.reconciliation);
   }
   await app.register(dashboardRoutes);
 
