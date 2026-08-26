@@ -107,6 +107,7 @@ describe("reconciliation policy gate", () => {
                   severity: "blocking",
                   rules: [{ key: "agents_require_owner", value: true }],
                   enforcedBy: [],
+                  tags: [],
                 },
               ],
               agents: [
@@ -114,7 +115,7 @@ describe("reconciliation policy gate", () => {
                   id: "bot",
                   name: "Bot",
                   provider: "internal",
-                  role: "review",
+                  role: "review" as const,
                   capabilities: [],
                   status: "active",
                   permissions: [],
