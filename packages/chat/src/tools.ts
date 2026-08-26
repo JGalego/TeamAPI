@@ -59,7 +59,7 @@ export interface ChatToolsOptions {
 }
 
 /**
- * Builds the same ~12 org-graph operations `@jgalego/teamapi-mcp-server` exposes over MCP, as
+ * Builds the same 13 org-graph operations `@jgalego/teamapi-mcp-server` exposes over MCP, as
  * provider-neutral tool definitions — same underlying `@jgalego/teamapi-core` query functions,
  * different protocol adapter. Each tool closes over a single resolved `graph`: chat sessions are
  * one-shot, unlike the long-running REST/MCP servers, so there's no need for `OrgGraphStore`'s

@@ -7,7 +7,7 @@
 
 Chat as a team or a specific team member from a
 [Team API as Code](https://github.com/JGalego/TeamAPI) org — backed by a live tool-use loop over
-the same ~12 org-graph operations `@jgalego/teamapi-mcp-server` exposes, so the persona can
+the same 13 org-graph operations `@jgalego/teamapi-mcp-server` exposes, so the persona can
 answer questions about any team in the org.
 
 Normally used via `teamapi chat --team <id> [--member <id>] [--ask <question>]`.

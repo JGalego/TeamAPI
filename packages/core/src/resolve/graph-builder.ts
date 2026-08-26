@@ -44,6 +44,7 @@ async function mapWithConcurrency<T, R>(items: T[], limit: number, worker: (item
 }
 
 interface PendingEdge {
+  sourceUri: string;
   targetUri: string;
   build: (toId: string) => GraphEdge;
 }
@@ -54,6 +55,7 @@ interface PendingEdge {
 type LevelLoad = { uri: string; loaded: LoadedDocument } | { uri: string; error: unknown };
 
 interface PendingRoleEdge {
+  sourceUri: string;
   targetUri: string;
   kind: RoleGraphEdge["kind"];
   fromTeam: string;
@@ -166,7 +168,7 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
       const enqueue = (ref: string, build: (toId: string) => GraphEdge) => {
         const targetUri = loaders.resolveRef(loaded.canonicalUri, ref);
         worklist.push(targetUri);
-        pendingEdges.push({ targetUri, build });
+        pendingEdges.push({ sourceUri: loaded.canonicalUri, targetUri, build });
       };
 
       if (doc.platform) {
@@ -196,7 +198,14 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
       const enqueueRole = (ref: string, kind: RoleGraphEdge["kind"], fromRole: string, toRoleId: string) => {
         const targetUri = loaders.resolveRef(loaded.canonicalUri, ref);
         worklist.push(targetUri);
-        pendingRoleEdges.push({ targetUri, kind, fromTeam: doc.id, fromRole, toRoleId });
+        pendingRoleEdges.push({
+          sourceUri: loaded.canonicalUri,
+          targetUri,
+          kind,
+          fromTeam: doc.id,
+          fromRole,
+          toRoleId,
+        });
       };
 
       for (const role of doc.roles) {
@@ -215,7 +224,7 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
     const toId = uriToTeamId.get(pending.targetUri);
     if (!toId) {
       unresolved.push({
-        fromUri: pending.targetUri,
+        fromUri: pending.sourceUri,
         ref: pending.targetUri,
         reason: "Referenced document could not be resolved into a team",
       });
@@ -229,7 +238,7 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
     const toTeamId = uriToTeamId.get(pending.targetUri);
     if (!toTeamId) {
       unresolved.push({
-        fromUri: pending.targetUri,
+        fromUri: pending.sourceUri,
         ref: pending.targetUri,
         reason: "Referenced document could not be resolved into a team",
       });
@@ -239,7 +248,7 @@ export async function buildOrgGraph(options: BuildOrgGraphOptions): Promise<OrgG
     const roleExists = toTeam.doc.roles.some((r) => r.id === pending.toRoleId);
     if (!roleExists) {
       unresolved.push({
-        fromUri: pending.targetUri,
+        fromUri: pending.sourceUri,
         ref: pending.targetUri,
         reason: `Role '${pending.toRoleId}' not found on team '${toTeamId}' (referenced by ${pending.fromTeam}.${pending.fromRole})`,
       });

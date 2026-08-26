@@ -90,17 +90,27 @@ export function watchOrgGraph(options: WatchOrgGraphOptions): OrgGraphWatcher {
     timer.unref?.();
   };
 
+  const reportWatchError = (watchPath: string, error: unknown) => {
+    onError?.(
+      new Error(`Cannot watch ${watchPath}: ${error instanceof Error ? error.message : String(error)}`, {
+        cause: error,
+      }),
+    );
+  };
+
   for (const watchPath of watchPaths) {
+    if (!fs.existsSync(watchPath)) {
+      reportWatchError(watchPath, new Error("path does not exist"));
+      continue;
+    }
     try {
-      watchers.push(fs.watch(watchPath, { recursive: true }, (_event, filename) => schedule(filename)));
+      const watcher = fs.watch(watchPath, { recursive: true }, (_event, filename) => schedule(filename));
+      watcher.on("error", (error) => reportWatchError(watchPath, error));
+      watchers.push(watcher);
     } catch (error) {
       // A path that cannot be watched (permissions, a platform without recursive watch) must not
       // take down the server it was meant to keep fresh — the API still serves, just statically.
-      onError?.(
-        new Error(`Cannot watch ${watchPath}: ${error instanceof Error ? error.message : String(error)}`, {
-          cause: error,
-        }),
-      );
+      reportWatchError(watchPath, error);
     }
   }
 

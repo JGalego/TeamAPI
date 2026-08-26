@@ -69,6 +69,11 @@ describe("buildOrgGraph — cycles", () => {
 
     expect(graph.teams.size).toBe(1);
     expect(graph.unresolved.length).toBeGreaterThan(0);
+    expect(graph.unresolved).toContainEqual({
+      fromUri: aFile,
+      ref: path.join(tmpDir, "does-not-exist.yml"),
+      reason: "Referenced document could not be resolved into a team",
+    });
     expect(graph.edges).toEqual([]);
   });
 
@@ -91,14 +96,18 @@ describe("buildOrgGraph — cycles", () => {
         },
       ],
     });
-    await writeTeam("team-b", {
+    const bFile = await writeTeam("team-b", {
       roles: [{ id: "tech-lead", name: "Tech Lead", kind: "TechLead" }],
     });
 
     const graph = await buildOrgGraph({ seedUris: [aFile], allowPartial: true });
 
     expect(graph.roleEdges).toEqual([]);
-    expect(graph.unresolved.some((u) => u.reason.includes("ghost-role"))).toBe(true);
+    expect(graph.unresolved).toContainEqual({
+      fromUri: aFile,
+      ref: bFile,
+      reason: "Role 'ghost-role' not found on team 'team-b' (referenced by team-a.engineer)",
+    });
   });
 
   it("flags duplicate team ids declared from different files", async () => {
