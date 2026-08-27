@@ -27,6 +27,7 @@
 import { mkdirSync, readFileSync, readdirSync, writeFileSync, existsSync, cpSync } from "node:fs";
 import { dirname, join, posix, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import hljs from "highlight.js";
 import { marked } from "marked";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
@@ -97,6 +98,59 @@ function titleCase(slug) {
   );
 }
 
+/** The README is intentionally exhaustive; the documentation navigation should not be. Related
+ * H2 sections become subsections of a smaller set of task-sized pages. Keeping this map here,
+ * rather than changing the README's hierarchy, preserves its usefulness as a standalone GitHub
+ * document while giving the generated site an information architecture of its own. */
+const GUIDE_CHAPTERS = [
+  { title: "Quick start", sections: ["Quick start", "Examples"] },
+  { title: "Team knowledge", sections: ["AI-native team knowledge"] },
+  { title: "Diagrams", sections: ["Diagrams"] },
+  { title: "REST API", sections: ["REST API"] },
+  { title: "Dashboard and editing", sections: ["Dashboard", "Editing a team without opening an editor"] },
+  { title: "Agents and chat", sections: ["MCP tools", "Chat"] },
+  { title: "Generated artifacts", sections: ["Generators"] },
+  {
+    title: "Import and synchronization",
+    sections: ["Import", "Sync with GitHub teams", "Write back to Slack, Okta and PagerDuty"],
+  },
+  { title: "CLI and editor", sections: ["CLI reference", "Editor support"] },
+  { title: "Organizational health", sections: ["Org history", "Gaps", "Policy", "Topology", "Shadow AI"] },
+  { title: "Deployment and automation", sections: ["Docker", "CI integration"] },
+];
+
+const GUIDE_REDIRECTS = new Map([
+  ["Paperclip", "integrations/paperclip.html"],
+  ["Slack", "integrations/slack.html"],
+  ["PagerDuty", "integrations/pagerduty.html"],
+  ["Okta", "integrations/okta.html"],
+  ["Metrics", "integrations/prometheus.html"],
+  ["Checking an integration", "integrations/doctor.html"],
+  ["Contributing", "https://github.com/JGalego/TeamAPI/blob/main/CONTRIBUTING.md"],
+]);
+
+function demoteHeadings(markdown) {
+  let fence = false;
+  return markdown
+    .split("\n")
+    .map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+      return fence ? line : line.replace(/^(#{1,5}) /, "#$1 ");
+    })
+    .join("\n");
+}
+
+function normalizeHeadingLabels(markdown) {
+  let fence = false;
+  return markdown
+    .split("\n")
+    .map((line) => {
+      if (/^\s*(```|~~~)/.test(line)) fence = !fence;
+      return fence ? line : line.replace(/^(#{1,6})\s+(?:\p{Extended_Pictographic}\uFE0F?\s*)+/u, "$1 ");
+    })
+    .join("\n");
+}
+
 /**
  * Every page the site is built from, in sidebar and reading order.
  *
@@ -106,21 +160,74 @@ function titleCase(slug) {
  */
 function collectPages() {
   const pages = [];
+  const redirects = [];
   const read = (rel) => readFileSync(join(source, rel), "utf-8");
 
   const readme = splitByH2(read("README.md"));
   pages.push({ src: "README.md", out: "index.html", title: "Overview", group: "Guide", markdown: readme.intro });
-  for (const section of readme.sections) {
-    const title = stripEmoji(section.heading);
-    // The Contents section is the README compensating for having no sidebar; this site has one.
-    if (/^contents$/i.test(title)) continue;
+  const sections = new Map(readme.sections.map((section) => [stripEmoji(section.heading), section]));
+  // The contents list compensates for GitHub's single long page; the generated site has a sidebar.
+  sections.delete("Contents");
+  const consumed = new Set();
+
+  for (const chapter of GUIDE_CHAPTERS) {
+    const chapterSections = chapter.sections.map((title) => {
+      const section = sections.get(title);
+      if (!section) throw new Error(`Guide chapter “${chapter.title}” references missing README section “${title}”`);
+      consumed.add(title);
+      return section;
+    });
+    const first = chapterSections[0];
+    let markdown = first.markdown.replace(/^# .+$/m, `# ${chapter.title}`);
+    const oldSlug = fileSlug(first.heading);
+    if (
+      chapter.title !== stripEmoji(first.heading) &&
+      !markdown.includes(`id="${oldSlug}"`) &&
+      !markdown.includes(`name="${oldSlug}"`)
+    ) {
+      markdown = `<a id="${oldSlug}"></a>\n\n${markdown}`;
+    }
+    for (const section of chapterSections.slice(1)) markdown += `\n\n${demoteHeadings(section.markdown)}`;
+    markdown = normalizeHeadingLabels(markdown);
+
+    const out = `guide/${fileSlug(chapter.title)}.html`;
     pages.push({
       src: "README.md",
-      out: `guide/${fileSlug(section.heading)}.html`,
-      title,
+      out,
+      title: chapter.title,
       group: "Guide",
-      markdown: section.markdown,
+      markdown,
     });
+
+    for (const section of chapterSections) {
+      const oldOut = `guide/${fileSlug(section.heading)}.html`;
+      if (oldOut !== out) {
+        redirects.push({
+          out: oldOut,
+          target: `${out}#${githubSlug(stripEmoji(section.heading), new Map())}`,
+        });
+      }
+    }
+  }
+
+  for (const [title, target] of GUIDE_REDIRECTS) {
+    const section = sections.get(title);
+    if (!section) throw new Error(`Guide redirect references missing README section “${title}”`);
+    consumed.add(title);
+    redirects.push({
+      out: `guide/${fileSlug(section.heading)}.html`,
+      target,
+      src: "README.md",
+      anchors: [
+        githubSlug(title, new Map()),
+        ...[...section.markdown.matchAll(/(?:id|name)="([^"]+)"/g)].map((match) => match[1]),
+      ],
+    });
+  }
+
+  const unassigned = [...sections.keys()].filter((title) => !consumed.has(title));
+  if (unassigned.length) {
+    throw new Error(`README sections need a guide chapter or redirect: ${unassigned.join(", ")}`);
   }
 
   const spec = "docs/spec/teamapi-extended-v1.md";
@@ -167,7 +274,7 @@ function collectPages() {
     }
   }
 
-  return pages;
+  return { pages, redirects };
 }
 
 /**
@@ -193,6 +300,7 @@ function githubSlug(text, seen) {
 
 /** Per-page state the custom renderer fills in while marked walks the document. */
 const pageState = { slugs: new Map(), toc: [], hasMermaid: false };
+const highlightedLanguages = new Set(["bash", "json", "markdown", "python", "ts", "typescript", "yaml"]);
 
 const renderer = {
   heading({ tokens, depth }) {
@@ -212,9 +320,14 @@ const renderer = {
     return `<h${depth} id="${slug}">${inline}${anchor}</h${depth}>\n`;
   },
   code({ text, lang }) {
-    if (lang !== "mermaid") return false; // fall through to marked's default renderer
-    pageState.hasMermaid = true;
-    return `<pre class="mermaid">${escapeHtml(text)}</pre>\n`;
+    const language = (lang ?? "").split(/\s+/)[0].toLowerCase();
+    if (language === "mermaid") {
+      pageState.hasMermaid = true;
+      return `<pre class="mermaid">${escapeHtml(text)}</pre>\n`;
+    }
+    if (!highlightedLanguages.has(language)) return false; // preserve plain output and unlabelled fences
+    const highlighted = hljs.highlight(text, { language }).value;
+    return `<pre><code class="hljs language-${language}">${highlighted}</code></pre>\n`;
   },
 };
 
@@ -296,6 +409,7 @@ function sidebar(pages, current, prefix, versions) {
 <h3>Elsewhere</h3>
 <ul>
   <li><a href="https://github.com/JGalego/TeamAPI">GitHub</a></li>
+  <li><a href="https://github.com/JGalego/TeamAPI/blob/main/CONTRIBUTING.md">Contributing</a></li>
   <li><a href="https://www.npmjs.com/package/@jgalego/teamapi">npm</a></li>
   <li><a href="${prefix}../index.html">Landing page</a></li>
 </ul>
@@ -343,21 +457,24 @@ function pager(pages, current, prefix) {
 const STYLE = `
   :root {
     --bg:#fff; --fg:#1e293b; --muted:#64748b; --card:#f8fafc; --line:#e2e8f0; --accent:#14b8a6;
+    --syntax-keyword:#7c3aed; --syntax-string:#047857; --syntax-number:#b45309; --syntax-title:#0369a1;
     --top-h: 3.25rem;
   }
   @media (prefers-color-scheme: dark) {
     :root:not([data-theme="light"]) {
       --bg:#0b0f16; --fg:#e6edf3; --muted:#8b98a9; --card:#131922; --line:#222b38; --accent:#2dd4bf;
+      --syntax-keyword:#c084fc; --syntax-string:#6ee7b7; --syntax-number:#fbbf24; --syntax-title:#7dd3fc;
     }
   }
   :root[data-theme="dark"] {
     --bg:#0b0f16; --fg:#e6edf3; --muted:#8b98a9; --card:#131922; --line:#222b38; --accent:#2dd4bf;
+    --syntax-keyword:#c084fc; --syntax-string:#6ee7b7; --syntax-number:#fbbf24; --syntax-title:#7dd3fc;
   }
   * { box-sizing: border-box; }
   html { scroll-padding-top: calc(var(--top-h) + 1rem); }
   body {
     margin:0; background:var(--bg); color:var(--fg);
-    font:16px/1.7 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font:16px/1.8 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   }
   code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
   a { color: var(--accent); }
@@ -369,13 +486,15 @@ const STYLE = `
     background: var(--bg); border-bottom: 1px solid var(--line);
   }
   .top .brand { display:flex; align-items:center; gap:.45rem; font-weight:600; text-decoration:none; color:var(--fg); white-space:nowrap; }
+  .top .brand img { width:1.65rem; height:1.65rem; flex:none; }
   .version { font-size:.72rem; color:var(--muted); border:1px solid var(--line); border-radius:999px; padding:.05rem .5rem; white-space:nowrap; }
   .top button {
     background:none; border:1px solid var(--line); color:var(--muted); border-radius:8px;
     padding:.3rem .55rem; cursor:pointer; font:inherit; font-size:.85rem; line-height:1;
   }
   .top button:hover { color: var(--fg); }
-  #menu { display:none; }
+  #menu { display:none; align-items:center; gap:.35rem; }
+  #menu .menu-icon { font-size:1rem; }
   .search { position:relative; flex:1; max-width:26rem; margin-left:auto; }
   .search input {
     width:100%; padding:.35rem .7rem; font:inherit; font-size:.85rem;
@@ -414,25 +533,59 @@ const STYLE = `
   /* ---- article ---- */
   /* break-word so a slash-chained token or bare URL wraps instead of widening the page — on a
      phone one such word is the difference between a readable page and sideways scrolling */
-  article { padding:1.5rem 0; min-width:0; overflow-wrap:break-word; }
-  article h1 { margin-top:0; font-size:1.9rem; line-height:1.25; }
-  article h2 { margin-top:2.4rem; padding-top:.5rem; border-top:1px solid var(--line); }
+  article { padding:2rem 0; min-width:0; overflow-wrap:break-word; }
+  article > p, article > ul, article > ol, article > blockquote { max-width:48rem; }
+  article p { margin:.9rem 0 1.2rem; }
+  article ul, article ol { margin:1rem 0 1.35rem; padding-left:1.6rem; }
+  article li + li { margin-top:.35rem; }
+  article h1 { margin:0 0 1.35rem; font-size:clamp(2rem, 4vw, 2.5rem); line-height:1.15; letter-spacing:-.025em; }
+  article h2 { margin:3rem 0 1.15rem; padding-top:.65rem; border-top:1px solid var(--line); font-size:1.5rem; line-height:1.3; letter-spacing:-.015em; }
+  article h3 { margin:2rem 0 .8rem; font-size:1.2rem; line-height:1.35; }
+  article h4 { margin:1.6rem 0 .65rem; font-size:1rem; line-height:1.4; }
   /* No scroll-margin here: html's scroll-padding-top already clears the sticky header, and the
      two are additive — both at once lands every anchor a full header-height too low. */
   article h2, article h3 { position:relative; }
   .hl { margin-left:.4rem; text-decoration:none; opacity:0; font-weight:400; }
   h1:hover .hl, h2:hover .hl, h3:hover .hl, .hl:focus { opacity:1; }
   article img { max-width:100%; height:auto; }
-  article pre { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:.9rem 1rem; overflow-x:auto; font-size:.88em; }
+  .code-block { position:relative; margin:1.35rem 0 1.6rem; }
+  article pre {
+    margin:1.35rem 0 1.6rem; background:var(--card); border:1px solid var(--line);
+    border-radius:10px; padding:1rem 1.1rem; overflow-x:auto; font-size:.88em; line-height:1.65;
+  }
+  .code-block pre { margin:0; padding-right:5.25rem; }
+  .copy-code {
+    position:absolute; top:.55rem; right:.55rem; z-index:2; min-height:2rem;
+    display:inline-flex; align-items:center; gap:.35rem; padding:.25rem .55rem;
+    border:1px solid var(--line); border-radius:7px; background:var(--bg); color:var(--muted);
+    font:600 .72rem/1 ui-sans-serif, system-ui, sans-serif; cursor:pointer;
+    transition:color .15s, border-color .15s, background .15s;
+  }
+  .copy-code:hover { color:var(--fg); border-color:var(--accent); }
+  .copy-code.done { color:var(--accent); border-color:var(--accent); }
+  .copy-code:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  .hljs-comment, .hljs-quote { color:var(--muted); font-style:italic; }
+  .hljs-keyword, .hljs-selector-tag, .hljs-literal, .hljs-built_in, .hljs-type { color:var(--syntax-keyword); }
+  .hljs-string, .hljs-regexp, .hljs-attr, .hljs-template-variable { color:var(--syntax-string); }
+  .hljs-number, .hljs-symbol, .hljs-bullet, .hljs-variable, .hljs-meta { color:var(--syntax-number); }
+  .hljs-title, .hljs-section, .hljs-selector-id, .hljs-selector-class, .hljs-function { color:var(--syntax-title); }
+  .hljs-emphasis { font-style:italic; }
+  .hljs-strong { font-weight:700; }
   article pre.mermaid { text-align:center; }
   article :not(pre) > code { background:var(--card); border:1px solid var(--line); border-radius:4px; padding:.05rem .3rem; font-size:.88em; overflow-wrap:anywhere; }
   article table { border-collapse:collapse; display:block; overflow-x:auto; max-width:100%; }
-  article th, article td { border:1px solid var(--line); padding:.35rem .6rem; text-align:left; font-size:.9rem; }
+  article th, article td { border:1px solid var(--line); padding:.55rem .75rem; text-align:left; font-size:.9rem; line-height:1.55; }
   article thead th { background:var(--card); }
   /* Tables already scroll sideways, so a code token in a cell never needs to shatter mid-word —
      "teamApiVersion" broken across four lines is worse than a wider column. */
   article table code { overflow-wrap:normal; white-space:nowrap; }
-  article blockquote { border-left:3px solid var(--accent); margin-left:0; padding-left:1rem; color:var(--muted); }
+  article table.command-table { display:table; width:100%; table-layout:fixed; overflow:visible; }
+  article table.command-table th:first-child { width:56%; }
+  article table.command-table td:first-child { background:color-mix(in srgb, var(--card) 55%, transparent); }
+  article table.command-table td:first-child code {
+    white-space:normal; overflow-wrap:anywhere; word-break:normal; line-height:1.7;
+  }
+  article blockquote { border-left:3px solid var(--accent); margin:1.4rem 0; padding:.15rem 0 .15rem 1.15rem; color:var(--muted); }
   .banner { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:.6rem .9rem; font-size:.88rem; margin-bottom:1.5rem; }
 
   /* ---- on this page ---- */
@@ -477,7 +630,7 @@ const STYLE = `
   /* ---- narrow: off-canvas navigation ---- */
   @media (max-width: 60rem) {
     .shell { grid-template-columns: 1fr; gap:0; }
-    #menu { display:inline-block; }
+    #menu { display:inline-flex; }
     nav.side {
       position:fixed; top:0; bottom:0; left:0; z-index:40;
       width:min(19rem, 85vw); max-height:none;
@@ -490,6 +643,20 @@ const STYLE = `
     body.nav-open #backdrop { display:block; position:fixed; inset:0; z-index:35; background:rgb(0 0 0 / .45); }
     body.nav-open { overflow:hidden; }
     .version { display:none; }
+  }
+  @media (max-width: 42rem) {
+    article table.command-table, article table.command-table tbody, article table.command-table tr,
+    article table.command-table td { display:block; width:100%; }
+    article table.command-table { border:0; }
+    article table.command-table thead { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+    article table.command-table tr { margin:0 0 .85rem; border:1px solid var(--line); border-radius:10px; overflow:hidden; }
+    article table.command-table td { border:0; padding:.65rem .8rem; }
+    article table.command-table td + td { border-top:1px solid var(--line); }
+    article table.command-table td::before {
+      content:"Command"; display:block; margin-bottom:.25rem; color:var(--muted);
+      font:600 .68rem/1.2 ui-sans-serif, system-ui, sans-serif; letter-spacing:.06em; text-transform:uppercase;
+    }
+    article table.command-table td + td::before { content:"Purpose"; }
   }
 `;
 
@@ -508,8 +675,13 @@ const APP_SCRIPT = `
     var body = document.body;
     var menu = document.getElementById("menu");
     var backdrop = document.getElementById("backdrop");
-    function closeNav() { body.classList.remove("nav-open"); }
-    menu.addEventListener("click", function () { body.classList.toggle("nav-open"); });
+    function setNav(open) {
+      body.classList.toggle("nav-open", open);
+      menu.setAttribute("aria-expanded", String(open));
+      menu.setAttribute("aria-label", open ? "Close navigation" : "Open navigation");
+    }
+    function closeNav() { setNav(false); }
+    menu.addEventListener("click", function () { setNav(!body.classList.contains("nav-open")); });
     backdrop.addEventListener("click", closeNav);
     document.querySelector("nav.side").addEventListener("click", function (e) {
       if (e.target.closest("a")) closeNav();
@@ -589,6 +761,54 @@ const APP_SCRIPT = `
       if (e.key === "/" && !e.target.closest("input, textarea, select")) { e.preventDefault(); input.focus(); }
       if (e.key === "Escape") closeNav();
     });
+
+    // Add copy controls progressively: the generated HTML remains useful without JavaScript,
+    // and Mermaid blocks stay diagrams rather than pretending to be ordinary snippets.
+    document.querySelectorAll("article pre:not(.mermaid)").forEach(function (pre) {
+      var code = pre.querySelector("code");
+      if (!code) return;
+      var wrap = document.createElement("div");
+      wrap.className = "code-block";
+      pre.parentNode.insertBefore(wrap, pre);
+      wrap.appendChild(pre);
+
+      var copy = document.createElement("button");
+      copy.type = "button";
+      copy.className = "copy-code";
+      copy.setAttribute("aria-label", "Copy code to clipboard");
+      copy.innerHTML = '<span aria-hidden="true">⧉</span><span>Copy</span>';
+      wrap.appendChild(copy);
+
+      copy.addEventListener("click", function () {
+        var text = code.textContent;
+        var copied = navigator.clipboard && window.isSecureContext
+          ? navigator.clipboard.writeText(text)
+          : new Promise(function (resolve, reject) {
+              var area = document.createElement("textarea");
+              area.value = text;
+              area.style.position = "fixed";
+              area.style.opacity = "0";
+              document.body.appendChild(area);
+              area.select();
+              try { document.execCommand("copy") ? resolve() : reject(); }
+              catch (error) { reject(error); }
+              area.remove();
+            });
+        copied.then(function () {
+          copy.classList.add("done");
+          copy.lastElementChild.textContent = "Copied";
+          copy.setAttribute("aria-label", "Code copied");
+          setTimeout(function () {
+            copy.classList.remove("done");
+            copy.lastElementChild.textContent = "Copy";
+            copy.setAttribute("aria-label", "Copy code to clipboard");
+          }, 1600);
+        }).catch(function () {
+          copy.lastElementChild.textContent = "Select";
+          code.parentElement.scrollIntoView({ block: "nearest" });
+        });
+      });
+    });
   })();
 `;
 
@@ -626,8 +846,8 @@ function page(pages, current, body, versions, toc, hasMermaid) {
 </head>
 <body>
 <header class="top">
-  <button id="menu" aria-label="Open navigation" aria-controls="sidenav">☰</button>
-  <a class="brand" href="${prefix}index.html">🧭 TeamAPI</a>
+  <button id="menu" type="button" aria-label="Open navigation" aria-controls="sidenav" aria-expanded="false"><span class="menu-icon" aria-hidden="true">☰</span><span>Menu</span></button>
+  <a class="brand" href="${prefix}index.html"><img src="${prefix}../logo.svg" alt="">TeamAPI</a>
   <span class="version">${label}</span>
   <div class="search">
     <input id="q" type="search" placeholder="Search docs — press /" autocomplete="off" aria-label="Search documentation">
@@ -656,7 +876,29 @@ ${hasMermaid ? `<script type="module">${MERMAID_SCRIPT}</script>` : ""}
 `;
 }
 
-const pages = collectPages();
+function redirectPage(from, target) {
+  const hashAt = target.indexOf("#");
+  const targetPath = hashAt === -1 ? target : target.slice(0, hashAt);
+  const hash = hashAt === -1 ? "" : target.slice(hashAt);
+  const href = /^https?:/.test(targetPath)
+    ? target
+    : `${posix.relative(posix.dirname(from), targetPath) || posix.basename(targetPath)}${hash}`;
+  const safeHref = escapeHtml(href);
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="refresh" content="0; url=${safeHref}">
+<link rel="canonical" href="${safeHref}">
+<title>Documentation moved — TeamAPI</title>
+</head>
+<body><p>This documentation moved to <a href="${safeHref}">${safeHref}</a>.</p></body>
+</html>
+`;
+}
+
+const { pages, redirects } = collectPages();
 // Written by the caller (the workflow) once every version is built; read here so a page can link
 // to the versions that exist rather than to a hard-coded list.
 const versionsFile = join(dirname(outDir), "versions.json");
@@ -674,7 +916,10 @@ for (const entry of pages) {
   pageState.toc = [];
   pageState.hasMermaid = false;
 
-  const html = marked.parse(entry.markdown);
+  let html = marked.parse(entry.markdown);
+  if (entry.src === "README.md" && entry.markdown.includes('<a id="cli-reference"></a>')) {
+    html = html.replace("<table>", '<table class="command-table">');
+  }
   const ids = new Set([...pageState.slugs.keys(), ...[...html.matchAll(/(?:id|name)="([^"]+)"/g)].map((m) => m[1])]);
   rendered.set(entry.out, { html, toc: pageState.toc, hasMermaid: pageState.hasMermaid, ids });
 
@@ -682,6 +927,15 @@ for (const entry of pages) {
   const anchors = anchorsBySrc.get(entry.src) ?? new Map();
   for (const id of ids) if (!anchors.has(id)) anchors.set(id, entry.out);
   anchorsBySrc.set(entry.src, anchors);
+}
+
+// Omitted README summaries still own public anchors. Point them at their small redirect pages so
+// old links continue to work and then land on the richer, dedicated integration documentation.
+for (const redirect of redirects) {
+  if (!redirect.src) continue;
+  const anchors = anchorsBySrc.get(redirect.src) ?? new Map();
+  for (const anchor of redirect.anchors) if (!anchors.has(anchor)) anchors.set(anchor, redirect.out);
+  anchorsBySrc.set(redirect.src, anchors);
 }
 
 // Pass 2 — rewrite links now that every target is known, and write the pages out.
@@ -704,11 +958,23 @@ for (const entry of pages) {
   writeFileSync(file, page(pages, entry, body, versions, toc, hasMermaid), "utf-8");
 }
 
+for (const redirect of redirects) {
+  const file = join(outDir, redirect.out);
+  mkdirSync(dirname(file), { recursive: true });
+  writeFileSync(file, redirectPage(redirect.out, redirect.target), "utf-8");
+}
+
 writeFileSync(join(outDir, "search-index.json"), JSON.stringify(searchIndex), "utf-8");
 
 // Images the README references by repository path. Copied rather than linked to GitHub so the
 // site keeps working for a reader behind a proxy that does not reach raw.githubusercontent.
 const assets = join(source, "docs", "assets");
 if (existsSync(assets)) cpSync(assets, join(outDir, "docs", "assets"), { recursive: true });
+
+// The deployed site already copies site/ before building docs. Copy the mark when absent as well,
+// so a standalone local docs build has the same header and favicon rather than a broken image.
+const logo = join(source, "site", "logo.svg");
+const outputLogo = join(dirname(outDir), "logo.svg");
+if (existsSync(logo) && !existsSync(outputLogo)) cpSync(logo, outputLogo);
 
 console.log(`Built ${pages.length} page(s) into ${relative(REPO, outDir)} (${label})`);

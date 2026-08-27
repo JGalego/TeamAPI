@@ -337,13 +337,106 @@ not called out below (`capabilities`, `tags`, `reviewers`, etc.) is a plain stri
 
 **Agent**: `{ id, name, description?, provider, model?, role, capabilities: string[], status: "active" | "inactive" | "deprecated" (default "active"), ownerId?: slug (a members[].id), permissions: string[], tags: string[] }`. Worked example: `examples/acme-org/platform-payments/teamapi.yml` declares five agents, each scoped to one review concern (architecture, tests, security, docs, compliance) rather than one do-everything agent — `platform-payments`'s `memory[]` (below) records why. `examples/acme-org/stream-onboarding/teamapi.yml` declares none, backed by a `policies[]` entry rather than silent omission.
 
+#### Example: an agent with a resolvable human owner
+
+`ownerId` names a member of the same team. The schema accepts any slug here; `teamapi gaps` reports a missing owner as `dangling-owner`, and the knowledge graph creates an accountability edge only when the member resolves.
+
+```yaml
+members:
+  - id: priya-raman
+    name: Priya Raman
+    roleIds: [tech-lead]
+    allocation: 100
+
+agents:
+  - id: security-scanner
+    name: Security Scanner
+    provider: in-house
+    model: acme-secscan-v3
+    role: security-auditor
+    capabilities: [dependency-scanning, secret-detection]
+    ownerId: priya-raman
+    permissions: ["read:pull-requests", "comment:pull-requests"]
+```
+
+> **Structurally valid, semantically unresolved:** changing `ownerId` to `departed-member` still passes schema validation because cross-resource identity is a graph concern. `teamapi gaps` then reports a blocking finding rather than silently attaching the agent to the wrong person.
+
 **MemoryEntry**: `{ id, title, kind: "architecture-decision" | "convention" | "lesson-learned" | "recurring-issue" | "domain-knowledge" | "historical-decision", body (markdown), tags: string[], contributors: string[], relatedRefs: Ref[], createdAt?, updatedAt? }`.
 
 **Specification**: `{ id, title, kind: "requirement" | "design" | "task" | "acceptance-criteria", status: "draft" | "in-review" | "approved" | "in-progress" | "implemented" | "deprecated" (default "draft"), body?, reviewers: string[], approvals: { reviewer, approvedAt?, comment? }[], linkedPullRequests: string[], linkedIssues: string[], linkedDocuments: Ref[], tags: string[] }`. `linkedPullRequests`/`linkedIssues` are plain strings (URLs or `owner/repo#123`), not `$ref`s — they point at GitHub/GitLab/Jira, not another team's document.
 
+#### Example: recording a review in progress
+
+`reviewers[]` records who is expected to review; `approvals[]` records review events. They are intentionally independent: the schema stores the declared lifecycle but does not infer or enforce a status from the number of approvals.
+
+```yaml
+specifications:
+  - id: oauth-login
+    title: Support OAuth login
+    kind: requirement
+    status: in-review
+    reviewers: [security-lead, identity-owner]
+    approvals:
+      - reviewer: security-lead
+        approvedAt: "2026-07-15T10:30:00Z"
+        comment: Aligns with the threat model.
+    linkedPullRequests: ["acme/checkout-api#418"]
+    tags: [identity, security]
+```
+
 **SteeringDocument**: `{ id, title, category: "coding-standards" | "api-conventions" | "security-guidelines" | "architecture-principles" | "documentation-style" | "custom", scope: "organization" | "team" | "project" (default "team"), appliesTo?, body, tags: string[] }`. `@jgalego/teamapi-core`'s `resolveEffectiveSteering(graph, teamId)` returns a team's own documents plus every document declared on the team(s) reachable by walking the existing `platform.$ref` chain upward — reusing that edge rather than inventing a second hierarchy mechanism. A document the team declares itself always wins over an inherited one sharing its `id`.
 
+#### Example: inheriting and overriding steering
+
+```yaml
+# platform-payments/teamapi.yml
+id: platform-payments
+steeringDocuments:
+  - id: security-baseline
+    title: Payment security baseline
+    category: security-guidelines
+    scope: organization
+    body: All services must enable audit logging.
+---
+# stream-checkout/teamapi.yml
+id: stream-checkout
+platform:
+  $ref: ../platform-payments/teamapi.yml
+steeringDocuments:
+  - id: security-baseline
+    title: Checkout security baseline
+    category: security-guidelines
+    scope: team
+    body: Checkout must enable audit logging and redact cart tokens.
+```
+
+For `stream-checkout`, the local `security-baseline` replaces the inherited document with the same `id`. Other inherited documents remain available.
+
 **Prompt**: `{ id, name, description?, template (with {{variable}} placeholders), variables: { name, description?, required (default false), default? }[], version (default "1.0.0"), versions: { version, template, changelog?, publishedAt? }[], tags: string[], owner? }`. `@jgalego/teamapi-core`'s `renderPrompt(prompt, variables)` fills placeholders, falling back to each variable's `default`, and throws `MissingPromptVariableError` for a `required` variable left unfilled.
+
+#### Example: required variables and defaults
+
+```yaml
+prompts:
+  - id: release-review
+    name: Release review
+    template: "Review {{service}} for {{environment}}. Focus on {{focus}}."
+    variables:
+      - name: service
+        required: true
+      - name: environment
+        default: production
+      - name: focus
+        default: rollback safety
+```
+
+Rendering with `{ "service": "checkout-api" }` produces:
+
+```text
+Review checkout-api for production. Focus on rollback safety.
+```
+
+Omitting `service` throws `MissingPromptVariableError`; an optional variable with neither a supplied value nor a default leaves its placeholder unchanged.
 
 **Playbook**: `{ id, name, category: "incident-response" | "release" | "onboarding" | "offboarding" | "production-deployment" | "custom", steps: { order, title, description?, requiredRoles: string[], automationHook? }[], documentation?, attachments: Ref[], tags: string[] }`.
 
@@ -352,6 +445,35 @@ not called out below (`capabilities`, `tags`, `reviewers`, etc.) is a plain stri
 **KnowledgeBaseEntry**: `{ id, title, kind: "adr" | "faq" | "meeting-notes" | "architecture-doc" | "runbook" | "design-doc", category?, body (markdown), relatedRefs: Ref[], attachments: Ref[], tags: string[] }`.
 
 **Workflow**: `{ id, name, description?, states: { id, name, description? }[], transitions: { from, to, trigger }[], automation: { trigger, action }[], tags: string[] }`. Validated: every `transitions[].from`/`.to` must match a declared `states[].id`.
+
+#### Example: a validated release transition
+
+```yaml
+workflows:
+  - id: release
+    name: Release process
+    states:
+      - id: testing
+        name: Testing
+      - id: approved
+        name: Approved
+      - id: deployed
+        name: Deployed
+    transitions:
+      - from: testing
+        to: approved
+        trigger: tests-pass
+      - from: approved
+        to: deployed
+        trigger: deploy-scheduled
+    automation:
+      - trigger: tests-pass
+        action: github-actions:request-approval
+      - trigger: deploy-scheduled
+        action: deployment:execute
+```
+
+> **Rejected:** a transition such as `{ from: testing, to: production, trigger: deploy }` fails validation because `production` is not present in `states[]`. Automation actions are declarations for external tooling; TeamAPI does not execute them.
 
 **AiSession**: `{ id, agentId?: slug (an agents[].id), assistant, model?, objective, promptIds: slug[] (this team's prompts[].id), generatedArtifacts: Ref[], referencedDocuments: Ref[], decisions: string[], startedAt?, endedAt?, tags: string[] }`. Written after the fact — a durable record, the same way `meetings[]` records a standing meeting rather than driving one live.
 

@@ -86,6 +86,8 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 
 ## 🚀 Quick start
 
+### 1. Install TeamAPI
+
 Install the CLI from npm:
 
 ```bash
@@ -100,6 +102,8 @@ pnpm install
 pnpm build
 ```
 
+### 2. Create your organization
+
 Start your own org repository:
 
 ```bash
@@ -109,6 +113,8 @@ teamapi validate      # no arguments needed — teamapi.config.yml says where to
 ```
 
 That writes a `teamapi.config.yml`, a CI workflow, VS Code settings binding the documents to the [published schema](#editor-support), a README, and a first stream-aligned and platform team. Every command in this README then works in that directory with no arguments.
+
+### 3. Explore a sample organization
 
 Or try it against the sample org bundled with this repo, [`examples/acme-org`](examples/acme-org):
 
@@ -158,15 +164,33 @@ A team includes the AI agents working alongside its people, and the knowledge th
 | `workflows[]`         | Process state machines (e.g. testing → approval → deployment → announcement), independent of any particular CI/CD system.                                                              |
 | `sessions[]`          | A record of AI collaboration sessions: objective, prompts used, artifacts produced, decisions made.                                                                                    |
 
-Every section is optional, so documents written before they existed keep validating unchanged. No migration is required. Like the rest of the toolchain, these sections are read-only: edited in git, never `POST`ed.
+> **Backward compatible by design.** Every section is optional, so existing documents keep validating without migration. Like the rest of the toolchain, these sections are edited in git and exposed read-only—never `POST`ed.
 
-**Worked example: agents follow the same team boundaries as services.** In `examples/acme-org`, `platform-payments` runs a five-agent fleet (`architecture-reviewer`, `test-generator`, `security-scanner`, `docs-writer`, `compliance-auditor`). Each agent has a narrow enough scope that three can review the same OAuth pull request in parallel without contradicting each other; `memory/conways-law-for-agents` records why that split replaced a single do-everything agent. `stream-onboarding`, the only team touching raw KYC data, carries a `policies/no-agents-on-applicant-pii` entry and no `agents[]` at all. Its `GET /teams/stream-onboarding/agents` response is therefore a documented `[]`.
+### A worked example
 
-**Context bundles**: `POST /context` (or the `get_context_bundle` MCP tool) takes a goal such as `{ "goal": "Implement OAuth" }`, optionally scoped to one `teamId`. It returns the matching entries from those sections along with the scoped team's related teams, members, and services. Ranking uses keyword overlap, and each hit includes the `matchedTerms` behind its score. One call gives an assistant the task-specific part of the graph.
+Agents follow the same team boundaries as services. In `examples/acme-org`, `platform-payments` runs a five-agent fleet (`architecture-reviewer`, `test-generator`, `security-scanner`, `docs-writer`, `compliance-auditor`). Each agent has a narrow enough scope that three can review the same OAuth pull request in parallel without contradicting each other; `memory/conways-law-for-agents` records why that split replaced a single do-everything agent. `stream-onboarding`, the only team touching raw KYC data, carries a `policies/no-agents-on-applicant-pii` entry and no `agents[]` at all. Its `GET /teams/stream-onboarding/agents` response is therefore a documented `[]`.
+
+### Context bundles
+
+`POST /context` (or the `get_context_bundle` MCP tool) takes a goal such as `{ "goal": "Implement OAuth" }`, optionally scoped to one `teamId`. It returns the matching entries from those sections along with the scoped team's related teams, members, and services. Ranking uses keyword overlap, and each hit includes the `matchedTerms` behind its score. One call gives an assistant the task-specific part of the graph.
+
+```mermaid
+flowchart LR
+  goal["Goal + optional team"] --> bundle["Context bundle"]
+  bundle --> knowledge["Relevant knowledge"]
+  bundle --> ownership["People and services"]
+  bundle --> seams["Cross-team seams"]
+```
+
+### Cross-team seams
 
 It also returns `seams[]`, listing every pair of teams spanned by the matched entries. Each item includes the declared interaction mode, or `undeclared: true` when neither team declares an edge to the other. Without that list, a scoped bundle can make a cross-team goal look as though it belongs to one team. An undeclared seam warns that the work is crossing a line nobody wrote down.
 
-**The knowledge graph** (`GET /knowledge-graph`, `GET /knowledge-graph/:nodeId/traverse`, or the `get_knowledge_graph`/`traverse_knowledge_graph` MCP tools) links every team, person, agent, and document by ownership, role, team topology, and resolved cross-team `$ref` edges, for visualization or traversal tooling to consume.
+### Knowledge graph
+
+`GET /knowledge-graph`, `GET /knowledge-graph/:nodeId/traverse`, and the matching MCP tools link every team, person, agent, and document by ownership, role, team topology, and resolved cross-team `$ref` edges for visualization or traversal tooling to consume.
+
+### One interface for every resource
 
 Each section gets the same read-only REST shape — `GET /<plural>`, `GET /teams/:id/<plural>`, `GET /teams/:id/<plural>/:resourceId`, e.g. `/teams/platform-payments/prompts/code-review` — plus a matching `list_*`/`get_*` MCP tool pair, and all of them are covered by `GET /search?q=`. `POST /teams/:id/prompts/:promptId/render` (or `render_prompt`) fills a prompt's `{{variable}}` placeholders. Field-by-field reference: [`docs/spec/teamapi-extended-v1.md`](docs/spec/teamapi-extended-v1.md).
 

@@ -9,6 +9,7 @@
 <meta property="og:description" content="Who owns this? Just curl your org.">
 <meta property="og:url" content="https://teamapi.dev">
 <link rel="icon" href="logo.svg" type="image/svg+xml">
+<script>document.documentElement.classList.add("js")</script>
 <style>
   :root {
     --bg: #ffffff; --fg: #1e293b; --muted: #64748b; --card: #f8fafc;
@@ -38,6 +39,30 @@
   main { max-width: 54rem; margin: 0 auto; padding: 0 1.25rem 5rem; }
   a { color: inherit; }
   code, pre { font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace; }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
+
+  /* ── scroll story ───────────────────────────────────────── */
+  .js .reveal { opacity: 0; translate: 0 2rem; }
+  .js .reveal.revealed {
+    opacity: 1; translate: none;
+    transition: opacity .7s cubic-bezier(.2,.8,.2,1), translate .7s cubic-bezier(.2,.8,.2,1);
+  }
+  .js .reveal .reveal-item, .js .reveal .ints a { opacity: 0; translate: 0 1rem; }
+  .js .reveal.revealed .reveal-item, .js .reveal.revealed .ints a {
+    opacity: 1; translate: none;
+    transition: opacity .55s cubic-bezier(.2,.8,.2,1), translate .55s cubic-bezier(.2,.8,.2,1);
+    transition-delay: calc(var(--i, 0) * 90ms + 160ms);
+  }
+  .js .reveal .ints a:nth-child(2) { --i: 1; }
+  .js .reveal .ints a:nth-child(3) { --i: 2; }
+  .js .reveal .ints a:nth-child(4) { --i: 3; }
+  .js .reveal .ints a:nth-child(5) { --i: 4; }
+  .js .reveal .ints a:nth-child(6) { --i: 5; }
+  .js .reveal .ints a:nth-child(7) { --i: 6; }
+  .js .reveal .ints a:nth-child(8) { --i: 7; }
+  .js .reveal .ints a:nth-child(9) { --i: 8; }
+  .js .reveal .ints a:nth-child(10) { --i: 9; }
+  .js .reveal .ints a:nth-child(11) { --i: 10; }
 
   /* ── header ─────────────────────────────────────────────── */
   header { display: flex; justify-content: flex-end; padding: 1rem 1.25rem; }
@@ -48,7 +73,7 @@
   #theme:hover { color: var(--fg); border-color: var(--muted); }
 
   /* ── hero ───────────────────────────────────────────────── */
-  .hero { text-align: center; padding: 1rem 0 2.5rem; }
+  .hero { text-align: center; padding: 1rem 0 3.5rem; }
   .hero svg { width: 84px; height: 84px; animation: settle .7s cubic-bezier(.2,.8,.2,1) both; }
   @keyframes settle { from { opacity: 0; transform: scale(.9) } to { opacity: 1; transform: none } }
   /* The weave re-threads itself: each crossing wipes in or out, staggered by column so the
@@ -65,8 +90,33 @@
     .hero .x { animation: none }
   }
   h1 { font-size: clamp(2.2rem, 7vw, 3.1rem); margin: .6rem 0 .3rem; letter-spacing: -.035em; }
-  .tag { font-size: clamp(1.05rem, 3.4vw, 1.3rem); margin: 0 0 .8rem; }
-  .sub { color: var(--muted); max-width: 34rem; margin: 0 auto; }
+  .tag { font-size: clamp(1.05rem, 3.4vw, 1.3rem); margin: 0; }
+  .sub { color: var(--teal); font-size: clamp(1rem, 3vw, 1.2rem); font-weight: 600; margin: .1rem auto 0; }
+
+  /* ── narrative bridge ───────────────────────────────────── */
+  .story { margin-top: 3rem; text-align: center; }
+  .friction { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; }
+  @media (min-width: 65rem) {
+    .friction {
+      width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%);
+    }
+  }
+  .friction article {
+    --accent: var(--teal);
+    padding: 1.15rem; text-align: left; background: var(--card);
+    border: 1px solid var(--line); border-radius: 12px;
+    transition: color .18s, background .18s, border-color .18s, transform .18s, box-shadow .18s;
+  }
+  .friction article:nth-child(2) { --accent: var(--purple); }
+  .friction article:nth-child(3) { --accent: var(--amber); }
+  .friction article:hover {
+    background: color-mix(in srgb, var(--accent) 10%, var(--card));
+    border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow);
+  }
+  .friction b { display: block; margin-bottom: .25rem; }
+  .friction p { margin: 0; color: var(--muted); font-size: .94rem; }
+  .n { color: var(--accent); font: 600 .78rem/1 ui-monospace, monospace; letter-spacing: .08em; }
+  @media (max-width: 42rem) { .friction { grid-template-columns: 1fr; } }
 
   /* ── install ────────────────────────────────────────────── */
   .install {
@@ -100,40 +150,82 @@
   /* whichever section leads sits closer to the hero */
   .hero + .slide h2 { margin-top: 2.2rem; }
   .demo h2 { margin: 0 0 .5rem; }
+  .section-intro {
+    color: var(--muted); text-align: center; font-size: 1.06rem;
+    margin: -.1rem auto 1.5rem; max-width: 40rem; text-wrap: balance;
+  }
+  .section-intro.story-lede { max-width: none; margin-bottom: 2rem; white-space: nowrap; text-wrap: nowrap; }
   /* section mark sits above its heading — icons from Lucide (ISC) */
   h2 .mark { display: block; width: 30px; height: 30px; margin: 0 auto .6rem; color: var(--teal); }
 
   /* ── closing call to action ─────────────────────────────── */
   .cta {
-    text-align: center; margin: 5.5rem 0 1rem; padding: 3.2rem 1.6rem;
-    background: var(--card); border: 1px solid var(--line); border-radius: 16px;
+    text-align: center; margin: 5.5rem 0 1rem; padding: 4rem 2rem;
+    background:
+      linear-gradient(135deg, color-mix(in srgb, var(--purple) 8%, transparent), transparent 45%),
+      linear-gradient(315deg, color-mix(in srgb, var(--teal) 9%, transparent), transparent 45%),
+      var(--card);
+    border: 1px solid var(--line); border-radius: 20px;
   }
   .cta .mark { display: block; width: 34px; height: 34px; margin: 0 auto .8rem; color: var(--teal); }
-  /* the floor has to let 'Make every team' fit a 280px screen, since it can't break */
-  .cta .q { font-size: clamp(1.15rem, 6vw, 2.1rem); font-weight: 600; margin: 0 0 .6rem; letter-spacing: -.025em; }
-  .cta .a { color: var(--muted); margin: 0 auto; max-width: 33rem; text-wrap: pretty; }
+  .cta h2 { margin: 0 0 1rem; }
+  .cta .q {
+    max-width: 46rem; font-size: clamp(1.85rem, 5vw, 3.2rem); line-height: 1.1;
+    font-weight: 700; margin: 0 auto .9rem; letter-spacing: -.04em; text-wrap: balance;
+  }
   @media (min-width: 65rem) {
     .cta { width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%); }
   }
-  .acts { display: flex; flex-wrap: wrap; gap: .6rem; justify-content: center; margin-top: 1.5rem; }
-  .acts a {
-    text-decoration: none; border: 1px solid var(--line); border-radius: 9px;
-    padding: .55rem 1.1rem; font-size: .9rem; color: var(--muted); background: var(--card);
-    transition: color .15s, border-color .15s;
+  .acts {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem;
+    width: min(62rem, 100%); margin: 2rem auto 0; text-align: left;
   }
-  .acts a:hover { color: var(--fg); border-color: var(--muted); }
-  .acts .go { background: var(--fg); color: var(--bg); border-color: var(--fg); font-weight: 500; }
-  .acts .go:hover { opacity: .88; color: var(--bg); }
-  /* capped so six chips break 3 + 3 rather than stranding one on its own row */
+  .acts a {
+    position: relative; display: grid; grid-template-columns: 2.25rem 1fr auto; gap: .75rem;
+    align-items: start; text-decoration: none; border: 1px solid var(--line); border-radius: 12px;
+    padding: 1rem; color: var(--fg); background: var(--bg);
+    transition: border-color .15s, transform .15s, box-shadow .15s;
+  }
+  .acts a:hover { border-color: var(--teal); transform: translateY(-2px); box-shadow: var(--shadow); }
+  .acts .action-icon {
+    display: grid; place-items: center; width: 2.25rem; height: 2.25rem;
+    color: var(--teal); background: color-mix(in srgb, var(--teal) 10%, var(--card)); border-radius: 9px;
+  }
+  .acts svg { width: 18px; height: 18px; }
+  .acts strong { display: block; font-size: .9rem; line-height: 1.25; }
+  .acts small { display: block; color: var(--muted); font-size: .75rem; line-height: 1.4; margin-top: .3rem; }
+  .acts .arrow { color: var(--muted); line-height: 1; margin-top: .25rem; }
+  .acts .go { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .acts .go .action-icon { color: var(--fg); background: var(--teal); }
+  .acts .go small, .acts .go .arrow { color: color-mix(in srgb, var(--bg) 68%, transparent); }
+  .acts .go:hover { color: var(--bg); border-color: var(--teal); }
+  @media (max-width: 48rem) {
+    .cta { padding: 3rem 1rem; }
+    .acts { grid-template-columns: 1fr; }
+  }
+  /* capped so prompts form compact, balanced rows above the terminal */
   .chips { display: flex; flex-wrap: wrap; gap: .45rem; margin: 0 auto .8rem; justify-content: center;
            max-width: 32rem; }
   .chips button {
+    --accent: var(--teal);
+    display: inline-flex; align-items: center; gap: .45rem;
     border: 1px solid var(--line); background: var(--card); color: var(--muted);
     border-radius: 999px; padding: .35rem .85rem; cursor: pointer; font: inherit; font-size: .82rem;
-    transition: all .15s;
+    transition: color .15s, background .15s, border-color .15s, transform .15s, box-shadow .15s;
   }
-  .chips button:hover { color: var(--fg); }
-  .chips button[aria-selected="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .chips button:hover {
+    color: var(--fg); background: color-mix(in srgb, var(--accent) 10%, var(--card));
+    border-color: var(--accent); transform: translateY(-1px);
+  }
+  .chips button[aria-selected="true"] {
+    background: color-mix(in srgb, var(--accent) 16%, var(--card)); color: var(--fg);
+    border-color: var(--accent); box-shadow: inset 3px 0 var(--accent);
+  }
+  .chip-icon {
+    display: grid; place-items: center; width: 1.45rem; height: 1.45rem; flex: 0 0 auto;
+    color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 6px;
+  }
+  .chip-icon svg { width: 14px; height: 14px; }
   .term {
     background: var(--term-bg); border-radius: 12px; overflow: hidden;
     border: 1px solid var(--line); box-shadow: var(--shadow);
@@ -142,10 +234,11 @@
   .bar i { width: 11px; height: 11px; border-radius: 50%; background: #ffffff20; }
   .term pre {
     margin: 0; padding: 1rem 1.1rem 1.2rem; color: var(--term-fg); font-size: .84rem;
-    line-height: 1.65; overflow-x: auto; min-height: 15.5rem; white-space: pre;
+    line-height: 1.65; overflow: auto; height: 32rem; white-space: pre;
   }
+  @media (max-width: 40rem) { .term pre { height: 27rem; } }
   .term .p { color: var(--teal); }
-  .term .c { color: #f1f5f9; }
+  .term .c { color: #f1f5f9; white-space: pre-wrap; overflow-wrap: anywhere; }
   .term .dim { color: #64748b; }
   .term .ok { color: var(--teal); }
   .term .warn { color: var(--amber); }
@@ -173,28 +266,41 @@
       width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%);
     }
     .demo h2 { grid-column: 1 / -1; }
+    .demo .section-intro { grid-column: 1 / -1; }
     .chips { flex-direction: column; align-items: stretch; justify-content: flex-start;
              max-width: none; margin: 0; }
     .chips button { text-align: left; }
   }
 
   /* ── integrations ───────────────────────────────────────── */
-  .ints { display: grid; gap: .6rem; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); }
+  .ints { display: grid; gap: .7rem; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); }
+  @media (min-width: 65rem) {
+    .ints {
+      width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%);
+    }
+  }
   .ints a {
+    --accent: var(--teal);
     display: block; text-decoration: none; padding: .8rem 1rem;
     background: var(--card); border: 1px solid var(--line); border-radius: 10px;
-    transition: border-color .15s;
+    transition: color .18s, background .18s, border-color .18s, transform .18s, box-shadow .18s;
   }
-  .ints a:hover { border-color: var(--muted); }
+  .ints a:nth-child(4n + 2) { --accent: var(--purple); }
+  .ints a:nth-child(4n + 3) { --accent: var(--amber); }
+  .ints a:nth-child(4n + 4) { --accent: var(--rose); }
+  .ints a:hover {
+    color: var(--fg); background: color-mix(in srgb, var(--accent) 10%, var(--card));
+    border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow);
+  }
   .ints .row { display: flex; align-items: center; gap: .5rem; }
   .ints svg { width: 17px; height: 17px; flex-shrink: 0; color: var(--muted); }
-  .ints a:hover svg { color: var(--fg); }
+  .ints a:hover svg { color: var(--accent); }
   .ints b { font-size: .92rem; }
-  .ints span { display: block; color: var(--muted); font-size: .82rem; margin-top: .15rem; }
+  .ints span { display: block; color: var(--muted); font-size: .9rem; margin-top: .15rem; }
 
   /* ── steps ──────────────────────────────────────────────── */
-  h2 { font-size: .95rem; text-transform: uppercase; letter-spacing: .11em; color: var(--muted);
-       margin: 4rem 0 1.1rem; font-weight: 600; text-align: center; }
+    h2 { font-size: clamp(1.08rem, 2vw, 1.28rem); text-transform: uppercase; letter-spacing: .09em; color: var(--fg);
+      margin: 4rem 0 1.1rem; font-weight: 700; text-align: center; }
   .steps { display: grid; gap: 1rem; grid-template-columns: 1fr; }
   /* 65rem, not 64: at exactly 1024px the first card's copy tips to a third line */
   @media (min-width: 65rem) {
@@ -207,7 +313,7 @@
   }
   .step .row { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
   .step .row svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--teal); }
-  .step p { margin: 0 0 .7rem; color: var(--muted); font-size: .9rem; }
+  .step p { margin: 0 0 .7rem; color: var(--muted); font-size: .96rem; }
   .step pre {
     margin: auto 0 0; font-size: .74rem; overflow-x: auto; color: var(--fg);
     background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .55rem .6rem;
@@ -229,6 +335,12 @@
 
   body.deck { overflow: hidden; }
   body.deck header, body.deck footer { display: none; }
+  body.deck {
+    background:
+      radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--purple) 13%, transparent), transparent 34rem),
+      radial-gradient(circle at 82% 78%, color-mix(in srgb, var(--teal) 12%, transparent), transparent 32rem),
+      var(--bg);
+  }
   body.deck main { max-width: none; padding: 0; }
   body.deck .slide { display: none; }
   body.deck .slide.on {
@@ -236,21 +348,32 @@
     min-height: 100vh; max-height: 100vh; overflow-y: auto;
     margin: 0 auto; padding: 4rem 2.5rem 5rem; width: min(76rem, 100%);
     animation: slidein .32s cubic-bezier(.2,.8,.2,1) both;
+    opacity: 1; translate: none;
   }
+  body.deck .slide.on .reveal-item, body.deck .slide.on .ints a { opacity: 1; translate: none; }
   @keyframes slidein { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
-  body.deck .slide.on > h2 { margin-top: 0; }
-  body.deck .steps, body.deck .demo.on, body.deck .cta.on {
+  body.deck .slide.on > h2 { margin-top: 0; font-size: clamp(1.35rem, 2.5vw, 1.75rem); }
+  body.deck .section-intro { font-size: clamp(1.1rem, 1.8vw, 1.3rem); }
+  body.deck .demo .section-intro { max-width: none; white-space: nowrap; text-wrap: nowrap; }
+  body.deck .hero { align-items: center; }
+  body.deck .hero > svg { width: 104px; height: 104px; }
+  body.deck .hero h1 { font-size: clamp(4rem, 10vw, 7rem); }
+  body.deck .hero .tag { font-size: clamp(1.35rem, 3vw, 2rem); }
+  body.deck .hero .sub { font-size: clamp(1.15rem, 2.4vw, 1.6rem); }
+  body.deck .hero .install { display: none; }
+  body.deck .steps, body.deck .friction, body.deck .ints, body.deck .demo.on, body.deck .cta.on {
     width: auto; margin-left: 0; transform: none;
   }
   body.deck .cta.on { border: none; background: none; }
+  body.deck .cta .q { font-size: clamp(2.5rem, 6vw, 5rem); max-width: 60rem; }
   /* the tallest demo runs to 34 lines, well past a slide — so in a deck the
      terminal is a fixed box that scrolls, rather than a slide that overflows */
-  body.deck .term pre { height: calc(100vh - 24rem); overflow-y: auto; }
+  body.deck .term pre { height: clamp(12rem, calc(100vh - 24rem), 32rem); overflow-y: auto; }
   /* .slide.on's flex would otherwise outrank the chips-beside-terminal grid */
   @media (min-width: 68rem) {
     body.deck .demo.on { display: grid; align-content: center; }
     /* the chips move out of the column here, so the terminal gets that height back */
-    body.deck .term pre { height: calc(100vh - 18rem); }
+    body.deck .term pre { height: clamp(18rem, calc(100vh - 18rem), 34rem); }
   }
   /* a deck slide is wider than the page column, so three steps fit sooner here */
   @media (min-width: 60rem) { body.deck .steps { grid-template-columns: repeat(3, 1fr); } }
@@ -259,7 +382,9 @@
   #deck-bar { position: fixed; top: 0; left: 0; height: 2px; background: var(--teal); transition: width .3s; }
   #deck-nav {
     position: fixed; right: 1.1rem; bottom: 1.1rem; display: flex; align-items: center; gap: .3rem;
-    font-size: .78rem; color: var(--muted);
+    padding: .35rem; font-size: .78rem; color: var(--muted);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(12px);
   }
   #deck-nav button {
     background: var(--card); border: 1px solid var(--line); color: var(--muted); cursor: pointer;
@@ -268,7 +393,12 @@
   #deck-nav button:hover:not(:disabled) { color: var(--fg); border-color: var(--muted); }
   #deck-nav button:disabled { opacity: .35; cursor: default; }
   #deck-n { padding: 0 .4rem; font-variant-numeric: tabular-nums; }
-  @media (prefers-reduced-motion: reduce) { body.deck .slide.on { animation: none } }
+  #deck-title { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); }
+  #deck-hint { position: fixed; left: 1.2rem; bottom: 1.3rem; color: var(--muted); font-size: .75rem; }
+  @media (prefers-reduced-motion: reduce) {
+    body.deck .slide.on { animation: none }
+    .js .reveal, .js .reveal .reveal-item, .js .reveal .ints a { opacity: 1; translate: none; transition: none; }
+  }
 
   /* ── footer ─────────────────────────────────────────────── */
   footer {
@@ -283,12 +413,12 @@
 <body>
 
 <header>
-  <button id="present" type="button" aria-label="Enter presentation mode">▶ present</button>
+  <button id="present" type="button" aria-label="Present the TeamAPI story">▶ present story</button>
   <button id="theme" type="button" aria-label="Switch colour theme">◐ theme</button>
 </header>
 
 <main>
-  <section class="hero slide">
+  <section class="hero slide revealed" data-title="Every team has an API">
     <!-- the woven mark: sixteen teams, each crossing over one neighbour and under the next -->
     <svg viewBox="0 0 100 100" fill="none" role="img" aria-label="TeamAPI">
       <path d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="round"/>
@@ -318,7 +448,7 @@
     </svg>
     <h1>TeamAPI</h1>
     <p class="tag">Every team has an API.</p>
-    <p class="sub">Time to bring yours online.</p>
+    <p class="sub">Make yours callable.</p>
 
     <div class="install">
       <span class="dollar">$</span>
@@ -327,35 +457,19 @@
     </div>
   </section>
 
-  <section class="slide">
-  <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /> <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" /> <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" /> <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" /></svg>Quick start</h2>
-  <div class="steps">
-    <div class="step">
-      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 12.5 8 15l2 2.5" /> <path d="m14 12.5 2 2.5-2 2.5" /></svg><b>Write a team spec</b></div>
-      <p>One file per team: what it owns, who's accountable, how much it can take on.</p>
-      <pre><span class="pr">$</span> teamapi scaffold cart \
-  --type stream-aligned \
-  --out teams/cart.yml</pre>
+  <section class="story slide reveal" data-title="The ownership gap">
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>The ownership gap</h2>
+    <p class="section-intro story-lede">Finding out who owns what shouldn't be a scavenger hunt.</p>
+    <div class="friction">
+      <article class="reveal-item" style="--i:0"><span class="n">01</span><b>Ownership is scattered</b><p>The answer lives across docs, catalogs, chat threads, and people's heads.</p></article>
+      <article class="reveal-item" style="--i:1"><span class="n">02</span><b>Answers expire</b><p>Teams change faster than the pages meant to describe them.</p></article>
+      <article class="reveal-item" style="--i:2"><span class="n">03</span><b>Agents can't ask around</b><p>AI needs structured organizational context—not another human-only diagram.</p></article>
     </div>
-    <div class="step">
-      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve the API</b></div>
-      <p>Your whole org over HTTP, and a dashboard to browse it.</p>
-      <pre><span class="pr">$</span> teamapi serve-api ./org
-<span class="cm"># 📊 :3000/dashboard</span>
-<span class="cm"># 📖 :3000/docs (Swagger)</span></pre>
-    </div>
-    <div class="step">
-      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /> <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" /></svg><b>Let agents in</b></div>
-      <p>Turn your org into an MCP server and point AI assistants at it.</p>
-      <pre><span class="pr">$</span> teamapi serve-mcp ./org
-<span class="cm"># 🔌 MCP over stdio</span>
-<span class="cm"># 🤖 "who owns checkout-api?"</span></pre>
-    </div>
-  </div>
   </section>
 
-  <section class="demo slide">
-    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19h8" /> <path d="m4 17 6-6-6-6" /></svg>Ask it something</h2>
+  <section class="demo slide reveal" data-title="Ask your organization">
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19h8" /> <path d="m4 17 6-6-6-6" /></svg>Ask your organization</h2>
+    <p class="section-intro">One source of truth. Useful answers for people, platforms, and agents.</p>
     <div class="chips" role="tablist" aria-label="Try a command"></div>
     <div class="term">
       <div class="bar"><i></i><i></i><i></i></div>
@@ -363,65 +477,104 @@
     </div>
   </section>
 
-  <section class="slide">
-  <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5" /> <path d="M15 8V2" /> <path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z" /> <path d="M9 8V2" /></svg>Plugs into</h2>
+  <section class="slide reveal" data-title="From file to API">
+  <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /> <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" /> <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" /> <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" /></svg>From file to API</h2>
+  <p class="section-intro">Start with one team. Add an interface only when you need it.</p>
+  <div class="steps">
+    <div class="step reveal-item" style="--i:0">
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 12.5 8 15l2 2.5" /> <path d="m14 12.5 2 2.5-2 2.5" /></svg><b>Describe the team</b></div>
+      <p>Capture what it owns, who's accountable, and how much it can take on.</p>
+      <pre><span class="pr">$</span> teamapi scaffold cart \
+  --type stream-aligned \
+  --out teams/cart.yml</pre>
+    </div>
+    <div class="step reveal-item" style="--i:1">
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve it everywhere</b></div>
+      <p>Give people an API, a browsable dashboard, and generated documentation.</p>
+      <pre><span class="pr">$</span> teamapi serve-api ./org
+<span class="cm"># 📊 :3000/dashboard</span>
+<span class="cm"># 📖 :3000/docs (Swagger)</span></pre>
+    </div>
+    <div class="step reveal-item" style="--i:2">
+      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /> <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" /></svg><b>Let agents query it</b></div>
+      <p>Expose the same grounded organizational context through MCP.</p>
+      <pre><span class="pr">$</span> teamapi serve-mcp ./org
+<span class="cm"># 🔌 MCP over stdio</span>
+<span class="cm"># 🤖 "who owns checkout-api?"</span></pre>
+    </div>
+  </div>
+  </section>
+
+  <section class="slide reveal" data-title="One source, many surfaces">
+  <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5" /> <path d="M15 8V2" /> <path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z" /> <path d="M9 8V2" /></svg>One source, many surfaces</h2>
+  <p class="section-intro">Define your organization once. Keep the tools around it in sync.</p>
   <div class="ints">
     <a href="https://github.com/JGalego/TeamAPI#generators">
       <div class="row"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12.482.18C7.161 1.319 1.478 9.069 1.426 15.372c-.051 5.527 3.1 8.68 8.68 8.627 6.716-.05 14.259-6.87 12.09-10.9-.672-1.292-1.396-1.344-2.687-.207-1.602 1.395-1.654.31-.207-2.893 1.757-3.98 1.705-5.322-.31-7.544C17.03.388 14.962-.388 12.482.181Zm5.322 2.068c2.273 2.015 2.376 4.236.465 8.42-1.395 3.1-2.17 3.515-3.824 1.86-1.24-1.24-1.343-3.46-.258-6.044 1.137-2.635.982-3.1-.568-1.653-3.72 3.358-6.458 9.765-5.424 12.503.464 1.189.825 1.395 2.737 1.395 2.79 0 6.303-1.705 7.957-3.926 1.756-2.274 2.79-2.274 2.79-.052 0 3.875-6.459 8.627-11.625 8.627-6.251 0-9.351-4.752-7.491-11.47.878-2.995 4.443-7.904 7.077-9.66 3.255-2.17 5.684-2.17 8.164 0z"/></svg><b>CrewAI</b></div>
-      <span>roles become agents, responsibilities turn into tasks</span>
+      <span>Turn team roles into agents and responsibilities into tasks.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI#backstage-catalog">
       <div class="row"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M19.5188 9.3003a4.5194 4.5194 0 0 0 .7533-.5808 7.0485 7.0485 0 0 0 .1289-.1288 4.6555 4.6555 0 0 0 .4441-.5254 3.5672 3.5672 0 0 0 .354-.6032 2.721 2.721 0 0 0 .2436-.9185c.0835-1.086-.56-2.166-1.995-3.0369L13.6692 0 6.9335 6.454 2.548 10.6558l6.0826 3.6916a6.25 6.25 0 0 0 3.2351.919c1.3958 0 2.7333-.4928 3.7201-1.4388 1.0732-1.0283 1.4294-2.3591.7674-3.4653a2.7568 2.7568 0 0 0-.3809-.4968 4.9944 4.9944 0 0 0 1.0821.1204h.0084a4.7653 4.7653 0 0 0 1.7363-.3243 4.53 4.53 0 0 0 .7197-.3613Zm-5.6317 3.35c-1.0821 1.0367-2.8229 1.189-4.24.3304l-4.2085-2.5546 3.7779-3.6204 4.2796 2.5977c1.542.9348 1.4574 2.2247.391 3.2469zm.5001-4.6051-3.957-2.4023 3.6075-3.4585 3.8854 2.358c1.4529.8804 1.6416 2.0723.591 3.0805a3.3992 3.3992 0 0 1-4.1269.4223Zm1.6725 10.6418c-1.0961 1.0501-2.586 1.6293-4.194 1.6293a6.93 6.93 0 0 1-3.5902-1.0194L2.548 15.8238v1.3817l6.0826 3.6916a6.2506 6.2506 0 0 0 3.2351.9197c1.3958 0 2.7333-.4935 3.7201-1.439.7214-.691 1.1202-1.5195 1.1023-2.3237v-.1003a4.888 4.888 0 0 1-.6284.7354zm0-2.1844c-1.0961 1.0502-2.586 1.6287-4.194 1.6287a6.9345 6.9345 0 0 1-3.5902-1.0188L2.548 13.64v1.3824l6.0826 3.6915a6.2506 6.2506 0 0 0 3.2351.9197c1.3958 0 2.7333-.4934 3.7201-1.4389.7214-.6911 1.1202-1.5195 1.1023-2.3244v-.0997a4.888 4.888 0 0 1-.6284.7354zm0-2.1844c-1.0961 1.0508-2.586 1.6293-4.194 1.6293a6.9345 6.9345 0 0 1-3.5902-1.0188l-5.7275-3.472v1.3823l6.0826 3.6916a6.25 6.25 0 0 0 3.2351.9191c1.3958 0 2.7333-.4929 3.7201-1.4383.7214-.6917 1.1202-1.5195 1.1023-2.3244v-.102a4.8218 4.8218 0 0 1-.6284.7371zm4.688 1.4417a5.2733 5.2733 0 0 1-3.3718 1.4484v1.4988a4.5704 4.5704 0 0 0 2.898-1.253c.784-.7493 1.184-1.5743 1.1761-2.3882v-.1226a5.3164 5.3164 0 0 1-.7023.8205zm-4.688 5.1086c-1.0961 1.0508-2.586 1.6293-4.194 1.6293a6.93 6.93 0 0 1-3.5902-1.0193L2.548 18.007v1.3823l6.0826 3.691A6.2506 6.2506 0 0 0 11.8657 24c1.3958 0 2.7333-.4929 3.7201-1.4389.7214-.6911 1.1202-1.5195 1.1023-2.3238v-.1003a4.833 4.833 0 0 1-.6284.7354zM20.863 9.0987c-.038.0386-.0756.0773-.1148.1154a5.2856 5.2856 0 0 1-.596.4845 5.1165 5.1165 0 0 1-.6496.392 5.2946 5.2946 0 0 1-1.4697.4879 5.4716 5.4716 0 0 1-.7931.088 3.07 3.07 0 0 1 .07.2744 2.9836 2.9836 0 0 1 .0638.672v.5411h.0032a4.7277 4.7277 0 0 0 1.4198-.3108 4.5368 4.5368 0 0 0 1.478-.9421c.0449-.043.084-.0874.1267-.131a4.5972 4.5972 0 0 0 .4441-.5254 3.5712 3.5712 0 0 0 .354-.6016 2.7193 2.7193 0 0 0 .242-.9213c.0046-.0689.0111-.1384.0106-.2073v-.1131q-.0605.0863-.126.173a5.4178 5.4178 0 0 1-.4627.5243zm0 4.3643c-.0386.0392-.0733.079-.112.1176a5.276 5.276 0 0 1-3.3717 1.4484v1.4938a4.5704 4.5704 0 0 0 2.8979-1.253 4.1172 4.1172 0 0 0 .9219-1.2602 2.7198 2.7198 0 0 0 .242-.9208c.0047-.0694.0111-.1383.0106-.2078v-.1226c-.0414.06-.0818.1204-.1272.1798a5.359 5.359 0 0 1-.4615.5248zm0-2.1844c-.0386.0392-.0733.079-.112.1176a5.219 5.219 0 0 1-.5954.4845 5.1321 5.1321 0 0 1-.6513.392 5.3472 5.3472 0 0 1-2.125.5702v1.4955a4.5732 4.5732 0 0 0 2.8979-1.253c.0448-.0431.084-.0873.1266-.131a4.5972 4.5972 0 0 0 .4441-.5254 3.5712 3.5712 0 0 0 .3512-.6026 2.7198 2.7198 0 0 0 .242-.9208c.0047-.0694.0111-.139.0106-.2078v-.1232c-.0414.0604-.0818.121-.1272.1803a5.359 5.359 0 0 1-.4615.5248z"/></svg><b>Backstage</b></div>
-      <span>a Group per team, a Component per service</span>
+      <span>Generate Groups for teams and Components for services.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/paperclip.md">
       <div class="row"><svg viewBox="-4 -4 32 32" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m16 6-8.414 8.586a2 2 0 0 0 2.829 2.829l8.414-8.586a4 4 0 1 0-5.657-5.657l-8.379 8.551a6 6 0 1 0 8.485 8.485l8.379-8.551"/></svg><b>Paperclip</b></div>
-      <span>an agent company, plus drift detection against it</span>
+      <span>Generate an agent company and detect organizational drift.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/pagerduty.md">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 18v-6a5 5 0 1 1 10 0v6" /> <path d="M5 21a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1a2 2 0 0 0-2-2H7a2 2 0 0 0-2 2z" /> <path d="M21 12h1" /> <path d="M18.5 4.5 18 5" /> <path d="M2 12h1" /> <path d="M12 2v1" /> <path d="m4.929 4.929.707.707" /> <path d="M12 12v6" /></svg><b>PagerDuty</b></div>
-      <span>catches a service that pages nobody</span>
+      <span>Find services that have nobody on their escalation policy.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/slack.md">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="4" x2="20" y1="9" y2="9" /> <line x1="4" x2="20" y1="15" y2="15" /> <line x1="10" x2="8" y1="3" y2="21" /> <line x1="16" x2="14" y1="3" y2="21" /></svg><b>Slack</b></div>
-      <span>/whoowns, and topics that name their owner</span>
+      <span>Answer /whoowns and put ownership in channel topics.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/agents-md.md">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8" /> <rect width="16" height="12" x="4" y="8" rx="2" /> <path d="M2 14h2" /> <path d="M20 14h2" /> <path d="M15 13v2" /> <path d="M9 13v2" /></svg><b>AGENTS.md</b></div>
-      <span>every repo tells an agent whose it is</span>
+      <span>Tell coding agents who owns every repository.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/codeowners.md">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 11 2 2 4-4" /> <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" /> <circle cx="9" cy="7" r="4" /></svg><b>CODEOWNERS</b></div>
-      <span>every pull request routed to the owning team</span>
+      <span>Route every pull request to the team that owns it.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/port.md">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 14 4-4" /> <path d="M3.34 19a10 10 0 1 1 17.32 0" /></svg><b>Port</b></div>
-      <span>a catalog that keeps the cognitive load</span>
+      <span>Bring ownership and cognitive load into your catalog.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/opentelemetry.md">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" /></svg><b>OpenTelemetry</b></div>
-      <span>every trace knows whose service it is</span>
+      <span>Attach team ownership to every service trace.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI/blob/main/docs/integrations/okta.md">
       <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10h2" /> <path d="M16 14h2" /> <path d="M6.17 15a3 3 0 0 1 5.66 0" /> <circle cx="9" cy="11" r="2" /> <rect x="2" y="5" width="20" height="14" rx="2" /></svg><b>Okta</b></div>
-      <span>catches a leaver still listed as an owner</span>
+      <span>Find departed teammates still listed as owners.</span>
     </a>
     <a href="https://github.com/JGalego/TeamAPI#apply">
       <div class="row"><svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg><b>GitHub</b></div>
-      <span>import existing teams, reconcile membership</span>
+      <span>Import existing teams and reconcile their membership.</span>
     </a>
   </div>
   </section>
 
-  <section class="cta slide">
-    <svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172" /> <path d="m18.586 13.414-5.172 5.172" /> <path d="M6 12h12" /> <circle cx="12" cy="20" r="2" /> <circle cx="12" cy="4" r="2" /> <circle cx="20" cy="12" r="2" /> <circle cx="4" cy="12" r="2" /></svg>
-    <p class="q">Make&nbsp;every&nbsp;team one&nbsp;call&nbsp;away.</p>
-    <p class="a">Someone has to go first. One file, and the teams around you can look you up
-      instead of asking around.</p>
+  <section class="cta slide reveal" data-title="Start with one team">
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172" /> <path d="m18.586 13.414-5.172 5.172" /> <path d="M6 12h12" /> <circle cx="12" cy="20" r="2" /> <circle cx="12" cy="4" r="2" /> <circle cx="20" cy="12" r="2" /> <circle cx="4" cy="12" r="2" /></svg>Start with one team</h2>
+    <p class="q">Stop asking around.<br>Start querying your organization.</p>
     <div class="acts">
-      <a class="go" href="latest/index.html">Read the docs</a>
-      <a href="latest/spec.html">Read the spec</a>
-      <a href="https://github.com/JGalego/TeamAPI/tree/main/examples/acme-org">See a worked example</a>
+      <a class="go" href="latest/guide/quick-start.html">
+        <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15v5"/><path d="M9 18h6"/><path d="M10 2h4"/><path d="M8 5h8l2 10H6z"/></svg></span>
+        <span><strong>Build your first Team API</strong><small>Install, scaffold, and serve a team in minutes.</small></span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+      <a href="https://github.com/JGalego/TeamAPI/tree/main/examples/acme-org">
+        <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="2"/><rect x="14" y="3" width="7" height="7" rx="2"/><rect x="8.5" y="14" width="7" height="7" rx="2"/><path d="M6.5 10v2h11v-2M12 12v2"/></svg></span>
+        <span><strong>Explore a working organization</strong><small>See services, boundaries, load, and interactions.</small></span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+      <a href="latest/spec.html">
+        <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/><path d="M8 7h8M8 11h6"/></svg></span>
+        <span><strong>Understand the model</strong><small>Review the specification before adopting it.</small></span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
     </div>
   </section>
 
@@ -437,7 +590,9 @@
 
 <div id="deck" hidden>
   <div id="deck-bar"></div>
+  <span id="deck-hint">← → navigate · esc exit</span>
   <div id="deck-nav">
+    <span id="deck-title"></span>
     <button id="deck-prev" type="button" aria-label="Previous slide">←</button>
     <span id="deck-n"></span>
     <button id="deck-next" type="button" aria-label="Next slide">→</button>
@@ -533,9 +688,21 @@
         <text x="${x + w / 2}" y="${y + 39}" text-anchor="middle" font-size="10" fill="#0b0f16"
           opacity=".7">${type}</text>`).join("")}
     </svg>`;
+  const ICONS = {
+    search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>',
+    gauge: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 14a8 8 0 1 1 16 0"/><path d="m12 14 4-4"/><path d="M6 18h12"/></svg>',
+    network: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="5" cy="12" r="2"/><circle cx="19" cy="5" r="2"/><circle cx="19" cy="19" r="2"/><path d="m7 11 10-5M7 13l10 5"/></svg>',
+    seams: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M8 3v5l-4 4 4 4v5M16 3v5l4 4-4 4v5"/></svg>',
+    bots: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M12 3v4M8 12h.01M16 12h.01M9 16h6"/></svg>',
+    chat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4Z"/></svg>',
+    gaps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10.3 2.9 1.8 17a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 2.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>',
+    shield: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>',
+    memory: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/><path d="M9 7h7M9 11h5"/></svg>',
+  };
   const DEMOS = [
     {
-      label: "who owns it?",
+      label: "find the owner",
+      icon: "search",
       cmd: "curl -s localhost:3000/services/checkout-api | jq 'del(.. | .ubiquitousLanguage?)'",
       lang: "json",
       out: [
@@ -565,7 +732,8 @@
       ],
     },
     {
-      label: "who's drowning?",
+      label: "spot the overload",
+      icon: "gauge",
       cmd: "curl -s localhost:3000/cognitive-load | jq 'del(.. | .notes?)'",
       lang: "json",
       out: [
@@ -604,7 +772,8 @@
       ],
     },
     {
-      label: "who talks to whom?",
+      label: "map dependencies",
+      icon: "network",
       cmd: "teamapi render examples/acme-org --scope topology",
       svg: diagram([
         ["M186 56 H424", 0], ["M101 82 V152", 0],
@@ -615,7 +784,8 @@
       ]),
     },
     {
-      label: "where are the seams?",
+      label: "inspect the seams",
+      icon: "seams",
       cmd: "teamapi render examples/acme-org --scope context-map",
       svg: diagram([
         ["M186 56 H424", 0], ["M101 82 V152", 0], ["M194 184 H424", 1],
@@ -625,7 +795,42 @@
       ]),
     },
     {
+      label: "meet the AI fleet",
+      icon: "bots",
+      cmd: "curl -s localhost:3000/teams/platform-payments/agents | jq 'map(select(.status == \"active\")) | map({name, provider, model, role})'",
+      lang: "json",
+      out: [
+        '[',
+        '  {',
+        '    "name": "Architecture Reviewer",',
+        '    "provider": "OpenAI",',
+        '    "model": "gpt-4.1",',
+        '    "role": "reviewer"',
+        '  },',
+        '  {',
+        '    "name": "Docs Writer",',
+        '    "provider": "Anthropic",',
+        '    "model": "claude-haiku-4-5",',
+        '    "role": "technical-writer"',
+        '  },',
+        '  {',
+        '    "name": "Security Scanner",',
+        '    "provider": "in-house",',
+        '    "model": "acme-secscan-v3",',
+        '    "role": "security-auditor"',
+        '  },',
+        '  {',
+        '    "name": "Test Generator",',
+        '    "provider": "Anthropic",',
+        '    "model": "claude-sonnet-4-5",',
+        '    "role": "qa"',
+        '  }',
+        ']',
+      ],
+    },
+    {
       label: "ask a teammate",
+      icon: "chat",
       cmd: "teamapi chat examples/acme-org --team stream-checkout --member diego-alves --debug",
       out: [
         ["dim", "Chatting as Diego Alves (model: claude-opus-4-8). Type 'exit' or Ctrl+D to quit."],
@@ -653,23 +858,65 @@
       ],
     },
     {
-      label: "ship it to my agents",
-      cmd: 'teamapi generate paperclip examples/acme-org --out ./company && find company -type f | sort',
+      label: "find hidden gaps",
+      icon: "gaps",
+      cmd: "teamapi gaps examples/driftwood-org",
       out: [
-        ["ok", "Wrote 12 file(s) to ./company/ (agentcompanies/v1)"],
-        ["warn", "  ! skipped 1 non-active agent(s): platform-payments/compliance-auditor"],
-        ["dim", "company/COMPANY.md"],
-        ["dim", "company/agents/platform-payments-architecture-reviewer/AGENTS.md"],
-        ["dim", "company/agents/platform-payments-docs-writer/AGENTS.md"],
-        ["dim", "company/agents/platform-payments-security-scanner/AGENTS.md"],
-        ["dim", "company/agents/platform-payments-test-generator/AGENTS.md"],
-        ["dim", "company/skills/platform-payments-code-review/SKILL.md"],
-        ["dim", "company/skills/platform-payments-generate-tests/SKILL.md"],
-        ["dim", "company/skills/platform-payments-security-scan/SKILL.md"],
-        ["dim", "company/teams/enabling-devex/TEAM.md"],
-        ["dim", "company/teams/platform-payments/TEAM.md"],
-        ["dim", "company/teams/stream-checkout/TEAM.md"],
-        ["dim", "company/teams/stream-onboarding/TEAM.md"],
+        ["warn", "! orphan-subscription: 'feature-store' subscribes to 'ModelTrained', which no declared service publishes"],
+        ["dim", "- unconsumed-event: 'insights-api' publishes 'InsightGenerated', which no declared service subscribes to"],
+        ["warn", "! dangling-owner: agent 'pipeline-reviewer' is owned by 'dana-whitfield', who is not a member of platform-data"],
+        ["dim", "- unscored-supervision: platform-data runs 2 active agent(s) but scored no cognitiveLoad.supervision for supervising them"],
+        ["dim", "? vacant-load-bearing: 'head-of-data' on platform-data is vacant, but stream-insights report(s) into it"],
+        ["dim", "- unaccountable-agent: agent 'report-writer' names no ownerId, so nobody on stream-insights is accountable for it"],
+        ["dim", "- unaccountable-agent: agent 'dashboard-qa' names no ownerId, so nobody on stream-insights is accountable for it"],
+        ["dim", "- unscored-supervision: stream-insights runs 2 active agent(s) but scored no cognitiveLoad.supervision for supervising them"],
+        ["dim", "~ unacknowledged: stream-insights declares a collaboration with platform-data, which declares nothing back"],
+        ["", ""],
+        ["dim", "Reporting lines explain 1 of 3 cross-team role relationship(s)."],
+        ["warn", "9 finding(s), 2 blocking; 2 seam(s) checked."],
+      ],
+    },
+    {
+      label: "prove the policies",
+      icon: "shield",
+      cmd: "curl -s localhost:3000/teams/stream-onboarding/policies/no-agents-on-applicant-pii | jq '{name, severity, rules, enforcedBy}' && teamapi policy examples/acme-org",
+      out: [
+        ["", "{"],
+        ["", '  "name": "No autonomous AI agents on applicant PII",'],
+        ["", '  "severity": "blocking",'],
+        ["", '  "rules": ['],
+        ["", '    {'],
+        ["", '      "key": "agents_allowed",'],
+        ["", '      "value": false'],
+        ["", '    }'],
+        ["", '  ],'],
+        ["", '  "enforcedBy": ['],
+        ["", '    "manual-review:compliance"'],
+        ["", '  ]'],
+        ["", "}"],
+        ["", ""],
+        ["dim", "~ delegated [info] platform-payments / pr-requires-two-approvals / min_approvals:"],
+        ["dim", "  not checkable from the org graph; enforced by github-actions:pr-gate"],
+        ["", ""],
+        ["ok", "1/1 rule(s) checked here pass; 2 rule(s) declared in total."],
+        ["dim", "1 finding(s), 0 blocking."],
+      ],
+    },
+    {
+      label: "brief an agent",
+      icon: "memory",
+      cmd: "curl -s localhost:3000/context --json '{\"goal\":\"OAuth login\",\"teamId\":\"stream-checkout\",\"limit\":1}' | jq '{team:.team.id,context:[.specifications,.steeringDocuments,.knowledgeBase,.prompts|.[0].item.id]}'",
+      lang: "json",
+      out: [
+        '{',
+        '  "team": "stream-checkout",',
+        '  "context": [',
+        '    "oauth-login-support",',
+        '    "security-guidelines",',
+        '    "adr-oauth-for-login",',
+        '    "code-review"',
+        '  ]',
+        '}',
       ],
     },
   ];
@@ -681,14 +928,31 @@
 
   DEMOS.forEach((d, i) => {
     const b = document.createElement("button");
-    b.type = "button"; b.textContent = d.label; b.setAttribute("role", "tab");
+    b.type = "button";
+    b.innerHTML = `<span class="chip-icon" aria-hidden="true">${ICONS[d.icon]}</span><span>${E(d.label)}</span>`;
+    b.style.setProperty("--accent", ["var(--teal)", "var(--purple)", "var(--amber)", "var(--rose)"][i % 4]);
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-controls", "out"); b.tabIndex = i === 0 ? 0 : -1;
     b.addEventListener("click", () => play(i));
     chips.appendChild(b);
   });
 
   function select(i) {
-    [...chips.children].forEach((c, n) => c.setAttribute("aria-selected", String(n === i)));
+    [...chips.children].forEach((c, n) => {
+      c.setAttribute("aria-selected", String(n === i));
+      c.tabIndex = n === i ? 0 : -1;
+    });
   }
+
+  chips.addEventListener("keydown", (e) => {
+    const keys = ["ArrowRight", "ArrowLeft", "Home", "End"];
+    if (!keys.includes(e.key)) return;
+    const last = DEMOS.length - 1;
+    const i = e.key === "Home" ? 0 : e.key === "End" ? last
+            : e.key === "ArrowRight" ? (picked + 1) % DEMOS.length
+            : (picked - 1 + DEMOS.length) % DEMOS.length;
+    play(i); chips.children[i].focus(); e.preventDefault();
+  });
 
   /** Types the command, then reveals its output a line at a time. Each call
    *  bumps `run` so a click mid-animation abandons the previous one. */
@@ -711,16 +975,9 @@
     const tail = '<span class="p">$</span> <span class="caret"></span>';
     const sleep = (ms) => new Promise((r) => setTimeout(r, reduced ? 0 : ms));
 
-    // Lay the finished frame out once and pin that height, so the terminal doesn't creep
-    // downwards line by line while the output arrives. Measured rather than counted, which
-    // keeps it right for the diagrams and for any line that wraps.
-    out.style.minHeight = "";
-    out.innerHTML = d.svg ? cmd + d.svg
-                          : cmd + d.out.map((e) => lineHtml(d, e)).join("\n") + "\n" + tail;
-    // in a deck the box is a fixed height set in CSS, so there is nothing to pin
-    if (!document.body.classList.contains("deck")) {
-      out.style.minHeight = out.getBoundingClientRect().height + "px";
-    }
+    // Every example uses the same scrollable viewport, so changing examples never moves
+    // the page around. Start each run at the command rather than inheriting a prior scroll.
+    out.scrollTop = 0;
 
     for (let n = 0; n <= d.cmd.length; n++) {
       if (me !== run) return;
@@ -747,7 +1004,24 @@
     out.innerHTML = cmd + body + tail;
   }
 
-  play(0);
+  select(0);
+
+  /* ── reveal each chapter when it enters the reader's viewport ─────── */
+  const reveals = [...document.querySelectorAll(".reveal")];
+  if (reduced || !("IntersectionObserver" in window)) {
+    reveals.forEach((section) => section.classList.add("revealed"));
+    play(0);
+  } else {
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (!entry.isIntersecting) continue;
+        entry.target.classList.add("revealed");
+        if (entry.target.classList.contains("demo")) play(picked);
+        observer.unobserve(entry.target);
+      }
+    }, { threshold: .14, rootMargin: "0px 0px -8%" });
+    reveals.forEach((section) => observer.observe(section));
+  }
 
   /* ── presentation mode ────────────────────────────────────────────────
      The page is already one section per idea, so a deck is a class on <body>
@@ -756,6 +1030,7 @@
   const deck = document.getElementById("deck");
   const bar = document.getElementById("deck-bar");
   const count = document.getElementById("deck-n");
+  const deckTitle = document.getElementById("deck-title");
   const prev = document.getElementById("deck-prev");
   const next = document.getElementById("deck-next");
   let at = 0;
@@ -764,6 +1039,7 @@
     at = Math.min(Math.max(i, 0), slides.length - 1);
     slides.forEach((s, n) => s.classList.toggle("on", n === at));
     count.textContent = `${at + 1} / ${slides.length}`;
+    deckTitle.textContent = slides[at].dataset.title || "TeamAPI";
     bar.style.width = `${((at + 1) / slides.length) * 100}%`;
     prev.disabled = at === 0;
     next.disabled = at === slides.length - 1;
@@ -773,12 +1049,11 @@
   }
 
   function enter() {
-    // open on whatever the reader was already looking at
-    const mid = scrollY + innerHeight / 2;
-    const here = slides.findIndex((s) => s.offsetTop + s.offsetHeight > mid);
     document.body.classList.add("deck");
     deck.hidden = false;
-    show(here < 0 ? slides.length - 1 : here);
+    // A presentation is a story, so always begin with its premise—not the section
+    // that happened to be beneath the button when it was clicked.
+    show(0);
   }
 
   function leave() {
