@@ -17,6 +17,7 @@ import type { ScannedRepo } from "../shadow-ai/scan";
 import { checkTopology, DEFAULT_TOPOLOGY_CONFIG, type TopologyConfig } from "../topology/heuristics";
 
 export const ASSESSMENT_STATE_VERSION = 1;
+export const ASSESSMENT_REPORT_VERSION = 1;
 
 export interface AssessmentState {
   version: typeof ASSESSMENT_STATE_VERSION;
@@ -34,6 +35,7 @@ export interface AssessmentSummary {
 }
 
 export interface AssessmentReport {
+  version: typeof ASSESSMENT_REPORT_VERSION;
   generatedAt: string;
   snapshot: OrgSnapshot;
   summary: AssessmentSummary;
@@ -76,6 +78,7 @@ export function buildAssessment(graph: OrgGraph, options: AssessmentOptions = {}
   const snapshot = snapshotOrg(graph);
 
   return {
+    version: ASSESSMENT_REPORT_VERSION,
     generatedAt,
     snapshot,
     summary: {

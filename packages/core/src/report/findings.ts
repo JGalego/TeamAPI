@@ -7,6 +7,7 @@ import type { TopologyFinding } from "../topology/heuristics";
 export type FindingSource = "gaps" | "policy" | "topology" | "shadow-ai";
 export type FindingSeverity = "blocking" | "warning" | "info";
 export type FindingTargetType = "organization" | "team" | "service" | "agent" | "role" | "repository" | "event";
+export const NORMALIZED_FINDING_VERSION = 1;
 
 /**
  * The stable, check-independent finding shape used by aggregate reports and integrations.
@@ -16,6 +17,7 @@ export type FindingTargetType = "organization" | "team" | "service" | "agent" | 
  * deterministic and contains no timestamp, so the same problem can be followed between runs.
  */
 export interface NormalizedFinding {
+  version: typeof NORMALIZED_FINDING_VERSION;
   id: string;
   source: FindingSource;
   ruleId: string;
@@ -60,6 +62,7 @@ export function normalizeGapFinding(finding: GapFinding): NormalizedFinding {
           : "team";
   const targetId = finding.subject ?? finding.teamId;
   return {
+    version: NORMALIZED_FINDING_VERSION,
     id: findingId("gaps", finding.kind, finding.teamId, finding.subject),
     source: "gaps",
     ruleId: finding.kind,
@@ -77,6 +80,7 @@ export function normalizeGapFinding(finding: GapFinding): NormalizedFinding {
 export function normalizePolicyFinding(finding: PolicyFinding): NormalizedFinding {
   const ruleId = `${finding.outcome}/${finding.ruleKey}`;
   return {
+    version: NORMALIZED_FINDING_VERSION,
     id: findingId("policy", ruleId, finding.teamId, finding.policyId),
     source: "policy",
     ruleId,
@@ -94,6 +98,7 @@ export function normalizePolicyFinding(finding: PolicyFinding): NormalizedFindin
 
 export function normalizeTopologyFinding(finding: TopologyFinding): NormalizedFinding {
   return {
+    version: NORMALIZED_FINDING_VERSION,
     id: findingId("topology", finding.kind, finding.teamId, finding.subject),
     source: "topology",
     ruleId: finding.kind,
@@ -111,6 +116,7 @@ export function normalizeTopologyFinding(finding: TopologyFinding): NormalizedFi
 export function normalizeShadowAiFinding(finding: ShadowAiFinding): NormalizedFinding {
   const targetId = finding.teamId ?? finding.subject;
   return {
+    version: NORMALIZED_FINDING_VERSION,
     id: findingId("shadow-ai", finding.kind, targetId, finding.subject),
     source: "shadow-ai",
     ruleId: finding.kind,

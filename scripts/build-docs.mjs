@@ -244,7 +244,7 @@ function collectPages() {
       markdown: read(evaluation),
     });
   }
-  for (const name of ["deployment.md", "code-quality.md"]) {
+  for (const name of ["deployment.md", "compatibility.md", "code-quality.md"]) {
     if (existsSync(join(source, "docs", name))) {
       pages.push({
         src: `docs/${name}`,
