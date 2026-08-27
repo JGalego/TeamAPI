@@ -275,4 +275,12 @@ describe("teamapi scaffold", () => {
     // The modeline is a comment: it must not change what the document parses to.
     expect(TeamApiDocumentSchema.parse(YAML.load(text)).id).toBe("new-stream-team");
   });
+
+  it("creates missing parent directories for a nested output path", async () => {
+    const outFile = path.join(tmpDir, "org", "teams", "cart", "teamapi.yml");
+    const code = await runScaffold({ id: "cart", type: "stream-aligned", out: outFile });
+
+    expect(code).toBe(0);
+    expect(TeamApiDocumentSchema.parse(YAML.load(await fs.readFile(outFile, "utf-8"))).id).toBe("cart");
+  });
 });

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" data-theme="auto">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -90,8 +90,9 @@
     .hero .x { animation: none }
   }
   h1 { font-size: clamp(2.2rem, 7vw, 3.1rem); margin: .6rem 0 .3rem; letter-spacing: -.035em; }
-  .tag { font-size: clamp(1.05rem, 3.4vw, 1.3rem); margin: 0; }
-  .sub { color: var(--teal); font-size: clamp(1rem, 3vw, 1.2rem); font-weight: 600; margin: .1rem auto 0; }
+  .tag, .sub { font-size: clamp(1.05rem, 3.4vw, 1.3rem); }
+  .tag { margin: 0; }
+  .sub { color: var(--teal); font-weight: 600; margin: .1rem auto 0; }
 
   /* ── narrative bridge ───────────────────────────────────── */
   .story { margin-top: 3rem; text-align: center; }
@@ -103,7 +104,7 @@
   }
   .friction article {
     --accent: var(--teal);
-    padding: 1.15rem; text-align: left; background: var(--card);
+    padding: 1.45rem; text-align: left; background: var(--card);
     border: 1px solid var(--line); border-radius: 12px;
     transition: color .18s, background .18s, border-color .18s, transform .18s, box-shadow .18s;
   }
@@ -113,9 +114,30 @@
     background: color-mix(in srgb, var(--accent) 10%, var(--card));
     border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow);
   }
-  .friction b { display: block; margin-bottom: .25rem; }
-  .friction p { margin: 0; color: var(--muted); font-size: .94rem; }
-  .n { color: var(--accent); font: 600 .78rem/1 ui-monospace, monospace; letter-spacing: .08em; }
+  .friction-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .friction .card-icon {
+    width: 2.35rem; height: 2.35rem; padding: .5rem; color: var(--accent);
+    overflow: visible; background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 10px;
+  }
+  .card-icon * { transform-box: fill-box; transform-origin: center; }
+  .friction article:first-child:hover .link-a { transform: translate(2.4px, -2.4px); }
+  .friction article:first-child:hover .link-b { transform: translate(-2.4px, 2.4px); }
+  .link-a, .link-b { transition: transform .35s cubic-bezier(.2,.8,.2,1); }
+  .friction article:nth-child(2):hover .hourglass-shape { animation: hourglass-flip .8s cubic-bezier(.4,0,.2,1); }
+  @keyframes hourglass-flip { 0%, 15% { transform: rotate(0) } 75%, 100% { transform: rotate(180deg) } }
+  .friction article:nth-child(3):hover .agent-robot { animation: agent-bob .8s cubic-bezier(.2,.8,.2,1); }
+  .friction article:nth-child(3):hover .agent-eyes { animation: agent-blink .8s ease-in-out; }
+  .friction article:nth-child(3):hover .agent-arm-left { animation: agent-left-arm .8s ease-in-out; }
+  .friction article:nth-child(3):hover .agent-arm-right { animation: agent-right-arm .8s ease-in-out; }
+  .friction article:nth-child(3):hover .agent-signal { animation: agent-signal .4s ease-out 2; }
+  @keyframes agent-bob { 0%, 100% { transform:translateY(0) } 35% { transform:translateY(-2px) } 65% { transform:translateY(1px) } }
+  @keyframes agent-blink { 0%, 22%, 38%, 62%, 78%, 100% { transform:scaleY(1) } 30%, 70% { transform:scaleY(.05) } }
+  @keyframes agent-left-arm { 0%, 100% { transform:translateX(0) } 45% { transform:translateX(-2px) } }
+  @keyframes agent-right-arm { 0%, 100% { transform:translateX(0) } 45% { transform:translateX(2px) } }
+  @keyframes agent-signal { 0% { opacity:.15; transform:scale(.3) } 65% { opacity:1; transform:scale(2.2) } 100% { opacity:.35; transform:scale(1) } }
+  .friction b { display: block; margin-bottom: .4rem; font-size: 1.12rem; line-height: 1.35; }
+  .friction p { margin: 0; color: var(--muted); font-size: 1.03rem; line-height: 1.6; }
+  .n { color: var(--accent); font: 700 1.65rem/1 ui-monospace, monospace; letter-spacing: -.04em; }
   @media (max-width: 42rem) { .friction { grid-template-columns: 1fr; } }
 
   /* ── install ────────────────────────────────────────────── */
@@ -127,6 +149,7 @@
   .install code { flex: 1; text-align: left; font-size: .88rem; overflow-x: auto; white-space: nowrap; }
   .install .dollar { color: var(--muted); user-select: none; }
   .install button {
+    display: inline-flex; align-items: center; gap: .3rem;
     border: 1px solid var(--line); background: var(--bg); color: var(--muted);
     border-radius: 7px; padding: .3rem .6rem; cursor: pointer; font: inherit; font-size: .78rem;
     flex-shrink: 0; transition: color .15s, border-color .15s;
@@ -148,7 +171,7 @@
   /* ── terminal ───────────────────────────────────────────── */
   .demo { margin: 4rem 0 0; }
   /* whichever section leads sits closer to the hero */
-  .hero + .slide h2 { margin-top: 2.2rem; }
+  .hero + .chapter h2 { margin-top: 2.2rem; }
   .demo h2 { margin: 0 0 .5rem; }
   .section-intro {
     color: var(--muted); text-align: center; font-size: 1.06rem;
@@ -344,117 +367,137 @@
              width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%); }
   }
   .step {
-    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.2rem 1.1rem;
+    --accent: var(--teal);
+    background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 1.45rem;
     display: flex; flex-direction: column;
+    transition: color .18s, background .18s, border-color .18s, transform .18s, box-shadow .18s;
   }
-  .step .row { display: flex; align-items: center; gap: .5rem; margin-bottom: .4rem; }
-  .step .row svg { width: 18px; height: 18px; flex-shrink: 0; color: var(--teal); }
-  .step p { margin: 0 0 .7rem; color: var(--muted); font-size: .96rem; }
+  .step:nth-child(2) { --accent: var(--purple); }
+  .step:nth-child(3) { --accent: var(--amber); }
+  .step:hover {
+    background: color-mix(in srgb, var(--accent) 10%, var(--card));
+    border-color: var(--accent); transform: translateY(-2px); box-shadow: var(--shadow);
+  }
+  .step-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .step .card-icon {
+    width: 2.35rem; height: 2.35rem; padding: .5rem; color: var(--accent); overflow: visible;
+    background: color-mix(in srgb, var(--accent) 12%, transparent); border-radius: 10px;
+  }
+  .step > b { display: block; margin-bottom: .4rem; font-size: 1.12rem; line-height: 1.35; }
+  .step p { margin: 0 0 .9rem; color: var(--muted); font-size: 1.03rem; line-height: 1.6; }
+  .step:first-child:hover .file-shape { animation: file-lift .8s cubic-bezier(.2,.8,.2,1); }
+  .step:first-child:hover .code-left { animation: code-left .8s cubic-bezier(.2,.8,.2,1); }
+  .step:first-child:hover .code-right { animation: code-right .8s cubic-bezier(.2,.8,.2,1); }
+  .step:nth-child(2):hover .server-top { animation: server-top .8s cubic-bezier(.2,.8,.2,1); }
+  .step:nth-child(2):hover .server-bottom { animation: server-bottom .8s cubic-bezier(.2,.8,.2,1); }
+  .step:nth-child(2):hover .server-light { animation: server-light .4s ease-out 2; }
+  .step:nth-child(3):hover .chat-back { animation: chat-back .8s cubic-bezier(.2,.8,.2,1); }
+  .step:nth-child(3):hover .chat-front { animation: chat-front .8s cubic-bezier(.2,.8,.2,1); }
+  @keyframes file-lift { 0%, 100% { transform:translateY(0) } 45% { transform:translateY(-1.5px) } }
+  @keyframes code-left { 0%, 100% { transform:translateX(0) } 45% { transform:translateX(-1.5px) } }
+  @keyframes code-right { 0%, 100% { transform:translateX(0) } 45% { transform:translateX(1.5px) } }
+  @keyframes server-top { 0%, 100% { transform:translateY(0) } 45% { transform:translateY(-1.5px) } }
+  @keyframes server-bottom { 0%, 100% { transform:translateY(0) } 45% { transform:translateY(1.5px) } }
+  @keyframes server-light { 0%, 100% { opacity:.35; transform:scale(.6) } 55% { opacity:1; transform:scale(1.8) } }
+  @keyframes chat-back { 0%, 100% { transform:translate(0, 0) } 45% { transform:translate(-1.5px, -1px) } }
+  @keyframes chat-front { 0%, 100% { transform:translate(0, 0) } 45% { transform:translate(1.5px, 1px) } }
   .step pre {
-    margin: auto 0 0; font-size: .74rem; overflow-x: auto; color: var(--fg);
+    margin: 0; font-size: .74rem; overflow-x: auto; color: var(--fg);
     background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: .55rem .6rem;
     white-space: pre-wrap; overflow-wrap: break-word;
   }
+  .step-command { position: relative; margin-top: auto; }
+  .step-command pre { min-height: 3.15rem; }
+  .multiline-command { display: flex; flex-direction: column; }
+  .multiline-command .command-cont { padding-left: 2ch; }
+  .command-copy {
+    position: absolute; top: .45rem; right: .45rem;
+    display: inline-flex; align-items: center; gap: .25rem;
+    border: 1px solid var(--line); background: var(--card); color: var(--muted);
+    border-radius: 6px; padding: .2rem .42rem; cursor: pointer; font: inherit; font-size: .7rem;
+    transition: color .15s, border-color .15s, background .15s;
+  }
+  .command-copy:hover { color: var(--fg); border-color: var(--accent); }
+  .command-copy.done { color: var(--accent); border-color: var(--accent); }
   .step pre .pr { color: var(--teal); user-select: none; }
   .step pre .cm { color: var(--muted); }
 
-  /* ── presentation mode ──────────────────────────────────
-     One section per idea already, so a deck is a body class and an index. The
-     breakout widths unwind here: in a deck a slide is its own container. */
-  #present, #deck { display: none; }
-  @media (min-width: 48rem) and (min-height: 30rem) { #present { display: inline-block; } }
-  #present {
-    background: none; border: 1px solid var(--line); color: var(--muted); margin-right: .5rem;
-    border-radius: 8px; padding: .4rem .7rem; cursor: pointer; font: inherit; font-size: .8rem;
-  }
-  #present:hover { color: var(--fg); border-color: var(--muted); }
-
-  body.deck { overflow: hidden; }
-  body.deck header, body.deck footer { display: none; }
-  body.deck {
+  /* ── section-by-section story ────────────────────────────
+     Presenter atmosphere without presenter mechanics: every idea gets a
+     viewport-sized chapter in one ordinary, vertically scrollable document. */
+  html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+  body {
     background:
       radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--purple) 13%, transparent), transparent 34rem),
       radial-gradient(circle at 82% 78%, color-mix(in srgb, var(--teal) 12%, transparent), transparent 32rem),
       var(--bg);
+    background-attachment: fixed;
   }
-  body.deck main { max-width: none; padding: 0; }
-  body.deck .slide { display: none; }
-  body.deck .slide.on {
+  main { max-width: none; padding: 0; }
+  .chapter {
     display: flex; flex-direction: column; justify-content: center;
-    min-height: 100vh; max-height: 100vh; overflow-y: auto;
-    margin: 0 auto; padding: 4rem 2.5rem 5rem; width: min(76rem, 100%);
-    animation: slidein .32s cubic-bezier(.2,.8,.2,1) both;
-    opacity: 1; translate: none;
+    min-height: 100vh; min-height: 100svh;
+    margin: 0 auto; padding: 4rem 2.5rem 6rem; width: min(76rem, 100%);
+    scroll-snap-align: start; scroll-snap-stop: always;
   }
-  body.deck .slide.on .reveal-item, body.deck .slide.on .ints a { opacity: 1; translate: none; }
-  @keyframes slidein { from { opacity: 0; transform: translateY(10px) } to { opacity: 1; transform: none } }
-  body.deck .slide.on > h2 { margin-top: 0; font-size: clamp(1.35rem, 2.5vw, 1.75rem); }
-  body.deck .section-intro { font-size: clamp(1.1rem, 1.8vw, 1.3rem); }
-  body.deck .demo .section-intro { max-width: none; white-space: nowrap; text-wrap: nowrap; }
-  body.deck .hero { align-items: center; }
-  body.deck .hero > svg { width: 104px; height: 104px; }
-  body.deck .hero h1 { font-size: clamp(4rem, 10vw, 7rem); }
-  body.deck .hero .tag { font-size: clamp(1.35rem, 3vw, 2rem); }
-  body.deck .hero .sub { font-size: clamp(1.15rem, 2.4vw, 1.6rem); }
-  body.deck .hero .install { display: none; }
-  body.deck .steps, body.deck .friction, body.deck .ints, body.deck .demo.on, body.deck .cta.on {
+  .chapter > h2 { margin-top: 0; font-size: clamp(1.35rem, 2.5vw, 1.75rem); }
+  .chapter .section-intro { font-size: clamp(1.1rem, 1.8vw, 1.3rem); }
+  .chapter.demo .section-intro { max-width: none; white-space: nowrap; text-wrap: nowrap; }
+  .chapter.hero { align-items: center; }
+  .chapter.hero > svg { width: 104px; height: 104px; }
+  .chapter.hero h1 { font-size: clamp(4rem, 10vw, 7rem); }
+  .chapter.hero .tag, .chapter.hero .sub { font-size: clamp(1.35rem, 3vw, 2rem); }
+  .chapter.hero .install { display: flex; width: min(27rem, 100%); margin-top: 2rem; }
+  .chapter .steps, .chapter .friction, .chapter .ints, .chapter.demo, .chapter.cta {
     width: auto; margin-left: 0; transform: none;
   }
-  body.deck .cta.on { border: none; background: none; }
-  body.deck .cta .q { font-size: clamp(2.5rem, 6vw, 5rem); max-width: 60rem; }
-  /* the tallest demo runs to 34 lines, well past a slide — so in a deck the
-     terminal is a fixed box that scrolls, rather than a slide that overflows */
-  body.deck .term pre { height: clamp(12rem, calc(100vh - 24rem), 32rem); overflow-y: auto; }
-  /* .slide.on's flex would otherwise outrank the chips-beside-terminal grid */
+  .chapter.cta { border: none; background: none; }
+  .chapter.cta .q { color: var(--teal); font-size: clamp(2rem, 4.5vw, 3.6rem); max-width: 54rem; }
+  .chapter .term pre { height: clamp(12rem, calc(100svh - 24rem), 32rem); overflow-y: auto; }
   @media (min-width: 68rem) {
-    body.deck .demo.on { display: grid; align-content: center; }
-    /* the chips move out of the column here, so the terminal gets that height back */
-    body.deck .term pre { height: clamp(18rem, calc(100vh - 18rem), 34rem); }
+    .chapter.demo { display: grid; align-content: center; }
+    .chapter .term pre { height: clamp(18rem, calc(100svh - 18rem), 34rem); }
   }
-  /* a deck slide is wider than the page column, so three steps fit sooner here */
-  @media (min-width: 60rem) { body.deck .steps { grid-template-columns: repeat(3, 1fr); } }
-  body.deck #deck { display: block; }
-
-  #deck-bar { position: fixed; top: 0; left: 0; height: 2px; background: var(--teal); transition: width .3s; }
-  #deck-nav {
-    position: fixed; right: 1.1rem; bottom: 1.1rem; display: flex; align-items: center; gap: .3rem;
-    padding: .35rem; font-size: .78rem; color: var(--muted);
-    background: color-mix(in srgb, var(--bg) 88%, transparent);
-    border: 1px solid var(--line); border-radius: 10px; backdrop-filter: blur(12px);
-  }
-  #deck-nav button {
-    background: var(--card); border: 1px solid var(--line); color: var(--muted); cursor: pointer;
-    border-radius: 7px; padding: .25rem .55rem; font: inherit; font-size: .78rem;
-  }
-  #deck-nav button:hover:not(:disabled) { color: var(--fg); border-color: var(--muted); }
-  #deck-nav button:disabled { opacity: .35; cursor: default; }
-  #deck-n { padding: 0 .4rem; font-variant-numeric: tabular-nums; }
-  #deck-title { max-width: 14rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--fg); }
-  #deck-hint { position: fixed; left: 1.2rem; bottom: 1.3rem; color: var(--muted); font-size: .75rem; }
+  @media (min-width: 60rem) { .chapter .steps { grid-template-columns: repeat(3, 1fr); } }
   @media (prefers-reduced-motion: reduce) {
-    body.deck .slide.on { animation: none }
+    html { scroll-behavior: auto; scroll-snap-type: none; }
+    .friction article:hover .card-icon *, .step:hover .card-icon * { animation: none !important; transform: none !important; }
     .js .reveal, .js .reveal .reveal-item, .js .reveal .ints a { opacity: 1; translate: none; transition: none; }
   }
 
   /* ── footer ─────────────────────────────────────────────── */
   footer {
-    margin-top: 4rem; padding-top: 1.6rem; border-top: 1px solid var(--line);
-    display: flex; flex-wrap: wrap; gap: 1.2rem; justify-content: center;
-    color: var(--muted); font-size: .87rem;
+    position: fixed; z-index: 50; inset: auto 0 0; min-height: 3.4rem;
+    display: flex; align-items: center; justify-content: center; padding: .55rem 4rem;
+    color: var(--muted); font-size: .82rem;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    border-top: 1px solid var(--line); backdrop-filter: blur(14px);
   }
-  footer a { text-decoration: none; }
-  footer a:hover { color: var(--fg); }
+  .footer-links { display: flex; align-items: center; justify-content: center; gap: .45rem; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .footer-links::-webkit-scrollbar { display: none; }
+  .footer-links > a {
+    display: inline-flex; align-items: center; gap: .35rem; flex: none;
+    padding: .35rem .5rem; border-radius: 7px; text-decoration: none;
+  }
+  .footer-links svg { width: 1rem; height: 1rem; flex: none; }
+  footer a:hover { color: var(--teal); background: var(--card); }
+  footer #theme {
+    position: absolute; right: 1rem; flex: none; padding: .3rem .55rem; font-size: .75rem;
+  }
+  @media (max-width: 42rem) {
+    footer { padding-inline: 3.2rem; }
+    .footer-links { gap: .2rem; }
+    .footer-links > a { padding: .45rem; }
+    .footer-links .footer-label { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); }
+    footer #theme { right: .6rem; }
+    footer #theme .theme-label { display: none; }
+  }
 </style>
 </head>
 <body>
 
-<header>
-  <button id="present" type="button" aria-label="Present the TeamAPI story">▶ present story</button>
-  <button id="theme" type="button" aria-label="Switch colour theme">◐ theme</button>
-</header>
-
 <main>
-  <section class="hero slide revealed" data-title="Every team has an API">
+  <section id="promise" class="hero chapter revealed">
     <!-- the woven mark: sixteen teams, each crossing over one neighbour and under the next -->
     <svg viewBox="0 0 100 100" fill="none" role="img" aria-label="TeamAPI">
       <path d="M14 26H86" stroke="#2dd4bf" stroke-width="10" stroke-linecap="round"/>
@@ -489,23 +532,23 @@
     <div class="install">
       <span class="dollar">$</span>
       <code id="cmd">npm install -g @jgalego/teamapi</code>
-      <button id="copy" type="button">copy</button>
+      <button id="copy" type="button" data-copy-text="npm install -g @jgalego/teamapi" data-copy-source="#cmd" aria-label="Copy npm install command"><span aria-hidden="true">⧉</span><span class="copy-label">Copy</span></button>
     </div>
   </section>
 
-  <section class="story slide reveal" data-title="The ownership gap">
-    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l2 2"/></svg>The ownership gap</h2>
+  <section id="ownership-gap" class="story chapter reveal">
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="4"/><path d="M2 21a7 7 0 0 1 11.2-5.6M16 16l5 5M21 16l-5 5"/></svg>The ownership gap</h2>
     <p class="section-intro story-lede">Finding out who owns what shouldn't be a scavenger hunt.</p>
     <div class="friction">
-      <article class="reveal-item" style="--i:0"><span class="n">01</span><b>Ownership is scattered</b><p>The answer lives across docs, catalogs, chat threads, and people's heads.</p></article>
-      <article class="reveal-item" style="--i:1"><span class="n">02</span><b>Answers expire</b><p>Teams change faster than the pages meant to describe them.</p></article>
-      <article class="reveal-item" style="--i:2"><span class="n">03</span><b>Agents can't ask around</b><p>AI needs structured organizational context—not another human-only diagram.</p></article>
+      <article class="reveal-item" style="--i:0"><div class="friction-head"><span class="n">01</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="link-a" d="m18.8 12.3 1.8-1.8a5.5 5.5 0 0 0-7.8-7.8L11 4.5M16 19v3M19 16h3"/><path class="link-b" d="m5.2 11.7-1.8 1.8a5.5 5.5 0 0 0 7.8 7.8l1.8-1.8M8 2v3M2 8h3"/></svg></div><b>Ownership is scattered</b><p>The answer lives across docs, catalogs, chat threads, and people's heads.</p></article>
+      <article class="reveal-item" style="--i:1"><div class="friction-head"><span class="n">02</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="hourglass-shape"><path d="M5 3h14M5 21h14"/><path d="M6 3c0 4.5 2.4 6.8 6 9-3.6 2.2-6 4.5-6 9M18 3c0 4.5-2.4 6.8-6 9 3.6 2.2 6 4.5 6 9"/></g></svg></div><b>Answers don't stay current</b><p>Teams change faster than the pages meant to describe them.</p></article>
+      <article class="reveal-item" style="--i:2"><div class="friction-head"><span class="n">03</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="agent-robot"><path d="M12 8V4H8"/><circle class="agent-signal" cx="8" cy="4" r="1" fill="currentColor" stroke="none"/><rect width="16" height="12" x="4" y="8" rx="2"/><path class="agent-arm-left" d="M2 14h2"/><path class="agent-arm-right" d="M20 14h2"/><path class="agent-eyes" d="M9 13v2M15 13v2"/></g></svg></div><b>Agents can't ask around</b><p>AI needs structured organizational context—not another human-only diagram.</p></article>
     </div>
   </section>
 
-  <section class="demo slide reveal" data-title="Ask your organization">
+  <section id="ask-your-organization" class="demo chapter reveal">
     <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19h8" /> <path d="m4 17 6-6-6-6" /></svg>Ask your organization</h2>
-    <p class="section-intro">One source of truth. Useful answers for people, platforms, and agents.</p>
+    <p class="section-intro">One source of truth for people, platforms, and agents.</p>
     <div class="chips" role="tablist" aria-label="Try a command"></div>
     <div class="term">
       <div class="bar"><i></i><i></i><i></i></div>
@@ -513,37 +556,47 @@
     </div>
   </section>
 
-  <section class="slide reveal" data-title="From file to API">
+  <section id="from-file-to-api" class="chapter reveal">
   <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" /> <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09" /> <path d="M9 12a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.4 22.4 0 0 1-4 2z" /> <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 .05 5 .05" /></svg>From file to API</h2>
-  <p class="section-intro">Start with one team. Add an interface only when you need it.</p>
+  <p class="section-intro">Start with one team, then add interfaces as needed.</p>
   <div class="steps">
     <div class="step reveal-item" style="--i:0">
-      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z" /> <path d="M14 2v5a1 1 0 0 0 1 1h5" /> <path d="M10 12.5 8 15l2 2.5" /> <path d="m14 12.5 2 2.5-2 2.5" /></svg><b>Describe the team</b></div>
+      <div class="step-head"><span class="n">01</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="file-shape"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path class="code-left" d="M10 12.5 8 15l2 2.5"/><path class="code-right" d="m14 12.5 2 2.5-2 2.5"/></g></svg></div>
+      <b>Describe the team</b>
       <p>Capture what it owns, who's accountable, and how much it can take on.</p>
-      <pre><span class="pr">$</span> teamapi scaffold cart \
-  --type stream-aligned \
-  --out teams/cart.yml</pre>
+      <div class="step-command">
+          <pre><span class="command-text multiline-command" id="scaffold-command"><span><span class="pr">$</span> teamapi scaffold cart \</span><span class="command-cont">--type stream-aligned \</span><span class="command-cont">--out org/cart/teamapi.yml</span></span></pre>
+          <button class="command-copy" type="button" data-copy-text="teamapi scaffold cart --type stream-aligned --out org/cart/teamapi.yml" data-copy-source="#scaffold-command" aria-label="Copy scaffold command"><span aria-hidden="true">⧉</span><span class="copy-label">Copy</span></button>
+      </div>
     </div>
     <div class="step reveal-item" style="--i:1">
-      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" /></svg><b>Serve it everywhere</b></div>
+      <div class="step-head"><span class="n">02</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><g class="server-top"><rect width="20" height="8" x="2" y="2" rx="2" ry="2"/><circle class="server-light" cx="6" cy="6" r=".75" fill="currentColor" stroke="none"/></g><g class="server-bottom"><rect width="20" height="8" x="2" y="14" rx="2" ry="2"/><circle class="server-light" cx="6" cy="18" r=".75" fill="currentColor" stroke="none"/></g></svg></div>
+      <b>Serve it everywhere</b>
       <p>Give people an API, a browsable dashboard, and generated documentation.</p>
-      <pre><span class="pr">$</span> teamapi serve-api ./org
+      <div class="step-command">
+      <pre><span class="command-text" id="serve-api-command"><span class="pr">$</span> teamapi serve-api ./org</span>
 <span class="cm"># 📊 :3000/dashboard</span>
 <span class="cm"># 📖 :3000/docs (Swagger)</span></pre>
+        <button class="command-copy" type="button" data-copy-text="teamapi serve-api ./org" data-copy-source="#serve-api-command" aria-label="Copy REST API command"><span aria-hidden="true">⧉</span><span class="copy-label">Copy</span></button>
+      </div>
     </div>
     <div class="step reveal-item" style="--i:2">
-      <div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" /> <path d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1" /></svg><b>Let agents query it</b></div>
+      <div class="step-head"><span class="n">03</span><svg class="card-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="chat-back" d="M16 10a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 14.286V4a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/><path class="chat-front" d="M20 9a2 2 0 0 1 2 2v10.286a.71.71 0 0 1-1.212.502l-2.202-2.202A2 2 0 0 0 17.172 19H10a2 2 0 0 1-2-2v-1"/></svg></div>
+      <b>Let agents query it</b>
       <p>Expose the same grounded organizational context through MCP.</p>
-      <pre><span class="pr">$</span> teamapi serve-mcp ./org
+      <div class="step-command">
+      <pre><span class="command-text" id="serve-mcp-command"><span class="pr">$</span> teamapi serve-mcp ./org</span>
 <span class="cm"># 🔌 MCP over stdio</span>
 <span class="cm"># 🤖 "who owns checkout-api?"</span></pre>
+        <button class="command-copy" type="button" data-copy-text="teamapi serve-mcp ./org" data-copy-source="#serve-mcp-command" aria-label="Copy MCP server command"><span aria-hidden="true">⧉</span><span class="copy-label">Copy</span></button>
+      </div>
     </div>
   </div>
   </section>
 
-  <section class="baseline slide reveal" data-title="Find accountability gaps">
+  <section id="accountability-gaps" class="baseline chapter reveal">
     <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 16 4-4 3 3 5-7"/></svg>Find where accountability breaks</h2>
-    <p class="section-intro">Run one baseline across ownership, policy, topology, and repository evidence—then track what gets resolved.</p>
+    <p class="section-intro">Find and track accountability gaps across your organization.</p>
     <div class="report reveal-item" style="--i:0">
       <div class="report-head"><strong>ACME baseline</strong><code>teamapi assess examples/acme-org</code></div>
       <div class="report-summary">
@@ -560,7 +613,7 @@
     </div>
   </section>
 
-  <section class="slide reveal" data-title="One source, many surfaces">
+  <section id="integrations" class="chapter reveal">
   <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5" /> <path d="M15 8V2" /> <path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z" /> <path d="M9 8V2" /></svg>One source, many surfaces</h2>
   <p class="section-intro">Define your organization once. Keep the tools around it in sync.</p>
   <div class="ints">
@@ -611,9 +664,9 @@
   </div>
   </section>
 
-  <section class="cta slide reveal" data-title="Start with what you have">
-    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172" /> <path d="m18.586 13.414-5.172 5.172" /> <path d="M6 12h12" /> <circle cx="12" cy="20" r="2" /> <circle cx="12" cy="4" r="2" /> <circle cx="20" cy="12" r="2" /> <circle cx="4" cy="12" r="2" /></svg>Start with what you have</h2>
-    <p class="q">Stop asking around.<br>Start querying your organization.</p>
+  <section id="start" class="cta chapter reveal">
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172" /> <path d="m18.586 13.414-5.172 5.172" /> <path d="M6 12h12" /> <circle cx="12" cy="20" r="2" /> <circle cx="12" cy="4" r="2" /> <circle cx="20" cy="12" r="2" /> <circle cx="4" cy="12" r="2" /></svg>Stop asking around</h2>
+    <p class="q">Start querying your organization.</p>
     <div class="acts">
       <a class="go" href="latest/guide/evaluation.html">
         <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
@@ -638,33 +691,39 @@
     </div>
   </section>
 
-  <footer>
-    <a href="latest/index.html">Docs</a>
-    <a href="https://github.com/JGalego/TeamAPI">GitHub</a>
-    <a href="https://www.npmjs.com/package/@jgalego/teamapi">npm</a>
-    <a href="latest/spec.html">Spec</a>
-    <a href="https://teamtopologies.com/">Team Topologies</a>
-    <span>MIT</span>
-  </footer>
 </main>
 
-<div id="deck" hidden>
-  <div id="deck-bar"></div>
-  <span id="deck-hint">← → navigate · esc exit</span>
-  <div id="deck-nav">
-    <span id="deck-title"></span>
-    <button id="deck-prev" type="button" aria-label="Previous slide">←</button>
-    <span id="deck-n"></span>
-    <button id="deck-next" type="button" aria-label="Next slide">→</button>
-    <button id="deck-exit" type="button" aria-label="Leave presentation mode">esc</button>
-  </div>
-</div>
+<footer>
+  <nav class="footer-links" aria-label="TeamAPI links">
+    <a href="latest/index.html" aria-label="Documentation">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z"/></svg>
+      <span class="footer-label">Docs</span>
+    </a>
+    <a href="https://github.com/JGalego/TeamAPI" aria-label="TeamAPI on GitHub">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.108-.775.419-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.5 11.5 0 0 1 12 6.84c1.02.005 2.045.138 3.003.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.91 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.814 1.102.814 2.222 0 1.606-.015 2.898-.015 3.293 0 .322.216.694.825.576C20.565 22.092 24 17.592 24 12.297 24 5.67 18.627.297 12 .297z"/></svg>
+      <span class="footer-label">GitHub</span>
+    </a>
+    <a href="https://www.npmjs.com/package/@jgalego/teamapi" aria-label="TeamAPI on npm">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="m4.3 7.7 7.7 4.4 7.7-4.4M12 12.1V21"/></svg>
+      <span class="footer-label">npm</span>
+    </a>
+    <a href="latest/spec.html" aria-label="TeamAPI specification">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M8 13h8M8 17h6"/></svg>
+      <span class="footer-label">Spec</span>
+    </a>
+    <a href="https://teamtopologies.com/" aria-label="Team Topologies">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M12 7v4M6.7 16.5 10.5 12M17.3 16.5 13.5 12"/></svg>
+      <span class="footer-label">Team Topologies</span>
+    </a>
+  </nav>
+  <button id="theme" type="button" aria-label="Switch colour theme">◐ <span class="theme-label">theme</span></button>
+</footer>
 
 <script>
 (() => {
   "use strict";
 
-  /* ── theme: auto by default, click to pin light or dark ──────────────── */
+  /* ── theme: dark by default, with a remembered reader override ──────── */
   const root = document.documentElement, btn = document.getElementById("theme");
   const saved = localStorage.getItem("teamapi-theme");
   if (saved) root.dataset.theme = saved;
@@ -677,14 +736,40 @@
   });
 
   /* ── copy ────────────────────────────────────────────────────────────── */
-  for (const box of document.querySelectorAll(".install")) {
-    const btn = box.querySelector("button"), code = box.querySelector("code");
+  for (const btn of document.querySelectorAll("[data-copy-text]")) {
+    const label = btn.querySelector(".copy-label");
+    const originalAriaLabel = btn.getAttribute("aria-label");
     btn.addEventListener("click", async () => {
       try {
-        await navigator.clipboard.writeText(code.textContent);
-        btn.textContent = "copied"; btn.classList.add("done");
-        setTimeout(() => { btn.textContent = "copy"; btn.classList.remove("done"); }, 1600);
-      } catch { btn.textContent = "⌘C"; }
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(btn.dataset.copyText);
+        } else {
+          const area = document.createElement("textarea");
+          area.value = btn.dataset.copyText;
+          area.style.cssText = "position:fixed;opacity:0";
+          document.body.appendChild(area);
+          area.select();
+          let copied = false;
+          try { copied = document.execCommand("copy"); }
+          finally { area.remove(); }
+          if (!copied) throw new Error("Copy failed");
+        }
+        label.textContent = "Copied"; btn.classList.add("done");
+        btn.setAttribute("aria-label", "Install command copied");
+        setTimeout(() => {
+          label.textContent = "Copy"; btn.classList.remove("done");
+          btn.setAttribute("aria-label", originalAriaLabel);
+        }, 1600);
+      } catch {
+        label.textContent = "Select";
+        const source = document.querySelector(btn.dataset.copySource);
+        const selection = getSelection();
+        if (!selection || !source) return;
+        selection.removeAllRanges();
+        const range = document.createRange();
+        range.selectNodeContents(source);
+        selection.addRange(range);
+      }
     });
   }
 
@@ -1083,65 +1168,44 @@
     reveals.forEach((section) => observer.observe(section));
   }
 
-  /* ── presentation mode ────────────────────────────────────────────────
-     The page is already one section per idea, so a deck is a class on <body>
-     plus an index — no library, nothing to load. */
-  const slides = [...document.querySelectorAll(".slide")];
-  const deck = document.getElementById("deck");
-  const bar = document.getElementById("deck-bar");
-  const count = document.getElementById("deck-n");
-  const deckTitle = document.getElementById("deck-title");
-  const prev = document.getElementById("deck-prev");
-  const next = document.getElementById("deck-next");
-  let at = 0;
+  /* ── chapter navigation ──────────────────────────────────────────────
+     Scrolling stays native; snap points settle wheel, trackpad, and touch
+     movement. Arrow/Page keys provide the same previous/next affordance. */
+  const chapters = [...document.querySelectorAll(".chapter")];
 
-  function show(i) {
-    at = Math.min(Math.max(i, 0), slides.length - 1);
-    slides.forEach((s, n) => s.classList.toggle("on", n === at));
-    count.textContent = `${at + 1} / ${slides.length}`;
-    deckTitle.textContent = slides[at].dataset.title || "TeamAPI";
-    bar.style.width = `${((at + 1) / slides.length) * 100}%`;
-    prev.disabled = at === 0;
-    next.disabled = at === slides.length - 1;
-    // the terminal pins its height from a measurement, so it has to be retaken
-    // once the slide is at its deck width
-    if (slides[at].classList.contains("demo")) play(picked);
+  function visibleChapter() {
+    const middle = innerHeight / 2;
+    const containing = chapters.findIndex((chapter) => {
+      const rect = chapter.getBoundingClientRect();
+      return rect.top <= middle && rect.bottom >= middle;
+    });
+    if (containing !== -1) return containing;
+    return chapters.reduce((nearest, chapter, index) => {
+      const distance = Math.abs(chapter.getBoundingClientRect().top);
+      return distance < nearest.distance ? { index, distance } : nearest;
+    }, { index: 0, distance: Infinity }).index;
   }
 
-  function enter() {
-    document.body.classList.add("deck");
-    deck.hidden = false;
-    // A presentation is a story, so always begin with its premise—not the section
-    // that happened to be beneath the button when it was clicked.
-    show(0);
+  function goToChapter(index) {
+    chapters[Math.min(Math.max(index, 0), chapters.length - 1)]?.scrollIntoView({
+      behavior: reduced ? "auto" : "smooth",
+      block: "start",
+    });
   }
 
-  function leave() {
-    const target = slides[at];
-    document.body.classList.remove("deck");
-    deck.hidden = true;
-    slides.forEach((s) => s.classList.remove("on"));
-    target.scrollIntoView();
-    if (slides.indexOf(target) >= 0) play(picked);
-  }
+  addEventListener("keydown", (event) => {
+    if (event.defaultPrevented || event.altKey || event.ctrlKey || event.metaKey) return;
+    if (event.target.closest("button, a, input, textarea, select, [role=tablist]")) return;
 
-  document.getElementById("present").addEventListener("click", enter);
-  document.getElementById("deck-exit").addEventListener("click", leave);
-  prev.addEventListener("click", () => show(at - 1));
-  next.addEventListener("click", () => show(at + 1));
-
-  addEventListener("keydown", (e) => {
-    if (!document.body.classList.contains("deck")) return;
-    // let the chips keep their own keyboard behaviour
-    const key = e.key;
-    if (key === "Escape") leave();
-    else if (key === "ArrowRight" || key === "PageDown" || key === " ") show(at + 1);
-    else if (key === "ArrowLeft" || key === "PageUp") show(at - 1);
-    else if (key === "Home") show(0);
-    else if (key === "End") show(slides.length - 1);
+    const current = visibleChapter();
+    if (["ArrowLeft", "ArrowUp", "PageUp"].includes(event.key)) goToChapter(current - 1);
+    else if (["ArrowRight", "ArrowDown", "PageDown", " "].includes(event.key)) goToChapter(current + 1);
+    else if (event.key === "Home") goToChapter(0);
+    else if (event.key === "End") goToChapter(chapters.length - 1);
     else return;
-    e.preventDefault();
+    event.preventDefault();
   });
+
 })();
 </script>
 </body>
