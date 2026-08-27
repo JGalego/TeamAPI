@@ -110,7 +110,7 @@ describe("SlackClient", () => {
   it("throws on a transport error too", async () => {
     fakeFetch([{ status: 500, body: {} }]);
     await expect(new SlackClient({ token: "t", baseUrl: "https://slack.test/api" }).listChannels()).rejects.toThrow(
-      /conversations\.list failed: 500/,
+      /Slack conversations\.list failed after 3 attempt\(s\): 500/,
     );
   });
 
@@ -268,12 +268,13 @@ describe("OktaClient", () => {
     expect(groups[0]!.members.map((m) => m.email)).toEqual(["one@acme.example", "two@acme.example"]);
   });
 
-  it("stops if a next link points back at a page already read", async () => {
+  it("fails instead of returning partial data if a next link points back at a page already read", async () => {
     const selfReferential = { link: '<https://acme.okta.com/api/v1/groups?limit=200>; rel="next"' };
     fakeFetch([{ body: [group("g1", "team")], headers: selfReferential }]);
 
-    const groups = await new OktaClient({ token: "t", url: "https://acme.okta.com" }).listGroups();
-    expect(groups).toHaveLength(1);
+    await expect(new OktaClient({ token: "t", url: "https://acme.okta.com" }).listGroups()).rejects.toThrow(
+      /pagination did not terminate/,
+    );
   });
 
   it("skips a group with no name rather than matching it to a team", async () => {
@@ -346,7 +347,7 @@ describe("PaperclipClient", () => {
   it("still throws on a status it can't interpret", async () => {
     fakeFetch([{ status: 500, body: {} }]);
     await expect(new PaperclipClient({ token: "t", url: "http://pc.test" }).verify("c1")).rejects.toThrow(
-      /Paperclip returned 500/,
+      /Paperclip verify company failed after 3 attempt\(s\): 500/,
     );
   });
 });

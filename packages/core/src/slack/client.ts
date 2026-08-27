@@ -1,9 +1,15 @@
 import type { SlackChannel } from "../apply/slack";
 import type { SlackUser, SlackUsergroup } from "../apply/slack-usergroups";
+import {
+  integrationFetch,
+  IntegrationError,
+  integrationHttpOptions,
+  type IntegrationHttpOptions,
+} from "../integrations/http";
 
 const DEFAULT_BASE_URL = "https://slack.com/api";
 
-export interface SlackClientOptions {
+export interface SlackClientOptions extends IntegrationHttpOptions {
   token: string;
   /** Override for tests or an enterprise proxy; defaults to https://slack.com/api. */
   baseUrl?: string;
@@ -24,24 +30,38 @@ interface SlackConversation {
 export class SlackClient {
   private readonly token: string;
   private readonly baseUrl: string;
+  private readonly http: IntegrationHttpOptions;
 
   constructor(options: SlackClientOptions) {
     this.token = options.token;
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
+    this.http = integrationHttpOptions(options);
   }
 
   private async call<T>(method: string, body: Record<string, string>): Promise<T> {
-    const res = await fetch(`${this.baseUrl}/${method}`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+    const res = await integrationFetch(
+      `${this.baseUrl}/${method}`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${this.token}`,
+          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+        },
+        body: new URLSearchParams(body).toString(),
       },
-      body: new URLSearchParams(body).toString(),
-    });
+      { provider: "Slack", operation: method, ...this.http },
+    );
     if (!res.ok) throw new Error(`Slack ${method} failed: ${res.status} ${res.statusText}`);
     const payload = (await res.json()) as { ok: boolean; error?: string } & T;
-    if (!payload.ok) throw new Error(`Slack ${method} failed: ${payload.error ?? "unknown error"}`);
+    if (!payload.ok) {
+      const code = payload.error ?? "unknown error";
+      throw new IntegrationError({
+        provider: "Slack",
+        operation: method,
+        retryable: code === "ratelimited" || code === "internal_error",
+        message: `Slack ${method} failed: ${code}`,
+      });
+    }
     return payload;
   }
 
@@ -60,6 +80,7 @@ export class SlackClient {
    */
   async listChannels(pageSize = 200): Promise<SlackChannel[]> {
     const channels: SlackChannel[] = [];
+    const seen = new Set<string>();
     let cursor = "";
     do {
       const page = await this.call<{
@@ -77,7 +98,16 @@ export class SlackClient {
         const topic = c.topic?.value;
         channels.push({ id: c.id, name: c.name, topic: topic === "" ? undefined : topic });
       }
-      cursor = page.response_metadata?.next_cursor ?? "";
+      const next = page.response_metadata?.next_cursor ?? "";
+      if (next && (seen.has(next) || seen.size >= (this.http.maxPages ?? 1_000))) {
+        throw new IntegrationError({
+          provider: "Slack",
+          operation: "conversations.list",
+          message: "Slack conversations.list pagination did not terminate",
+        });
+      }
+      if (next) seen.add(next);
+      cursor = next;
     } while (cursor);
     return channels;
   }
@@ -110,6 +140,7 @@ export class SlackClient {
    * the only field a Team API member and a Slack account reliably share. */
   async listUsers(pageSize = 200): Promise<SlackUser[]> {
     const users: SlackUser[] = [];
+    const seen = new Set<string>();
     let cursor = "";
     do {
       const page = await this.call<{
@@ -124,7 +155,16 @@ export class SlackClient {
           isBot: member.is_bot,
         });
       }
-      cursor = page.response_metadata?.next_cursor ?? "";
+      const next = page.response_metadata?.next_cursor ?? "";
+      if (next && (seen.has(next) || seen.size >= (this.http.maxPages ?? 1_000))) {
+        throw new IntegrationError({
+          provider: "Slack",
+          operation: "users.list",
+          message: "Slack users.list pagination did not terminate",
+        });
+      }
+      if (next) seen.add(next);
+      cursor = next;
     } while (cursor);
     return users;
   }

@@ -1,6 +1,12 @@
 import type { DirectoryGroup, DirectoryUser } from "../apply/okta-drift";
+import {
+  integrationFetch,
+  integrationHttpOptions,
+  IntegrationError,
+  type IntegrationHttpOptions,
+} from "../integrations/http";
 
-export interface OktaClientOptions {
+export interface OktaClientOptions extends IntegrationHttpOptions {
   token: string;
   /** Okta org URL, e.g. `https://acme.okta.com`. */
   url: string;
@@ -38,10 +44,12 @@ export function toDirectoryUser(raw: RawUser): DirectoryUser | null {
 export class OktaClient {
   private readonly token: string;
   private readonly baseUrl: string;
+  private readonly http: IntegrationHttpOptions;
 
   constructor(options: OktaClientOptions) {
     this.token = options.token;
     this.baseUrl = options.url.replace(/\/+$/, "");
+    this.http = integrationHttpOptions(options);
   }
 
   private async page<T>(startUrl: string): Promise<T[]> {
@@ -52,12 +60,22 @@ export class OktaClient {
     while (next) {
       // Okta echoes a `self` link alongside `next`; a malformed header that points back at the
       // page we just read would otherwise loop forever
-      if (seen.has(next)) return out;
+      if (seen.has(next) || seen.size >= (this.http.maxPages ?? 1_000)) {
+        throw new IntegrationError({
+          provider: "Okta",
+          operation: `paginate ${startUrl}`,
+          message: `Okta pagination did not terminate for ${startUrl}`,
+        });
+      }
       seen.add(next);
 
-      const res: Response = await fetch(next, {
-        headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
-      });
+      const res: Response = await integrationFetch(
+        next,
+        {
+          headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
+        },
+        { provider: "Okta", operation: `GET ${next}`, ...this.http },
+      );
       if (!res.ok) throw new Error(`Okta returned ${res.status} ${res.statusText} for ${next}`);
       const body = await res.json();
       if (!Array.isArray(body)) throw new Error(`Unexpected response from ${next}: expected an array`);
@@ -68,18 +86,26 @@ export class OktaClient {
   }
 
   private async write(method: "PUT" | "DELETE", path: string): Promise<void> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
-      method,
-      headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
-    });
+    const res = await integrationFetch(
+      `${this.baseUrl}${path}`,
+      {
+        method,
+        headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
+      },
+      { provider: "Okta", operation: `${method} ${path}`, ...this.http },
+    );
     if (!res.ok) throw new Error(`Okta returned ${res.status} ${res.statusText} for ${method} ${path}`);
   }
 
   /** The org this token belongs to. */
   async verify(): Promise<string> {
-    const res = await fetch(`${this.baseUrl}/api/v1/org`, {
-      headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
-    });
+    const res = await integrationFetch(
+      `${this.baseUrl}/api/v1/org`,
+      {
+        headers: { Authorization: `SSWS ${this.token}`, Accept: "application/json" },
+      },
+      { provider: "Okta", operation: "GET /api/v1/org", ...this.http },
+    );
     if (!res.ok) throw new Error(`Okta returned ${res.status} ${res.statusText} for /api/v1/org`);
     const org = (await res.json()) as { subdomain?: string; companyName?: string };
     return org.companyName ?? org.subdomain ?? "org reachable";

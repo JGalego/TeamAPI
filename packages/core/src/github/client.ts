@@ -1,3 +1,11 @@
+import {
+  integrationFetch,
+  IntegrationError,
+  integrationHttpOptions,
+  isIntegrationStatus,
+  type IntegrationHttpOptions,
+} from "../integrations/http";
+
 const DEFAULT_BASE_URL = "https://api.github.com";
 const API_VERSION = "2022-11-28";
 
@@ -22,7 +30,7 @@ export interface GithubRepo {
   html_url: string;
 }
 
-export interface GithubClientOptions {
+export interface GithubClientOptions extends IntegrationHttpOptions {
   token: string;
   /** Override for GitHub Enterprise Server; defaults to https://api.github.com. */
   baseUrl?: string;
@@ -45,10 +53,12 @@ function parseNextLink(header: string | null): string | undefined {
 export class GithubClient {
   private readonly token: string;
   private readonly baseUrl: string;
+  private readonly http: IntegrationHttpOptions;
 
   constructor(options: GithubClientOptions) {
     this.token = options.token;
     this.baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
+    this.http = integrationHttpOptions(options);
   }
 
   private headers(hasBody: boolean): Record<string, string> {
@@ -62,17 +72,25 @@ export class GithubClient {
 
   private async raise(res: Response, method: string, path: string): Promise<never> {
     const detail = await res.text().catch(() => "");
-    throw new Error(
-      `GitHub API ${method} ${path} failed: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`,
-    );
+    throw new IntegrationError({
+      provider: "GitHub API",
+      operation: `${method} ${path}`,
+      status: res.status,
+      retryable: false,
+      message: `GitHub API ${method} ${path} failed: ${res.status} ${res.statusText}${detail ? ` — ${detail}` : ""}`,
+    });
   }
 
   private async request<T>(method: string, path: string, body?: unknown): Promise<T> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
-      method,
-      headers: this.headers(body !== undefined),
-      body: body !== undefined ? JSON.stringify(body) : undefined,
-    });
+    const res = await integrationFetch(
+      `${this.baseUrl}${path}`,
+      {
+        method,
+        headers: this.headers(body !== undefined),
+        body: body !== undefined ? JSON.stringify(body) : undefined,
+      },
+      { provider: "GitHub API", operation: `${method} ${path}`, ...this.http },
+    );
     if (!res.ok) return this.raise(res, method, path);
     if (res.status === 204) return undefined as T;
     return (await res.json()) as T;
@@ -96,11 +114,9 @@ export class GithubClient {
     try {
       await this.getBranchSha(owner, repo, branch);
       return true;
-    } catch {
-      // A 404 is the answer, not a failure — every other error shape would also land here, and
-      // the caller's next move (create the branch) fails loudly on its own if the cause was
-      // something else.
-      return false;
+    } catch (error) {
+      if (isIntegrationStatus(error, 404)) return false;
+      throw error;
     }
   }
 
@@ -118,8 +134,9 @@ export class GithubClient {
         `/repos/${owner}/${repo}/contents/${path}?ref=${encodeURIComponent(ref)}`,
       );
       return file.sha;
-    } catch {
-      return undefined;
+    } catch (error) {
+      if (isIntegrationStatus(error, 404)) return undefined;
+      throw error;
     }
   }
 
@@ -166,9 +183,23 @@ export class GithubClient {
 
   private async paginate<T>(path: string): Promise<T[]> {
     const results: T[] = [];
+    const seen = new Set<string>();
+    const maxPages = this.http.maxPages ?? 1_000;
     let next: string | undefined = `${this.baseUrl}${path}${path.includes("?") ? "&" : "?"}per_page=100`;
     while (next) {
-      const res: Response = await fetch(next, { headers: this.headers(false) });
+      if (seen.size >= maxPages || seen.has(next)) {
+        throw new IntegrationError({
+          provider: "GitHub API",
+          operation: `paginate ${path}`,
+          message: `GitHub API pagination did not terminate for ${path}`,
+        });
+      }
+      seen.add(next);
+      const res: Response = await integrationFetch(
+        next,
+        { headers: this.headers(false) },
+        { provider: "GitHub API", operation: `GET ${next}`, ...this.http },
+      );
       if (!res.ok) return this.raise(res, "GET", next);
       results.push(...((await res.json()) as T[]));
       next = parseNextLink(res.headers.get("link"));

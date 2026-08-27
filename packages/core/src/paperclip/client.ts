@@ -1,6 +1,7 @@
 import type { PaperclipAgent } from "../apply/paperclip-drift";
+import { integrationFetch, integrationHttpOptions, type IntegrationHttpOptions } from "../integrations/http";
 
-export interface PaperclipClientOptions {
+export interface PaperclipClientOptions extends IntegrationHttpOptions {
   token: string;
   /** Paperclip base URL, e.g. `http://localhost:3000`. */
   url: string;
@@ -20,10 +21,12 @@ export type PaperclipReachability = "ok" | "unauthorized" | "no-such-company";
 export class PaperclipClient {
   private readonly token: string;
   private readonly baseUrl: string;
+  private readonly http: IntegrationHttpOptions;
 
   constructor(options: PaperclipClientOptions) {
     this.token = options.token;
     this.baseUrl = options.url.replace(/\/+$/, "");
+    this.http = integrationHttpOptions(options);
   }
 
   private agentsUrl(companyId: string): string {
@@ -33,9 +36,13 @@ export class PaperclipClient {
   /** Classifies whether the company is reachable with this token, without throwing on the two
    * outcomes a user can actually act on. */
   async verify(companyId: string): Promise<PaperclipReachability> {
-    const res = await fetch(this.agentsUrl(companyId), {
-      headers: { Authorization: `Bearer ${this.token}`, Accept: "application/json" },
-    });
+    const res = await integrationFetch(
+      this.agentsUrl(companyId),
+      {
+        headers: { Authorization: `Bearer ${this.token}`, Accept: "application/json" },
+      },
+      { provider: "Paperclip", operation: "verify company", ...this.http },
+    );
     if (res.status === 401 || res.status === 403) return "unauthorized";
     if (res.status === 404) return "no-such-company";
     if (!res.ok) throw new Error(`Paperclip returned ${res.status} ${res.statusText} for ${this.agentsUrl(companyId)}`);
@@ -44,9 +51,13 @@ export class PaperclipClient {
 
   async listAgents(companyId: string): Promise<PaperclipAgent[]> {
     const url = this.agentsUrl(companyId);
-    const res = await fetch(url, {
-      headers: { Authorization: `Bearer ${this.token}`, Accept: "application/json" },
-    });
+    const res = await integrationFetch(
+      url,
+      {
+        headers: { Authorization: `Bearer ${this.token}`, Accept: "application/json" },
+      },
+      { provider: "Paperclip", operation: "list agents", ...this.http },
+    );
     if (!res.ok) throw new Error(`Paperclip returned ${res.status} ${res.statusText} for ${url}`);
 
     const body = await res.json();

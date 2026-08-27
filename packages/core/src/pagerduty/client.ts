@@ -1,9 +1,15 @@
 import type { PagerDutyService } from "../apply/pagerduty-drift";
 import type { PagerDutyTeam, PagerDutyUser } from "../apply/pagerduty-teams";
+import {
+  integrationFetch,
+  integrationHttpOptions,
+  IntegrationError,
+  type IntegrationHttpOptions,
+} from "../integrations/http";
 
 const DEFAULT_BASE_URL = "https://api.pagerduty.com";
 
-export interface PagerDutyClientOptions {
+export interface PagerDutyClientOptions extends IntegrationHttpOptions {
   token: string;
   /** Override for the EU service region, or for tests. */
   baseUrl?: string;
@@ -31,23 +37,36 @@ interface RawPolicy {
 export class PagerDutyClient {
   private readonly token: string;
   private readonly baseUrl: string;
+  private readonly http: IntegrationHttpOptions;
 
   constructor(options: PagerDutyClientOptions) {
     this.token = options.token;
     this.baseUrl = (options.baseUrl ?? DEFAULT_BASE_URL).replace(/\/+$/, "");
+    this.http = integrationHttpOptions(options);
   }
 
   private async page<T>(path: string, key: string, pageSize = 100): Promise<T[]> {
     const out: T[] = [];
     let offset = 0;
-    for (;;) {
+    for (let page = 0; ; page++) {
+      if (page >= (this.http.maxPages ?? 1_000)) {
+        throw new IntegrationError({
+          provider: "PagerDuty",
+          operation: `paginate ${path}`,
+          message: `PagerDuty pagination did not terminate for ${path}`,
+        });
+      }
       const url = `${this.baseUrl}${path}?limit=${pageSize}&offset=${offset}`;
-      const res = await fetch(url, {
-        headers: {
-          Authorization: `Token token=${this.token}`,
-          Accept: "application/vnd.pagerduty+json;version=2",
+      const res = await integrationFetch(
+        url,
+        {
+          headers: {
+            Authorization: `Token token=${this.token}`,
+            Accept: "application/vnd.pagerduty+json;version=2",
+          },
         },
-      });
+        { provider: "PagerDuty", operation: `GET ${path}`, ...this.http },
+      );
       if (!res.ok) throw new Error(`PagerDuty returned ${res.status} ${res.statusText} for ${url}`);
       const body = (await res.json()) as Record<string, unknown>;
       const items = body[key];
@@ -61,13 +80,17 @@ export class PagerDutyClient {
   }
 
   private async write(method: "PUT" | "DELETE", path: string): Promise<void> {
-    const res = await fetch(`${this.baseUrl}${path}`, {
-      method,
-      headers: {
-        Authorization: `Token token=${this.token}`,
-        Accept: "application/vnd.pagerduty+json;version=2",
+    const res = await integrationFetch(
+      `${this.baseUrl}${path}`,
+      {
+        method,
+        headers: {
+          Authorization: `Token token=${this.token}`,
+          Accept: "application/vnd.pagerduty+json;version=2",
+        },
       },
-    });
+      { provider: "PagerDuty", operation: `${method} ${path}`, ...this.http },
+    );
     if (!res.ok) throw new Error(`PagerDuty returned ${res.status} ${res.statusText} for ${method} ${path}`);
   }
 
