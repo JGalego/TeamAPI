@@ -1,12 +1,13 @@
 import * as fs from "node:fs/promises";
 import * as path from "node:path";
 import {
-  ASSESSMENT_STATE_VERSION,
   assessmentToHtml,
   buildAssessment,
   buildOrgGraph,
   buildSarif,
   formatAssessmentText,
+  loadAssessmentState,
+  saveAssessmentState,
   scanForAiArtifacts,
   type AssessmentState,
   type NormalizedFinding,
@@ -28,26 +29,11 @@ export interface AssessOptions extends ConfigAwareOptions {
   state?: string;
 }
 
-function parseState(raw: string): AssessmentState {
-  const state = JSON.parse(raw) as Partial<AssessmentState>;
-  if (
-    state.version !== ASSESSMENT_STATE_VERSION ||
-    typeof state.generatedAt !== "string" ||
-    !state.snapshot ||
-    !Array.isArray(state.findingIds) ||
-    state.findingIds.some((id) => typeof id !== "string")
-  ) {
-    throw new Error(`expected assessment state version ${ASSESSMENT_STATE_VERSION}`);
-  }
-  return state as AssessmentState;
-}
-
 async function readState(file: string | undefined): Promise<AssessmentState | undefined> {
   if (!file) return undefined;
   try {
-    return parseState(await fs.readFile(file, "utf-8"));
+    return await loadAssessmentState(file);
   } catch (error) {
-    if ((error as NodeJS.ErrnoException).code === "ENOENT") return undefined;
     throw new Error(
       `Could not read assessment state ${file}: ${error instanceof Error ? error.message : String(error)}`,
     );
@@ -142,6 +128,6 @@ export async function runAssess(patterns: string[], options: AssessOptions = {})
 
   if (options.out) await writeOutput(options.out, rendered);
   else console.log(rendered);
-  if (options.state) await writeOutput(options.state, JSON.stringify(report.state, null, 2));
+  if (options.state) await saveAssessmentState(options.state, report.state);
   return report.summary.blocking > 0 ? 1 : 0;
 }

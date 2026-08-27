@@ -27,6 +27,26 @@ export interface EvidenceChain {
   result?: "open" | "accepted" | "rejected" | "resolved";
 }
 
+const EvidenceChainSchema = z
+  .object({
+    id: z.string().min(1),
+    finding: z.string().min(1),
+    targetId: z.string().min(1),
+    evidenceIds: z.array(z.string().min(1)).min(1),
+    action: z.string().min(1).optional(),
+    result: z.enum(["open", "accepted", "rejected", "resolved"]).optional(),
+  })
+  .strict();
+
+export const EvidenceLedgerDocumentSchema = z
+  .object({
+    version: z.literal(1),
+    entries: z.array(EvidenceEntrySchema),
+    chains: z.array(EvidenceChainSchema),
+  })
+  .strict();
+export type EvidenceLedgerDocument = z.infer<typeof EvidenceLedgerDocumentSchema>;
+
 function stable(value: unknown): string {
   if (Array.isArray(value)) return `[${value.map(stable).join(",")}]`;
   if (value && typeof value === "object") {
@@ -42,6 +62,14 @@ function stable(value: unknown): string {
 export class EvidenceLedger {
   readonly #entries = new Map<string, EvidenceEntry>();
   readonly #chains = new Map<string, EvidenceChain>();
+
+  static restore(raw: unknown): EvidenceLedger {
+    const document = EvidenceLedgerDocumentSchema.parse(raw);
+    const ledger = new EvidenceLedger();
+    for (const entry of document.entries) ledger.ingest(entry);
+    for (const chain of document.chains) ledger.link(chain);
+    return ledger;
+  }
 
   ingest(raw: unknown): { entry: EvidenceEntry; created: boolean } {
     const entry = EvidenceEntrySchema.parse(raw);
@@ -86,4 +114,11 @@ export class EvidenceLedger {
       .sort((a, b) => a.id.localeCompare(b.id))
       .map((chain) => structuredClone(chain));
   }
+
+  snapshot(): EvidenceLedgerDocument {
+    return { version: 1, entries: this.list(), chains: this.chains() };
+  }
 }
+
+/** Current on-disk evidence document version, for consumers that manage migrations. */
+export const EVIDENCE_LEDGER_VERSION = 1;
