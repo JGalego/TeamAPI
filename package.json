@@ -32,6 +32,7 @@
     "example:serve-mcp": "pnpm teamapi serve-mcp examples/acme-org",
     "bench:resolve": "node scripts/bench-resolve.mjs",
     "docs:build": "node scripts/build-docs.mjs --out site-out/latest --label latest",
+    "site:assessments": "node scripts/build-assessments.mjs --out site-out/assessments",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "turbo run build && changeset publish"

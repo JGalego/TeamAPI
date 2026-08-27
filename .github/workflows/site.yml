@@ -22,6 +22,11 @@ on:
       - "README.md"
       - "packages/*/README.md"
       - "scripts/build-docs.mjs"
+      - "scripts/build-assessments.mjs"
+      - "examples/**"
+      - "packages/cli/**"
+      - "packages/core/**"
+      - "packages/schema/**"
       - ".github/workflows/site.yml"
   release:
     types: [published]
@@ -64,6 +69,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build packages
+        run: pnpm build
+
       - name: Build the site
         run: |
           set -euo pipefail
@@ -80,6 +88,7 @@ jobs:
           cat site-out/versions.json
 
           node scripts/build-docs.mjs --out site-out/latest --label latest
+          node scripts/build-assessments.mjs --out site-out/assessments
 
           for TAG in $VERSIONS; do
             # A worktree rather than a checkout, so the build script and its dependencies stay at

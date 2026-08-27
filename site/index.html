@@ -265,28 +265,108 @@
   /* ── assessment sample ──────────────────────────────────── */
   .baseline { margin-top: 5rem; }
   .report {
+    width: min(52rem, 100%); margin-inline: auto;
     overflow: hidden; background: var(--card); border: 1px solid var(--line);
     border-radius: 14px; box-shadow: var(--shadow);
   }
   .report-head {
-    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
-    padding: .85rem 1rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .8rem;
+    display: flex; flex-direction: column; align-items: center; gap: .6rem;
+    padding: 1rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .8rem; text-align: center;
   }
-  .report-head code { color: var(--fg); overflow-wrap: anywhere; }
+  .report-title-row { display: flex; align-items: center; justify-content: center; gap: .75rem; max-width: 100%; }
+  .report-command {
+    display: flex; align-items: center; min-width: 0; max-width: 100%;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 7px; overflow: hidden;
+  }
+  .report-command .prompt { color: var(--teal); padding-left: .55rem; user-select: none; }
+  .report-command code {
+    min-width: 0; padding: .35rem .5rem; color: var(--fg); font-size: .72rem;
+    overflow-x: auto; white-space: nowrap; scrollbar-width: none;
+  }
+  .report-command code::-webkit-scrollbar { display: none; }
+  .report-copy {
+    align-self: stretch; display: inline-flex; align-items: center; gap: .25rem;
+    border: 0; border-left: 1px solid var(--line); padding: .3rem .5rem;
+    color: var(--muted); background: var(--card); cursor: pointer; font: inherit; font-size: .7rem;
+    transition: color .15s, background .15s;
+  }
+  .report-copy:hover { color: var(--teal); background: color-mix(in srgb, var(--teal) 8%, var(--card)); }
+  .report-copy.done { color: var(--teal); }
+  .report-orgs {
+    display: inline-flex; flex-wrap: wrap; max-width: 100%; gap: .2rem; padding: .2rem;
+    background: var(--bg); border: 1px solid var(--line); border-radius: 8px;
+  }
+  .report-orgs button {
+    display: inline-flex; align-items: center; justify-content: center; gap: .3rem;
+    border: 0; border-radius: 5px; padding: .25rem .5rem; color: var(--muted); background: transparent;
+    cursor: pointer; font: inherit; font-size: .72rem; transition: color .15s, background .15s;
+  }
+  .report-orgs svg { width: .85rem; height: .85rem; flex: none; }
+  .report-orgs button:hover { color: var(--fg); }
+  .report-orgs button[aria-selected="true"] { color: var(--bg); background: var(--teal); font-weight: 700; }
   .report-summary { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
-  .report-summary div { padding: 1.1rem; text-align: center; border-right: 1px solid var(--line); }
-  .report-summary div:last-child { border-right: 0; }
+  .report-summary button {
+    position: relative; padding: 1.1rem; text-align: center; border: 0; border-right: 1px solid var(--line);
+    color: var(--fg); background: transparent; cursor: pointer; font: inherit;
+    transition: background .18s, color .18s;
+  }
+  .report-summary button:last-child { border-right: 0; }
+  .report-summary button:disabled { cursor: wait; opacity: .6; }
+  .report-summary button::after {
+    content: ""; position: absolute; inset: auto 20% 0; height: 2px; border-radius: 2px;
+    background: currentColor; scale: 0 1; transition: scale .2s cubic-bezier(.2,.8,.2,1);
+  }
+  .report-summary button:hover, .report-summary button[aria-pressed="true"] {
+    background: color-mix(in srgb, currentColor 8%, transparent);
+  }
+  .report-summary button[aria-pressed="true"]::after { scale: 1; }
   .report-summary b { display: block; font-size: 1.65rem; line-height: 1.1; }
   .report-summary span { color: var(--muted); font-size: .78rem; }
-  .report-summary .blocking b { color: var(--teal); }
+  .report-summary .blocking b { color: var(--rose); }
   .report-summary .warning b { color: var(--amber); }
   .report-summary .info b { color: var(--purple); }
-  .report-findings { list-style: none; margin: 0; padding: 0; }
+  .report-findings { max-height: 16rem; overflow-y: auto; list-style: none; margin: 0; padding: 0; scrollbar-color: var(--line) transparent; }
   .report-findings li {
-    display: grid; grid-template-columns: 5.5rem 1fr; gap: .85rem;
-    padding: .85rem 1rem; border-bottom: 1px solid var(--line); font-size: .86rem;
+    --finding-accent: var(--amber);
+    border-bottom: 1px solid var(--line); box-shadow: inset 2px 0 transparent;
+    transition: background .18s, box-shadow .18s;
   }
-  .report-findings code { color: var(--muted); font-size: .72rem; }
+  .report-findings li[data-severity="blocking"] { --finding-accent: var(--rose); }
+  .report-findings li[data-severity="info"] { --finding-accent: var(--purple); }
+  .report-findings .report-state { padding: 1.5rem; color: var(--muted); text-align: center; }
+  .report-findings .report-state.error { color: var(--rose); }
+  .report-findings li:hover, .report-findings li.open {
+    background: color-mix(in srgb, var(--finding-accent) 6%, transparent);
+    box-shadow: inset 2px 0 var(--finding-accent);
+  }
+  .finding-toggle {
+    width: 100%; display: grid; grid-template-columns: 5.5rem 1fr auto; gap: .85rem; align-items: center;
+    padding: .72rem 1rem; border: 0; color: var(--fg); background: transparent;
+    cursor: pointer; font: inherit; font-size: .86rem; text-align: left;
+  }
+  .severity-label {
+    display: inline-flex; align-items: center; gap: .35rem;
+    color: var(--finding-accent); font: 600 .68rem/1 ui-monospace, monospace; text-transform: uppercase;
+  }
+  .severity-label::before {
+    content: ""; width: .45rem; height: .45rem; flex: none;
+    background: currentColor; border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
+  }
+  .finding-toggle .more {
+    color: var(--finding-accent); font-size: 1.1rem; line-height: 1;
+    transition: rotate .2s cubic-bezier(.2,.8,.2,1);
+  }
+  .finding-toggle[aria-expanded="true"] .more { rotate: 45deg; }
+  .finding-detail {
+    display: grid; grid-template-columns: 5.5rem 1fr auto; gap: .85rem;
+    max-height: 0; overflow: hidden; padding: 0 1rem; color: var(--muted); font-size: .78rem;
+    opacity: 0; transition: max-height .25s ease, padding .25s ease, opacity .2s ease;
+  }
+  .report-findings li.open .finding-detail { max-height: 5rem; padding: 0 1rem .8rem; opacity: 1; }
+  .finding-detail span { grid-column: 2; }
+  .finding-detail a { color: var(--finding-accent); font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .finding-detail a:hover { text-decoration: underline; }
+  .report-empty { margin: 0; padding: 1.2rem; color: var(--teal); text-align: center; font-size: .86rem; }
   .report-foot {
     display: flex; justify-content: space-between; align-items: center; gap: 1rem;
     padding: .9rem 1rem; color: var(--muted); font-size: .8rem;
@@ -294,8 +374,23 @@
   .report-foot a { color: var(--teal); font-weight: 600; text-decoration: none; white-space: nowrap; }
   .report-foot a:hover { text-decoration: underline; }
   @media (max-width: 36rem) {
-    .report-findings li { grid-template-columns: 1fr; gap: .25rem; }
+    .report-summary button { padding: .85rem .25rem; }
+    .report-summary span { font-size: .68rem; }
+    .finding-toggle { grid-template-columns: 1fr auto; gap: .25rem; }
+    .finding-toggle .severity-label, .finding-toggle .finding-message { grid-column: 1; }
+    .finding-toggle .more { grid-column: 2; grid-row: 1 / 3; }
+    .finding-detail { grid-template-columns: 1fr; }
+    .finding-detail span, .finding-detail a { grid-column: 1; }
+    .report-findings li.open .finding-detail { max-height: 8rem; }
     .report-foot { align-items: flex-start; flex-direction: column; }
+  }
+  @media (max-width: 28rem) {
+    .report-head { align-items: stretch; gap: .5rem; }
+    .report-title-row { flex-direction: column; gap: .4rem; }
+    .report-orgs { width: 100%; }
+    .report-orgs button { flex: 1 1 30%; }
+    .report-command { width: 100%; }
+    .report-command code { flex: 1; font-size: .68rem; }
   }
   .term .c { color: #f1f5f9; white-space: pre-wrap; overflow-wrap: anywhere; }
   .term .dim { color: #64748b; }
@@ -448,9 +543,10 @@
   .chapter.hero h1 { font-size: clamp(4rem, 10vw, 7rem); }
   .chapter.hero .tag, .chapter.hero .sub { font-size: clamp(1.35rem, 3vw, 2rem); }
   .chapter.hero .install { display: flex; width: min(27rem, 100%); margin-top: 2rem; }
-  .chapter .steps, .chapter .friction, .chapter .ints, .chapter.demo, .chapter.cta {
+  .chapter .steps, .chapter .friction, .chapter .ints, .chapter.cta {
     width: auto; margin-left: 0; transform: none;
   }
+  .chapter.demo { width: min(70rem, 100%); margin-left: auto; transform: none; }
   .chapter.cta { border: none; background: none; }
   .chapter.cta .q { color: var(--teal); font-size: clamp(2rem, 4.5vw, 3.6rem); max-width: 54rem; }
   .chapter .term pre { height: clamp(12rem, calc(100svh - 24rem), 32rem); overflow-y: auto; }
@@ -459,9 +555,14 @@
     .chapter .term pre { height: clamp(18rem, calc(100svh - 18rem), 34rem); }
   }
   @media (min-width: 60rem) { .chapter .steps { grid-template-columns: repeat(3, 1fr); } }
+  @media (max-width: 42rem) {
+    .chapter { padding: 3rem 1rem 5rem; }
+    .chapter.demo .section-intro, .section-intro.story-lede { white-space: normal; text-wrap: balance; }
+  }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; scroll-snap-type: none; }
     .friction article:hover .card-icon *, .step:hover .card-icon * { animation: none !important; transform: none !important; }
+    .report-summary button, .report-summary button::after, .report-findings li, .finding-toggle .more, .finding-detail { transition: none; }
     .js .reveal, .js .reveal .reveal-item, .js .reveal .ints a { opacity: 1; translate: none; transition: none; }
   }
 
@@ -595,21 +696,37 @@
   </section>
 
   <section id="accountability-gaps" class="baseline chapter reveal">
-    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 16 4-4 3 3 5-7"/></svg>Find where accountability breaks</h2>
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 16 4-4 3 3 5-7"/></svg>Where ownership breaks</h2>
     <p class="section-intro">Find and track accountability gaps across your organization.</p>
     <div class="report reveal-item" style="--i:0">
-      <div class="report-head"><strong>ACME baseline</strong><code>teamapi assess examples/acme-org</code></div>
-      <div class="report-summary">
-        <div class="blocking"><b>0</b><span>blocking</span></div>
-        <div class="warning"><b>5</b><span>warnings</span></div>
-        <div class="info"><b>1</b><span>information</span></div>
+      <div class="report-head">
+        <div class="report-title-row">
+          <strong>Example baseline</strong>
+          <div class="report-command">
+            <span class="prompt" aria-hidden="true">$</span>
+            <code id="report-command">teamapi assess examples/acme-org</code>
+            <button class="report-copy" type="button" data-copy-text="teamapi assess examples/acme-org" data-copy-source="#report-command" aria-label="Copy assessment command"><span aria-hidden="true">⧉</span><span class="copy-label">Copy</span></button>
+          </div>
+        </div>
+        <div class="report-orgs" role="tablist" aria-label="Example organization">
+          <button type="button" role="tab" data-report-org="acme" aria-selected="true" tabindex="0"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9h18l-1.5-5h-15z"/><path d="M5 9v11h14V9M9 20v-6h6v6"/><path d="M3 9a3 3 0 0 0 6 0 3 3 0 0 0 6 0 3 3 0 0 0 6 0"/></svg><span>ACME</span></button>
+          <button type="button" role="tab" data-report-org="cartwell" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="20" r="1"/><circle cx="18" cy="20" r="1"/><path d="M3 4h2l2.4 10.2a2 2 0 0 0 2 1.6h7.8a2 2 0 0 0 2-1.6L21 8H6"/></svg><span>Cartwell</span></button>
+          <button type="button" role="tab" data-report-org="driftwood" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 7V3H8"/><rect x="4" y="7" width="16" height="12" rx="3"/><path d="M8 12h.01M16 12h.01M9 16h6M2 13h2M20 13h2"/><circle cx="8" cy="3" r="1" fill="currentColor" stroke="none"/></svg><span>Driftwood</span></button>
+          <button type="button" role="tab" data-report-org="meridian" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 9 9-6 9 6M5 10v8M9 10v8M15 10v8M19 10v8M3 21h18"/></svg><span>Meridian Pay</span></button>
+          <button type="button" role="tab" data-report-org="reelstream" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m10 9 5 3-5 3zM3 9h18M7 5l2 4M13 5l2 4"/></svg><span>Reelstream</span></button>
+          <button type="button" role="tab" data-report-org="wavelength" aria-selected="false" tabindex="-1"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12h2l2-6 4 12 3-9 3 6 2-3h2"/></svg><span>Wavelength</span></button>
+        </div>
       </div>
-      <ul class="report-findings">
-        <li><code>ownership</code><span><b>LedgerEntryPosted</b> has no declared consumer.</span></li>
-        <li><code>topology</code><span><b>Stream Checkout</b> has an overdue collaboration.</span></li>
-        <li><code>policy</code><span><b>PR approvals</b> are delegated to a GitHub Actions gate.</span></li>
+      <div class="report-summary" aria-label="Filter findings by severity">
+        <button class="blocking" type="button" data-report-filter="blocking" aria-pressed="false" disabled><b data-report-count="blocking">—</b><span>blocking</span></button>
+        <button class="warning" type="button" data-report-filter="warning" aria-pressed="false" disabled><b data-report-count="warning">—</b><span>warnings</span></button>
+        <button class="info" type="button" data-report-filter="info" aria-pressed="false" disabled><b data-report-count="info">—</b><span>information</span></button>
+      </div>
+      <ul class="report-findings" aria-live="polite">
+        <li class="report-state">Loading assessment…</li>
       </ul>
-      <div class="report-foot"><span>6 findings across 4 teams, 4 services, and 5 agents.</span><a href="latest/guide/evaluation.html">Run a bounded evaluation →</a></div>
+      <p class="report-empty" hidden>No blocking findings in this scope.</p>
+      <div class="report-foot"><span aria-live="polite">Loading generated assessment…</span><a href="latest/guide/evaluation.html">Run a bounded evaluation →</a></div>
     </div>
   </section>
 
@@ -755,7 +872,7 @@
           if (!copied) throw new Error("Copy failed");
         }
         label.textContent = "Copied"; btn.classList.add("done");
-        btn.setAttribute("aria-label", "Install command copied");
+        btn.setAttribute("aria-label", "Command copied");
         setTimeout(() => {
           label.textContent = "Copy"; btn.classList.remove("done");
           btn.setAttribute("aria-label", originalAriaLabel);
@@ -773,12 +890,163 @@
     });
   }
 
+  const E = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  /* ── assessment: example switcher, filters and expandable findings ──── */
+  const EXAMPLES = {
+    acme: "acme-org",
+    cartwell: "cartwell-org",
+    driftwood: "driftwood-org",
+    meridian: "meridian-pay-org",
+    reelstream: "reelstream-org",
+    wavelength: "wavelength-org",
+  };
+
+  const report = document.querySelector(".report");
+  if (report) {
+    const orgs = [...report.querySelectorAll("[data-report-org]")];
+    const filters = [...report.querySelectorAll("[data-report-filter]")];
+    const list = report.querySelector(".report-findings");
+    const empty = report.querySelector(".report-empty");
+    const status = report.querySelector(".report-foot span");
+    const command = report.querySelector("#report-command");
+    const commandCopy = report.querySelector(".report-copy");
+    let activeOrg = "acme";
+    let activeFilter = null;
+    let activeReport = null;
+    let requestId = 0;
+
+    const visibleFindings = () => [...list.querySelectorAll("li:not([hidden])")];
+    const closeFinding = (finding) => {
+      finding.classList.remove("open");
+      finding.querySelector(".finding-toggle").setAttribute("aria-expanded", "false");
+    };
+    const applyFilter = () => {
+      if (!activeReport) return;
+      const findings = [...list.querySelectorAll("li")];
+      let visible = 0;
+      for (const finding of findings) {
+        const show = !activeFilter || finding.dataset.severity === activeFilter;
+        finding.hidden = !show;
+        if (show) visible += 1;
+        else closeFinding(finding);
+      }
+      empty.hidden = visible !== 0;
+      empty.textContent = `No ${activeFilter || "matching"} findings in this scope.`;
+      status.textContent = activeFilter
+        ? `Showing ${visible} of ${findings.length} findings.`
+        : `Showing all ${findings.length} findings across ${activeReport.snapshot.teams} teams.`;
+    };
+    const bindFindingToggles = () => {
+      for (const toggle of list.querySelectorAll(".finding-toggle")) {
+        toggle.addEventListener("click", () => {
+          const finding = toggle.closest("li");
+          const opening = !finding.classList.contains("open");
+          for (const other of visibleFindings()) closeFinding(other);
+          if (opening) {
+            finding.classList.add("open");
+            toggle.setAttribute("aria-expanded", "true");
+          }
+        });
+      }
+    };
+    const renderReport = async () => {
+      const slug = EXAMPLES[activeOrg];
+      const thisRequest = ++requestId;
+      command.textContent = `teamapi assess examples/${slug}`;
+      commandCopy.dataset.copyText = command.textContent;
+      list.innerHTML = '<li class="report-state">Loading generated assessment…</li>';
+      list.setAttribute("aria-busy", "true");
+      status.textContent = "Loading generated assessment…";
+      empty.hidden = true;
+      for (const filter of filters) {
+        filter.disabled = true;
+        report.querySelector(`[data-report-count="${filter.dataset.reportFilter}"]`).textContent = "—";
+      }
+
+      try {
+        const response = await fetch(`assessments/${slug}.json`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        if (thisRequest !== requestId) return;
+        if (!data.summary || !data.snapshot || !Array.isArray(data.findings)) throw new Error("Invalid assessment artifact");
+        activeReport = data;
+
+        const counts = {
+          blocking: data.summary.blocking,
+          warning: data.summary.warnings,
+          info: data.summary.info,
+        };
+        for (const [severity, count] of Object.entries(counts)) {
+          report.querySelector(`[data-report-count="${severity}"]`).textContent = count;
+        }
+        list.innerHTML = data.findings.map((finding) => {
+          const severity = ["blocking", "warning", "info"].includes(finding.severity) ? finding.severity : "info";
+          const context = [finding.source, finding.ruleId, finding.teamId].filter(Boolean).join(" · ");
+          const documentation = typeof finding.documentation === "string" && finding.documentation.startsWith("https://teamapi.dev/")
+            ? finding.documentation : "latest/guide/evaluation.html";
+          return `
+            <li data-severity="${severity}">
+              <button class="finding-toggle" type="button" aria-expanded="false"><span class="severity-label">${severity === "info" ? "Information" : severity}</span><span class="finding-message">${E(finding.detail)}</span><span class="more" aria-hidden="true">+</span></button>
+              <div class="finding-detail"><span>${E(context)}</span><a href="${documentation}">Read guidance →</a></div>
+            </li>`;
+        }).join("");
+        bindFindingToggles();
+        applyFilter();
+        list.scrollTop = 0;
+      } catch (error) {
+        if (thisRequest !== requestId) return;
+        activeReport = null;
+        list.innerHTML = `<li class="report-state error">Could not load the generated assessment artifact.</li>`;
+        status.textContent = "Assessment artifact unavailable.";
+        console.error(`Could not load assessments/${slug}.json`, error);
+      } finally {
+        if (thisRequest === requestId) list.removeAttribute("aria-busy");
+        if (thisRequest === requestId) for (const filter of filters) filter.disabled = false;
+      }
+    };
+
+    for (const org of orgs) {
+      org.addEventListener("click", () => {
+        activeOrg = org.dataset.reportOrg;
+        activeFilter = null;
+        for (const option of orgs) {
+          option.setAttribute("aria-selected", String(option === org));
+          option.tabIndex = option === org ? 0 : -1;
+        }
+        for (const filter of filters) filter.setAttribute("aria-pressed", "false");
+        renderReport();
+      });
+      org.addEventListener("keydown", (event) => {
+        const index = orgs.indexOf(org);
+        const next = event.key === "Home" ? 0
+          : event.key === "End" ? orgs.length - 1
+          : event.key === "ArrowRight" || event.key === "ArrowDown" ? (index + 1) % orgs.length
+          : event.key === "ArrowLeft" || event.key === "ArrowUp" ? (index - 1 + orgs.length) % orgs.length
+          : -1;
+        if (next < 0) return;
+        event.preventDefault();
+        orgs[next].focus();
+        orgs[next].click();
+      });
+    }
+    for (const filter of filters) {
+      filter.addEventListener("click", () => {
+        const requested = filter.dataset.reportFilter;
+        activeFilter = activeFilter === requested ? null : requested;
+        for (const option of filters) {
+          option.setAttribute("aria-pressed", String(option.dataset.reportFilter === activeFilter));
+        }
+        applyFilter();
+      });
+    }
+    renderReport();
+  }
+
   /* ── the demo ─────────────────────────────────────────────────────────
      Output is captured from the CLI running against examples/acme-org in the repo.
      The one exception is the chat reply, which is a language model's and so can't be
      pinned — but the tool call inside it, and the numbers it returns, are real.     */
-  const E = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-
   /* A string followed by a colon is a key; one that isn't is a value. Everything else falls
      through to numbers, literals and punctuation, so highlighting is per token rather than
      per line — which is all the old [class, line] pairs could manage. */
