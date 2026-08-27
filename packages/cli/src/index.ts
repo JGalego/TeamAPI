@@ -1,4 +1,5 @@
 export { runValidate } from "./commands/validate";
+export { runAssess, type AssessOptions, type AssessFormat } from "./commands/assess";
 export { runRender, type RenderOptions } from "./commands/render";
 export { runScaffold, type ScaffoldOptions } from "./commands/scaffold";
 export { runGenerate, type GenerateOptions } from "./commands/generate";

@@ -9,6 +9,7 @@ import { runGaps } from "./commands/gaps";
 import { runShadowAi } from "./commands/shadow-ai";
 import { runPolicy } from "./commands/policy";
 import { runTopology } from "./commands/topology";
+import { ASSESS_FORMATS, runAssess, type AssessFormat } from "./commands/assess";
 import { runRender } from "./commands/render";
 import { runScaffold } from "./commands/scaffold";
 import { runInit } from "./commands/init";
@@ -145,6 +146,43 @@ export function createProgram(): Command {
     .action(async (patterns: string[], opts: { scan: string; format: ReportFormat; config?: string | boolean }) => {
       process.exitCode = await runShadowAi(patterns, { scan: opts.scan, format: opts.format, ...configFlags(opts) });
     });
+
+  const assessCommand = program
+    .command("assess")
+    .argument("[patterns...]", "file paths, globs, or a directory (defaults to `patterns:` in teamapi.config.yml)")
+    .description("Run one assessment across gaps, policies, topology and optional repository AI usage");
+  assessCommand
+    .addOption(
+      assessCommand
+        .createOption("--format <format>", "text | json | html | sarif")
+        .choices(ASSESS_FORMATS)
+        .default("text"),
+    )
+    .option("--scan <dir>", "directory whose immediate subdirectories are repository checkouts")
+    .option("--out <file>", "write the report to a file instead of stdout")
+    .option("--state <file>", "compare with and replace a persistent assessment state file")
+    .option("--config <file>", "path to teamapi.config.yml")
+    .option("--no-config", "ignore any config file")
+    .action(
+      async (
+        patterns: string[],
+        opts: {
+          format: AssessFormat;
+          scan?: string;
+          out?: string;
+          state?: string;
+          config?: string | boolean;
+        },
+      ) => {
+        process.exitCode = await runAssess(patterns, {
+          format: opts.format,
+          scan: opts.scan,
+          out: opts.out,
+          state: opts.state,
+          ...configFlags(opts),
+        });
+      },
+    );
 
   const renderCommand = program
     .command("render")

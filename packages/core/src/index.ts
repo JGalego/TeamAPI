@@ -60,6 +60,7 @@ export * from "./evidence/ledger";
 export * from "./recommendations/engine";
 export * from "./reconcile/policy-gate";
 export * from "./digest/build";
+export * from "./assessment/build";
 export * from "./github/client";
 export * from "./apply/github-teams";
 export * from "./propose/patch";
