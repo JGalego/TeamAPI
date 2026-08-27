@@ -234,6 +234,16 @@ function collectPages() {
   if (existsSync(join(source, spec))) {
     pages.push({ src: spec, out: "spec.html", title: "Specification", group: "Reference", markdown: read(spec) });
   }
+  const evaluation = "docs/evaluation.md";
+  if (existsSync(join(source, evaluation))) {
+    pages.push({
+      src: evaluation,
+      out: "guide/evaluation.html",
+      title: "Evaluate TeamAPI",
+      group: "Guide",
+      markdown: read(evaluation),
+    });
+  }
   for (const name of ["deployment.md", "code-quality.md"]) {
     if (existsSync(join(source, "docs", name))) {
       pages.push({

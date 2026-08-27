@@ -51,7 +51,10 @@ take no arguments at all.
 | `teamapi migrate <patterns...>`                    | Bring documents up to the latest `teamApiVersion`                       |
 | `teamapi schema`                                   | Print the document JSON Schema for editors and CI                       |
 
-**Check the org's shape** — all four take `--format text|json|sarif` for CI annotation
+**Check the org's shape**
+
+`teamapi assess <patterns...>` combines every check into text, JSON, HTML or SARIF, with optional baseline
+comparison.
 
 | Command                                        | Purpose                                                                                           |
 | ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -59,6 +62,10 @@ take no arguments at all.
 | `teamapi policy <patterns...>`                 | Check declared `policies[]`, and report the ones nothing enforces                                 |
 | `teamapi topology <patterns...>`               | Report Team Topologies design smells — overrunning collaborations, inverted platform flow         |
 | `teamapi shadow-ai <patterns...> --scan <dir>` | Report AI adoption found in repositories against what teams declare in `agents[]`                 |
+
+The individual checks take `--format text|json|sarif`. `assess` also supports a self-contained HTML report and
+`--state <file>` for stable new/resolved finding comparison. See the
+**[evaluation guide](https://teamapi.dev/latest/guide/evaluation.html)** for a bounded adoption workflow.
 
 **See and track it**
 
