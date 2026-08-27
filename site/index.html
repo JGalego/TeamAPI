@@ -320,8 +320,12 @@
     background: color-mix(in srgb, currentColor 8%, transparent);
   }
   .report-summary button[aria-pressed="true"]::after { scale: 1; }
-  .report-summary b { display: block; font-size: 1.65rem; line-height: 1.1; }
-  .report-summary span { color: var(--muted); font-size: .78rem; }
+  .report-summary b {
+    display: flex; align-items: center; justify-content: center; gap: .4rem;
+    font-size: 1.65rem; line-height: 1.1;
+  }
+  .report-summary b svg { width: 1.15rem; height: 1.15rem; flex: none; }
+  .report-summary button > span { color: var(--muted); font-size: .78rem; }
   .report-summary .blocking b { color: var(--rose); }
   .report-summary .warning b { color: var(--amber); }
   .report-summary .info b { color: var(--purple); }
@@ -340,7 +344,7 @@
     box-shadow: inset 2px 0 var(--finding-accent);
   }
   .finding-toggle {
-    width: 100%; display: grid; grid-template-columns: 5.5rem 1fr auto; gap: .85rem; align-items: center;
+    width: 100%; display: grid; grid-template-columns: 6.5rem 6rem minmax(0, 1fr) auto; gap: .45rem; align-items: baseline;
     padding: .72rem 1rem; border: 0; color: var(--fg); background: transparent;
     cursor: pointer; font: inherit; font-size: .86rem; text-align: left;
   }
@@ -352,18 +356,30 @@
     content: ""; width: .45rem; height: .45rem; flex: none;
     background: currentColor; border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
   }
+  .category-label {
+    position: relative; display: inline-block; padding-left: 1.1rem; white-space: nowrap;
+    color: var(--muted); font: 600 .62rem/1 ui-monospace, monospace;
+    letter-spacing: .04em; text-transform: uppercase;
+  }
+  .category-label svg {
+    position: absolute; left: 0; top: 50%; width: .8rem; height: .8rem; transform: translateY(-50%);
+  }
+  .finding-message code {
+    padding: .08rem .24rem; border: 1px solid var(--line); border-radius: 4px;
+    color: var(--fg); background: var(--bg); font: .92em/1.35 ui-monospace, SFMono-Regular, Consolas, monospace;
+  }
   .finding-toggle .more {
     color: var(--finding-accent); font-size: 1.1rem; line-height: 1;
     transition: rotate .2s cubic-bezier(.2,.8,.2,1);
   }
   .finding-toggle[aria-expanded="true"] .more { rotate: 45deg; }
   .finding-detail {
-    display: grid; grid-template-columns: 5.5rem 1fr auto; gap: .85rem;
+    display: grid; grid-template-columns: 1fr auto; gap: .85rem;
     max-height: 0; overflow: hidden; padding: 0 1rem; color: var(--muted); font-size: .78rem;
     opacity: 0; transition: max-height .25s ease, padding .25s ease, opacity .2s ease;
   }
   .report-findings li.open .finding-detail { max-height: 5rem; padding: 0 1rem .8rem; opacity: 1; }
-  .finding-detail span { grid-column: 2; }
+  .finding-detail span { grid-column: 1; }
   .finding-detail a { color: var(--finding-accent); font-weight: 600; text-decoration: none; white-space: nowrap; }
   .finding-detail a:hover { text-decoration: underline; }
   .report-empty { margin: 0; padding: 1.2rem; color: var(--teal); text-align: center; font-size: .86rem; }
@@ -375,10 +391,12 @@
   .report-foot a:hover { text-decoration: underline; }
   @media (max-width: 36rem) {
     .report-summary button { padding: .85rem .25rem; }
-    .report-summary span { font-size: .68rem; }
-    .finding-toggle { grid-template-columns: 1fr auto; gap: .25rem; }
-    .finding-toggle .severity-label, .finding-toggle .finding-message { grid-column: 1; }
-    .finding-toggle .more { grid-column: 2; grid-row: 1 / 3; }
+    .report-summary button > span { font-size: .68rem; }
+    .finding-toggle { grid-template-columns: max-content 1fr auto; gap: .4rem .6rem; }
+    .finding-toggle .category-label { grid-column: 1; grid-row: 1; }
+    .finding-toggle .severity-label { grid-column: 2; grid-row: 1; justify-self: start; }
+    .finding-toggle .finding-message { grid-column: 1 / 3; grid-row: 2; }
+    .finding-toggle .more { grid-column: 3; grid-row: 1 / 3; }
     .finding-detail { grid-template-columns: 1fr; }
     .finding-detail span, .finding-detail a { grid-column: 1; }
     .report-findings li.open .finding-detail { max-height: 8rem; }
@@ -455,8 +473,7 @@
   /* ── steps ──────────────────────────────────────────────── */
     h2 { font-size: clamp(1.08rem, 2vw, 1.28rem); text-transform: uppercase; letter-spacing: .09em; color: var(--fg);
       margin: 4rem 0 1.1rem; font-weight: 700; text-align: center; }
-  .steps { display: grid; gap: 1rem; grid-template-columns: 1fr; }
-  /* 65rem, not 64: at exactly 1024px the first card's copy tips to a third line */
+  .steps { display: grid; gap: .8rem; grid-template-columns: repeat(3, 1fr); }
   @media (min-width: 65rem) {
     .steps { grid-template-columns: repeat(3, 1fr);
              width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%); }
@@ -505,6 +522,12 @@
   .step-command pre { min-height: 3.15rem; }
   .multiline-command { display: flex; flex-direction: column; }
   .multiline-command .command-cont { padding-left: 2ch; }
+  @media (max-width: 42rem) { .steps { grid-template-columns: 1fr; } }
+  @media (min-width: 42.001rem) and (max-width: 64.999rem) {
+    .step { padding: 1rem; }
+    .step pre { font-size: .68rem; }
+    .command-copy .copy-label { display: none; }
+  }
   .command-copy {
     position: absolute; top: .45rem; right: .45rem;
     display: inline-flex; align-items: center; gap: .25rem;
@@ -718,9 +741,9 @@
         </div>
       </div>
       <div class="report-summary" aria-label="Filter findings by severity">
-        <button class="blocking" type="button" data-report-filter="blocking" aria-pressed="false" disabled><b data-report-count="blocking">—</b><span>blocking</span></button>
-        <button class="warning" type="button" data-report-filter="warning" aria-pressed="false" disabled><b data-report-count="warning">—</b><span>warnings</span></button>
-        <button class="info" type="button" data-report-filter="info" aria-pressed="false" disabled><b data-report-count="info">—</b><span>information</span></button>
+        <button class="blocking" type="button" data-report-filter="blocking" aria-pressed="false" disabled><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 2h8.2L22 7.9v8.2L16.1 22H7.9L2 16.1V7.9Z"/><path d="M12 8v4M12 16h.01"/></svg><span data-report-count="blocking">—</span></b><span>blocking</span></button>
+        <button class="warning" type="button" data-report-filter="warning" aria-pressed="false" disabled><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m21.7 18-8-14a2 2 0 0 0-3.4 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3Z"/><path d="M12 9v4M12 17h.01"/></svg><span data-report-count="warning">—</span></b><span>warnings</span></button>
+        <button class="info" type="button" data-report-filter="info" aria-pressed="false" disabled><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg><span data-report-count="info">—</span></b><span>information</span></button>
       </div>
       <ul class="report-findings" aria-live="polite">
         <li class="report-state">Loading assessment…</li>
@@ -891,6 +914,26 @@
   }
 
   const E = (s) => s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const formatFindingDetail = (finding) => {
+    const quoted = [...finding.detail.matchAll(/'([^']+)'/g)].map((match) => match[1]);
+    const detail = finding.detail.replace(/'([^']+)'/g, "$1");
+    const fieldPaths = detail.match(/\b[A-Za-z_$][\w$]*(?:\.[A-Za-z_$][\w$]*)+\b/g) || [];
+    const identifiers = new Set(
+      [...quoted, ...fieldPaths, finding.teamId, finding.targetId, finding.subject].filter(
+        (value) => typeof value === "string" && value.length > 0,
+      ),
+    );
+    if (identifiers.size === 0) return E(detail);
+
+    const pattern = [...identifiers]
+      .sort((left, right) => right.length - left.length)
+      .map((identifier) => identifier.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+      .join("|");
+    return detail
+      .split(new RegExp(`(${pattern})`, "g"))
+      .map((part) => (identifiers.has(part) ? `<code>${E(part)}</code>` : E(part)))
+      .join("");
+  };
 
   /* ── assessment: example switcher, filters and expandable findings ──── */
   const EXAMPLES = {
@@ -901,6 +944,13 @@
     reelstream: "reelstream-org",
     wavelength: "wavelength-org",
   };
+  const CATEGORY_ICONS = {
+    gaps: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m18.8 12.3 1.8-1.8a5.5 5.5 0 0 0-7.8-7.8L11 4.5M5.2 11.7l-1.8 1.8a5.5 5.5 0 0 0 7.8 7.8l1.8-1.8"/><path d="M8 2v3M2 8h3M16 19v3M19 16h3"/></svg>',
+    policy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/><path d="m9 12 2 2 4-4"/></svg>',
+    topology: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="5" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/><path d="M12 7v4M6.7 16.5 10.5 12M17.3 16.5 13.5 12"/></svg>',
+    "shadow-ai": '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 8V4H8"/><circle cx="8" cy="4" r="1" fill="currentColor" stroke="none"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2M20 14h2M9 13v2M15 13v2"/></svg>',
+  };
+  const GENERIC_CATEGORY_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v16H4zM8 9h8M8 13h6"/></svg>';
 
   const report = document.querySelector(".report");
   if (report) {
@@ -982,12 +1032,15 @@
         }
         list.innerHTML = data.findings.map((finding) => {
           const severity = ["blocking", "warning", "info"].includes(finding.severity) ? finding.severity : "info";
-          const context = [finding.source, finding.ruleId, finding.teamId].filter(Boolean).join(" · ");
+          const categoryKey = typeof finding.source === "string" ? finding.source : "assessment";
+          const category = categoryKey.replaceAll("-", " ");
+          const categoryIcon = CATEGORY_ICONS[categoryKey] || GENERIC_CATEGORY_ICON;
+          const context = [finding.ruleId, finding.teamId].filter(Boolean).join(" · ");
           const documentation = typeof finding.documentation === "string" && finding.documentation.startsWith("https://teamapi.dev/")
             ? finding.documentation : "latest/guide/evaluation.html";
           return `
             <li data-severity="${severity}">
-              <button class="finding-toggle" type="button" aria-expanded="false"><span class="severity-label">${severity === "info" ? "Information" : severity}</span><span class="finding-message">${E(finding.detail)}</span><span class="more" aria-hidden="true">+</span></button>
+              <button class="finding-toggle" type="button" aria-expanded="false"><span class="category-label">${categoryIcon}${E(category)}</span><span class="severity-label">${severity === "info" ? "Information" : severity}</span><span class="finding-message">${formatFindingDetail(finding)}</span><span class="more" aria-hidden="true">+</span></button>
               <div class="finding-detail"><span>${E(context)}</span><a href="${documentation}">Read guidance →</a></div>
             </li>`;
         }).join("");
