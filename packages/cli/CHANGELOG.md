@@ -1,5 +1,19 @@
 # @jgalego/teamapi
 
+## 0.7.0
+
+### Minor Changes
+
+- 214b393: Add `teamapi assess` with text, JSON, self-contained HTML and SARIF output, optional repository scanning, and baseline state comparison.
+
+### Patch Changes
+
+- Updated dependencies [214b393]
+  - @jgalego/teamapi-core@0.10.0
+  - @jgalego/teamapi-chat@0.3.2
+  - @jgalego/teamapi-mcp-server@0.5.2
+  - @jgalego/teamapi-rest-api@0.7.1
+
 ## 0.6.1
 
 ### Patch Changes

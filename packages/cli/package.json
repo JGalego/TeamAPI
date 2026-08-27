@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Team API as Code toolchain: one YAML file per team becomes diagrams, gap and policy checks, a REST API + dashboard, an MCP server, imports, reconciliation and chat",
   "keywords": [
     "teamapi",

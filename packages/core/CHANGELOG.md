@@ -1,5 +1,11 @@
 # @jgalego/teamapi-core
 
+## 0.10.0
+
+### Minor Changes
+
+- 214b393: Add versioned normalized findings and unified assessments, durable assessment and evidence state, and bounded retry-aware provider clients.
+
 ## 0.9.0
 
 ### Minor Changes

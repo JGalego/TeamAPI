@@ -1,5 +1,12 @@
 # @jgalego/teamapi-mcp-server
 
+## 0.5.2
+
+### Patch Changes
+
+- Updated dependencies [214b393]
+  - @jgalego/teamapi-core@0.10.0
+
 ## 0.5.1
 
 ### Patch Changes
