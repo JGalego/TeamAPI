@@ -42,15 +42,15 @@
   a:focus-visible, button:focus-visible { outline: 2px solid var(--teal); outline-offset: 3px; }
 
   /* ── scroll story ───────────────────────────────────────── */
-  .js .reveal { opacity: 0; translate: 0 2rem; }
+  .js .reveal { opacity: 0; }
   .js .reveal.revealed {
-    opacity: 1; translate: none;
-    transition: opacity .7s cubic-bezier(.2,.8,.2,1), translate .7s cubic-bezier(.2,.8,.2,1);
+    opacity: 1;
+    transition: opacity .7s cubic-bezier(.2,.8,.2,1);
   }
-  .js .reveal .reveal-item, .js .reveal .ints a { opacity: 0; translate: 0 1rem; }
+  .js .reveal .reveal-item, .js .reveal .ints a { opacity: 0; }
   .js .reveal.revealed .reveal-item, .js .reveal.revealed .ints a {
-    opacity: 1; translate: none;
-    transition: opacity .55s cubic-bezier(.2,.8,.2,1), translate .55s cubic-bezier(.2,.8,.2,1);
+    opacity: 1;
+    transition: opacity .55s cubic-bezier(.2,.8,.2,1);
     transition-delay: calc(var(--i, 0) * 90ms + 160ms);
   }
   .js .reveal .ints a:nth-child(2) { --i: 1; }
@@ -543,7 +543,7 @@
   /* ── section-by-section story ────────────────────────────
      Presenter atmosphere without presenter mechanics: every idea gets a
      viewport-sized chapter in one ordinary, vertically scrollable document. */
-  html { scroll-behavior: smooth; scroll-snap-type: y mandatory; }
+  html { scroll-behavior: smooth; }
   body {
     background:
       radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--purple) 13%, transparent), transparent 34rem),
@@ -556,7 +556,6 @@
     display: flex; flex-direction: column; justify-content: center;
     min-height: 100vh; min-height: 100svh;
     margin: 0 auto; padding: 4rem 2.5rem 6rem; width: min(76rem, 100%);
-    scroll-snap-align: start; scroll-snap-stop: always;
   }
   .chapter > h2 { margin-top: 0; font-size: clamp(1.35rem, 2.5vw, 1.75rem); }
   .chapter .section-intro { font-size: clamp(1.1rem, 1.8vw, 1.3rem); }
@@ -583,10 +582,10 @@
     .chapter.demo .section-intro, .section-intro.story-lede { white-space: normal; text-wrap: balance; }
   }
   @media (prefers-reduced-motion: reduce) {
-    html { scroll-behavior: auto; scroll-snap-type: none; }
+    html { scroll-behavior: auto; }
     .friction article:hover .card-icon *, .step:hover .card-icon * { animation: none !important; transform: none !important; }
     .report-summary button, .report-summary button::after, .report-findings li, .finding-toggle .more, .finding-detail { transition: none; }
-    .js .reveal, .js .reveal .reveal-item, .js .reveal .ints a { opacity: 1; translate: none; transition: none; }
+    .js .reveal, .js .reveal .reveal-item, .js .reveal .ints a { opacity: 1; transition: none; }
   }
 
   /* ── footer ─────────────────────────────────────────────── */
@@ -1490,8 +1489,8 @@
   }
 
   /* ── chapter navigation ──────────────────────────────────────────────
-     Scrolling stays native; snap points settle wheel, trackpad, and touch
-     movement. Arrow/Page keys provide the same previous/next affordance. */
+     Scrolling stays native. Arrow/Page keys provide a smooth
+     previous/next affordance without changing wheel, trackpad, or touch movement. */
   const chapters = [...document.querySelectorAll(".chapter")];
 
   function visibleChapter() {
