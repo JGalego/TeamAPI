@@ -1,6 +1,6 @@
 {
   "name": "@jgalego/teamapi-rest-api",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Read-only REST API over a resolved Team API org graph",
   "keywords": [
     "teamapi",

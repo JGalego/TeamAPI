@@ -1,5 +1,12 @@
 # @jgalego/teamapi-rest-api
 
+## 0.7.1
+
+### Patch Changes
+
+- Updated dependencies [214b393]
+  - @jgalego/teamapi-core@0.10.0
+
 ## 0.7.0
 
 ### Minor Changes
