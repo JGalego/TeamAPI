@@ -6,6 +6,10 @@ branding:
   color: "purple"
 
 inputs:
+  teamapi-version:
+    description: "npm version of @jgalego/teamapi to install; pin this in production workflows"
+    required: false
+    default: "latest"
   patterns:
     description: >-
       File paths, globs, or a directory to auto-discover teamapi.yml under (passed straight
@@ -79,14 +83,19 @@ runs:
 
     - name: Install teamapi
       shell: bash
-      run: npm install --global @jgalego/teamapi
+      env:
+        TEAMAPI_VERSION: ${{ inputs.teamapi-version }}
+      run: npm install --global "@jgalego/teamapi@${TEAMAPI_VERSION}"
 
     - name: Validate
       id: validate
       shell: bash
+      env:
+        TEAMAPI_PATTERNS: ${{ inputs.patterns }}
       run: |
+        read -r -a patterns <<< "$TEAMAPI_PATTERNS"
         set +e
-        OUTPUT="$(teamapi validate ${{ inputs.patterns }} 2>&1)"
+        OUTPUT="$(teamapi validate "${patterns[@]}" 2>&1)"
         CODE=$?
         set -e
         {
@@ -105,7 +114,9 @@ runs:
     - name: Check for accountability gaps
       if: inputs.check-gaps == 'true' && steps.validate.outputs.success == 'true'
       shell: bash
-      run: teamapi gaps ${{ inputs.patterns }}
+      env:
+        TEAMAPI_PATTERNS: ${{ inputs.patterns }}
+      run: read -r -a patterns <<< "$TEAMAPI_PATTERNS"; teamapi gaps "${patterns[@]}"
 
     # Same ordering argument as the gaps step above: policy rules are evaluated against the
     # resolved graph, so an unresolvable `$ref` would make a team look non-compliant when its
@@ -113,7 +124,9 @@ runs:
     - name: Check declared policies
       if: inputs.check-policies == 'true' && steps.validate.outputs.success == 'true'
       shell: bash
-      run: teamapi policy ${{ inputs.patterns }}
+      env:
+        TEAMAPI_PATTERNS: ${{ inputs.patterns }}
+      run: read -r -a patterns <<< "$TEAMAPI_PATTERNS"; teamapi policy "${patterns[@]}"
 
     # Runs regardless of whether the gate steps above failed, so the annotations describing *why*
     # the build is red are still produced — `continue-on-error` on the checks themselves would
@@ -121,35 +134,44 @@ runs:
     - name: Check topology
       if: inputs.check-topology == 'true' && steps.validate.outputs.success == 'true'
       shell: bash
-      run: teamapi topology ${{ inputs.patterns }}
+      env:
+        TEAMAPI_PATTERNS: ${{ inputs.patterns }}
+      run: read -r -a patterns <<< "$TEAMAPI_PATTERNS"; teamapi topology "${patterns[@]}"
 
     - name: Write SARIF
       if: always() && inputs.sarif-dir != '' && steps.validate.outputs.success == 'true'
       shell: bash
+      env:
+        TEAMAPI_PATTERNS: ${{ inputs.patterns }}
+        TEAMAPI_SARIF_DIR: ${{ inputs.sarif-dir }}
       run: |
-        mkdir -p "${{ inputs.sarif-dir }}"
+        read -r -a patterns <<< "$TEAMAPI_PATTERNS"
+        mkdir -p "$TEAMAPI_SARIF_DIR"
         # `teamapi gaps`/`policy` exit non-zero on a blocking finding, which is exactly the run
         # whose SARIF is worth uploading — so the exit code is ignored here and left to the gate
         # steps above to enforce.
-        teamapi gaps ${{ inputs.patterns }} --format sarif > "${{ inputs.sarif-dir }}/gaps.sarif" || true
+        teamapi gaps "${patterns[@]}" --format sarif > "$TEAMAPI_SARIF_DIR/gaps.sarif" || true
         if [ "${{ inputs.check-policies }}" = "true" ]; then
-          teamapi policy ${{ inputs.patterns }} --format sarif > "${{ inputs.sarif-dir }}/policy.sarif" || true
+          teamapi policy "${patterns[@]}" --format sarif > "$TEAMAPI_SARIF_DIR/policy.sarif" || true
         fi
         if [ "${{ inputs.check-topology }}" = "true" ]; then
-          teamapi topology ${{ inputs.patterns }} --format sarif > "${{ inputs.sarif-dir }}/topology.sarif" || true
+          teamapi topology "${patterns[@]}" --format sarif > "$TEAMAPI_SARIF_DIR/topology.sarif" || true
         fi
 
     - name: Render preview diagram
       id: render
       if: steps.validate.outputs.success == 'true'
       shell: bash
+      env:
+        TEAMAPI_PATTERNS: ${{ inputs.patterns }}
+        TEAMAPI_RENDER_SCOPE: ${{ inputs.render-scope }}
+        TEAMAPI_RENDER_TEAM: ${{ inputs.render-team }}
       run: |
+        read -r -a patterns <<< "$TEAMAPI_PATTERNS"
         set +e
-        TEAM_FLAG=""
-        if [ -n "${{ inputs.render-team }}" ]; then
-          TEAM_FLAG="--team ${{ inputs.render-team }}"
-        fi
-        DIAGRAM="$(teamapi render ${{ inputs.patterns }} --scope ${{ inputs.render-scope }} --format mermaid $TEAM_FLAG 2>&1)"
+        team_flag=()
+        if [[ -n "$TEAMAPI_RENDER_TEAM" ]]; then team_flag=(--team "$TEAMAPI_RENDER_TEAM"); fi
+        DIAGRAM="$(teamapi render "${patterns[@]}" --scope "$TEAMAPI_RENDER_SCOPE" --format mermaid "${team_flag[@]}" 2>&1)"
         set -e
         {
           echo "diagram<<TEAMAPI_RENDER_EOF"

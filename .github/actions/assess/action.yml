@@ -1,0 +1,95 @@
+name: "TeamAPI Assessment"
+description: "Assess ownership, policy, topology and optional repository AI usage, then upload SARIF"
+author: "JGalego"
+branding:
+  icon: "activity"
+  color: "purple"
+
+inputs:
+  patterns:
+    description: "Whitespace-separated files, globs or directories; defaults to teamapi.config.yml when empty"
+    required: false
+    default: "."
+  scan-dir:
+    description: "Directory whose immediate subdirectories are repository checkouts for shadow-AI detection"
+    required: false
+    default: ""
+  config:
+    description: "Explicit teamapi.config.yml path"
+    required: false
+    default: ""
+  state:
+    description: "Assessment state path to compare and replace; preserve it with a cache or artifact"
+    required: false
+    default: ""
+  sarif-file:
+    description: "Path for the generated SARIF report"
+    required: false
+    default: "teamapi-assessment.sarif"
+  upload-sarif:
+    description: "Upload the report to GitHub code scanning; requires security-events: write"
+    required: false
+    default: "false"
+  teamapi-version:
+    description: "npm version of @jgalego/teamapi to install; pin this in production workflows"
+    required: false
+    default: "latest"
+
+outputs:
+  exit-code:
+    description: "The teamapi assess exit code; 1 means a blocking finding or operational error"
+    value: ${{ steps.assess.outputs.exit-code }}
+  sarif-file:
+    description: "The generated SARIF path"
+    value: ${{ inputs.sarif-file }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Node
+      uses: actions/setup-node@v7
+      with:
+        node-version: "22"
+
+    - name: Install TeamAPI
+      shell: bash
+      env:
+        TEAMAPI_VERSION: ${{ inputs.teamapi-version }}
+      run: npm install --global "@jgalego/teamapi@${TEAMAPI_VERSION}"
+
+    - name: Run assessment
+      id: assess
+      shell: bash
+      env:
+        TEAMAPI_PATTERNS: ${{ inputs.patterns }}
+        TEAMAPI_SCAN_DIR: ${{ inputs.scan-dir }}
+        TEAMAPI_CONFIG: ${{ inputs.config }}
+        TEAMAPI_STATE: ${{ inputs.state }}
+        TEAMAPI_SARIF_FILE: ${{ inputs.sarif-file }}
+      run: |
+        read -r -a patterns <<< "$TEAMAPI_PATTERNS"
+        args=("${patterns[@]}" --format sarif --out "$TEAMAPI_SARIF_FILE")
+        if [[ -n "$TEAMAPI_SCAN_DIR" ]]; then args+=(--scan "$TEAMAPI_SCAN_DIR"); fi
+        if [[ -n "$TEAMAPI_CONFIG" ]]; then args+=(--config "$TEAMAPI_CONFIG"); fi
+        if [[ -n "$TEAMAPI_STATE" ]]; then args+=(--state "$TEAMAPI_STATE"); fi
+
+        set +e
+        teamapi assess "${args[@]}"
+        code=$?
+        set -e
+        echo "exit-code=$code" >> "$GITHUB_OUTPUT"
+        if [[ -s "$TEAMAPI_SARIF_FILE" ]]; then echo "report-written=true" >> "$GITHUB_OUTPUT"; fi
+
+    - name: Upload SARIF
+      if: inputs.upload-sarif == 'true' && steps.assess.outputs.report-written == 'true'
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ${{ inputs.sarif-file }}
+        category: teamapi-assessment
+
+    - name: Enforce assessment result
+      if: steps.assess.outputs.exit-code != '0'
+      shell: bash
+      env:
+        TEAMAPI_EXIT_CODE: ${{ steps.assess.outputs.exit-code }}
+      run: exit "$TEAMAPI_EXIT_CODE"

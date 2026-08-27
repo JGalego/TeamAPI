@@ -6,6 +6,10 @@ branding:
   color: "purple"
 
 inputs:
+  teamapi-version:
+    description: "npm version of @jgalego/teamapi to install; pin this in production workflows"
+    required: false
+    default: "latest"
   patterns:
     description: "File paths, globs, or a directory to auto-discover teamapi.yml under."
     required: false
@@ -62,7 +66,9 @@ runs:
 
     - name: Install teamapi
       shell: bash
-      run: npm install --global @jgalego/teamapi
+      env:
+        TEAMAPI_VERSION: ${{ inputs.teamapi-version }}
+      run: npm install --global "@jgalego/teamapi@${TEAMAPI_VERSION}"
 
     # Every check runs even when an earlier one fails, and none of them fail the step: the point
     # of this action is the report, and a shell that aborts on the first non-zero exit would
@@ -77,6 +83,7 @@ runs:
       run: |
         set +e
         clean=true
+        read -r -a patterns <<< "$TEAMAPI_PATTERNS"
 
         run_check() {
           local name="$1"
@@ -102,13 +109,13 @@ runs:
         }
 
         : > report.md
-        run_check "Validation" teamapi validate $TEAMAPI_PATTERNS
-        run_check "Gaps" teamapi gaps $TEAMAPI_PATTERNS
+        run_check "Validation" teamapi validate "${patterns[@]}"
+        run_check "Gaps" teamapi gaps "${patterns[@]}"
         if [ "$TEAMAPI_CHECK_POLICIES" = "true" ]; then
-          run_check "Policies" teamapi policy $TEAMAPI_PATTERNS
+          run_check "Policies" teamapi policy "${patterns[@]}"
         fi
         if [ -n "$TEAMAPI_SCAN_DIR" ]; then
-          run_check "Shadow AI" teamapi shadow-ai $TEAMAPI_PATTERNS --scan "$TEAMAPI_SCAN_DIR"
+          run_check "Shadow AI" teamapi shadow-ai "${patterns[@]}" --scan "$TEAMAPI_SCAN_DIR"
         fi
 
         echo "clean=$clean" >> "$GITHUB_OUTPUT"
