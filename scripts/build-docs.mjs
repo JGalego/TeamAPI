@@ -120,6 +120,7 @@ const GUIDE_CHAPTERS = [
 ];
 
 const GUIDE_REDIRECTS = new Map([
+  ["Assess an existing organization", "guide/evaluation.html"],
   ["Paperclip", "integrations/paperclip.html"],
   ["Slack", "integrations/slack.html"],
   ["PagerDuty", "integrations/pagerduty.html"],

@@ -177,7 +177,7 @@
     .cta { width: min(70rem, calc(100vw - 3rem)); margin-left: 50%; transform: translateX(-50%); }
   }
   .acts {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: .7rem;
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: .7rem;
     width: min(62rem, 100%); margin: 2rem auto 0; text-align: left;
   }
   .acts a {
@@ -238,6 +238,42 @@
   }
   @media (max-width: 40rem) { .term pre { height: 27rem; } }
   .term .p { color: var(--teal); }
+
+  /* ── assessment sample ──────────────────────────────────── */
+  .baseline { margin-top: 5rem; }
+  .report {
+    overflow: hidden; background: var(--card); border: 1px solid var(--line);
+    border-radius: 14px; box-shadow: var(--shadow);
+  }
+  .report-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    padding: .85rem 1rem; border-bottom: 1px solid var(--line); color: var(--muted); font-size: .8rem;
+  }
+  .report-head code { color: var(--fg); overflow-wrap: anywhere; }
+  .report-summary { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 1px solid var(--line); }
+  .report-summary div { padding: 1.1rem; text-align: center; border-right: 1px solid var(--line); }
+  .report-summary div:last-child { border-right: 0; }
+  .report-summary b { display: block; font-size: 1.65rem; line-height: 1.1; }
+  .report-summary span { color: var(--muted); font-size: .78rem; }
+  .report-summary .blocking b { color: var(--teal); }
+  .report-summary .warning b { color: var(--amber); }
+  .report-summary .info b { color: var(--purple); }
+  .report-findings { list-style: none; margin: 0; padding: 0; }
+  .report-findings li {
+    display: grid; grid-template-columns: 5.5rem 1fr; gap: .85rem;
+    padding: .85rem 1rem; border-bottom: 1px solid var(--line); font-size: .86rem;
+  }
+  .report-findings code { color: var(--muted); font-size: .72rem; }
+  .report-foot {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: .9rem 1rem; color: var(--muted); font-size: .8rem;
+  }
+  .report-foot a { color: var(--teal); font-weight: 600; text-decoration: none; white-space: nowrap; }
+  .report-foot a:hover { text-decoration: underline; }
+  @media (max-width: 36rem) {
+    .report-findings li { grid-template-columns: 1fr; gap: .25rem; }
+    .report-foot { align-items: flex-start; flex-direction: column; }
+  }
   .term .c { color: #f1f5f9; white-space: pre-wrap; overflow-wrap: anywhere; }
   .term .dim { color: #64748b; }
   .term .ok { color: var(--teal); }
@@ -505,6 +541,25 @@
   </div>
   </section>
 
+  <section class="baseline slide reveal" data-title="Find accountability gaps">
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v18h18"/><path d="m7 16 4-4 3 3 5-7"/></svg>Find where accountability breaks</h2>
+    <p class="section-intro">Run one baseline across ownership, policy, topology, and repository evidence—then track what gets resolved.</p>
+    <div class="report reveal-item" style="--i:0">
+      <div class="report-head"><strong>ACME baseline</strong><code>teamapi assess examples/acme-org</code></div>
+      <div class="report-summary">
+        <div class="blocking"><b>0</b><span>blocking</span></div>
+        <div class="warning"><b>5</b><span>warnings</span></div>
+        <div class="info"><b>1</b><span>information</span></div>
+      </div>
+      <ul class="report-findings">
+        <li><code>ownership</code><span><b>LedgerEntryPosted</b> has no declared consumer.</span></li>
+        <li><code>topology</code><span><b>Stream Checkout</b> has an overdue collaboration.</span></li>
+        <li><code>policy</code><span><b>PR approvals</b> are delegated to a GitHub Actions gate.</span></li>
+      </ul>
+      <div class="report-foot"><span>6 findings across 4 teams, 4 services, and 5 agents.</span><a href="latest/guide/evaluation.html">Run a bounded evaluation →</a></div>
+    </div>
+  </section>
+
   <section class="slide reveal" data-title="One source, many surfaces">
   <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22v-5" /> <path d="M15 8V2" /> <path d="M17 8a1 1 0 0 1 1 1v4a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V9a1 1 0 0 1 1-1z" /> <path d="M9 8V2" /></svg>One source, many surfaces</h2>
   <p class="section-intro">Define your organization once. Keep the tools around it in sync.</p>
@@ -556,11 +611,16 @@
   </div>
   </section>
 
-  <section class="cta slide reveal" data-title="Start with one team">
-    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172" /> <path d="m18.586 13.414-5.172 5.172" /> <path d="M6 12h12" /> <circle cx="12" cy="20" r="2" /> <circle cx="12" cy="4" r="2" /> <circle cx="20" cy="12" r="2" /> <circle cx="4" cy="12" r="2" /></svg>Start with one team</h2>
+  <section class="cta slide reveal" data-title="Start with what you have">
+    <h2><svg class="mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m10.586 5.414-5.172 5.172" /> <path d="m18.586 13.414-5.172 5.172" /> <path d="M6 12h12" /> <circle cx="12" cy="20" r="2" /> <circle cx="12" cy="4" r="2" /> <circle cx="20" cy="12" r="2" /> <circle cx="4" cy="12" r="2" /></svg>Start with what you have</h2>
     <p class="q">Stop asking around.<br>Start querying your organization.</p>
     <div class="acts">
-      <a class="go" href="latest/guide/quick-start.html">
+      <a class="go" href="latest/guide/evaluation.html">
+        <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+        <span><strong>Evaluate your organization</strong><small>Find one real gap in a representative scope.</small></span>
+        <span class="arrow" aria-hidden="true">→</span>
+      </a>
+      <a href="latest/guide/quick-start.html">
         <span class="action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15v5"/><path d="M9 18h6"/><path d="M10 2h4"/><path d="M8 5h8l2 10H6z"/></svg></span>
         <span><strong>Build your first Team API</strong><small>Install, scaffold, and serve a team in minutes.</small></span>
         <span class="arrow" aria-hidden="true">→</span>

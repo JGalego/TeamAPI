@@ -1015,6 +1015,24 @@ The command leaves several operations out because the source data cannot perform
 
 None of these APIs has a transaction, so a failure partway through says so and tells you to re-run, rather than reporting success over a half-applied change.
 
+<a id="assessment"></a>
+
+## 🔎 Assess an existing organization
+
+Start with a bounded baseline before deciding how deeply to adopt TeamAPI. `assess` resolves the organization once,
+then combines accountability gaps, policy checks, topology heuristics and—when `--scan` is supplied—repository AI
+evidence into one report.
+
+```bash
+teamapi assess teams --scan repositories --state .teamapi/assessment.json
+teamapi assess teams --format html --out teamapi-assessment.html
+```
+
+Reports are available as text, JSON, self-contained HTML or SARIF. Retaining the state file makes later runs name
+the stable finding IDs that appeared or were resolved. The [evaluation guide](docs/evaluation.md) covers selecting a
+representative scope, importing existing sources, reviewing one finding end to end and deciding whether the result
+is useful enough to automate.
+
 <a id="cli-reference"></a>
 
 ## 💻 CLI reference
@@ -1024,6 +1042,7 @@ None of these APIs has a transaction, so a failure partway through says so and t
 | Command                                                                                                                                                                                                                                           | Purpose                                                                                                                                                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `teamapi validate <patterns...> [--format text\|json\|sarif]`                                                                                                                                                                                     | Resolve every `$ref` transitively; report unresolved refs and [org-wide name conflicts](#name-conflicts)                                                                                                                                 |
+| `teamapi assess <patterns...> [--scan <dir>] [--state <file>] [--format text\|json\|html\|sarif] [--out <file>]`                                                                                                                                  | Establish and compare an [organization-wide accountability baseline](#assessment)                                                                                                                                                        |
 | `teamapi gaps <patterns...>`                                                                                                                                                                                                                      | Report [accountability holes between teams](#gaps) — unowned event contracts, vacant seats, unowned agents                                                                                                                               |
 | `teamapi policy <patterns...>`                                                                                                                                                                                                                    | Check [declared policies](#policy) against the org graph, and report the ones nothing enforces                                                                                                                                           |
 | `teamapi shadow-ai <patterns...> --scan <dir>`                                                                                                                                                                                                    | Report [AI adoption found in repositories](#shadow-ai) against what teams declare in `agents[]`                                                                                                                                          |
@@ -1055,7 +1074,8 @@ None of these APIs has a transaction, so a failure partway through says so and t
 
 ### 🤖 Machine-readable output
 
-`validate`, `gaps`, `policy` and `shadow-ai` take `--format text | json | sarif`; `diff` takes `--format text | json`.
+`validate`, `gaps`, `policy` and `shadow-ai` take `--format text | json | sarif`; `assess` also takes `html`, and
+`diff` takes `--format text | json`.
 
 ```bash
 teamapi gaps examples/driftwood-org --format json | jq '.findings[] | select(.severity == "blocking")'
