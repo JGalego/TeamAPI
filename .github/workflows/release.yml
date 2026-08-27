@@ -3,6 +3,20 @@ name: Release
 on:
   push:
     branches: [main]
+    # Keep .changeset files eligible: they drive the Version Packages PR.
+    paths-ignore:
+      - "site/**"
+      - "docs/**"
+      - "examples/**"
+      - "scripts/build-docs.mjs"
+      - "scripts/build-assessments.mjs"
+      - ".github/workflows/site.yml"
+      - "README.md"
+      - "CODE_OF_CONDUCT.md"
+      - "CONTRIBUTING.md"
+      - "SECURITY.md"
+      - "LICENSE"
+      - "packages/*/README.md"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
