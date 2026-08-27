@@ -65,6 +65,40 @@ This is a pnpm/Turborepo monorepo:
 3. If you touch a package's public API, check whether its `README.md` still accurately describes it.
 4. Run `pnpm verify` before opening a PR — this is exactly what CI runs, in the same order.
 
+### Stable findings and report contracts
+
+Findings are an API, not formatted log lines. When adding or changing a check:
+
+- Normalize it at the shared finding boundary and build its `id` from semantic identity, never mutable prose or
+  severity.
+- Do not reuse a `ruleId` for a different condition. A renamed or substantially redefined rule gets a new ID.
+- Add a test proving that wording and severity changes leave the identity unchanged, plus a representative expected
+  ID. See `packages/core/src/__tests__/normalized-findings.test.ts`.
+- Treat additions to a versioned report as compatible and removals or meaning changes as a new format version. Update
+  `packages/core/src/__tests__/compatibility-contract.test.ts` when a public contract changes.
+
+The full guarantees for finding IDs, reports, CLI behavior and package APIs are in
+[docs/compatibility.md](docs/compatibility.md).
+
+### External integration tests
+
+Provider clients must use the shared transport in `packages/core/src/integrations/http.ts` so timeout, retry and typed
+error behavior stays consistent. Keep automated tests deterministic and credential-free: stub `fetch`, return the
+smallest provider-shaped response and assert the outgoing URL, method and headers without snapshotting a token.
+
+Cover the failure boundaries a provider can change underneath us:
+
+- successful reads and documented write methods;
+- authentication and other permanent 4xx responses without retry;
+- bounded retry of 429, 5xx and network failures, including `Retry-After`;
+- pagination across at least two pages and rejection of repeated cursors or links;
+- malformed success payloads and provider-specific error envelopes.
+
+Use `packages/core/src/__tests__/integration-http.test.ts` for transport behavior and
+`packages/core/src/__tests__/http-clients.test.ts` for provider contracts. Live credentials never belong in the test
+suite. Before changing a provider integration, use the read-only `teamapi doctor` command against a least-privilege
+test account when one is available, then encode the observed shape in a fixture.
+
 ## Releasing
 
 This repo uses [Changesets](https://github.com/changesets/changesets). If your change affects a published package's behavior (not just internal refactors, tests, or docs), add one:
@@ -78,3 +112,6 @@ Pick the affected package(s), a semver bump (patch/minor/major), and a one-line 
 ## Reporting bugs / requesting features
 
 Open a [GitHub issue](https://github.com/JGalego/TeamAPI/issues). For security issues, see [SECURITY.md](SECURITY.md) instead of filing a public issue.
+
+Project decisions and maintenance expectations are documented in [GOVERNANCE.md](GOVERNANCE.md),
+[ROADMAP.md](ROADMAP.md) and [SUPPORT.md](SUPPORT.md).

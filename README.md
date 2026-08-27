@@ -57,6 +57,7 @@ The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/
 - [📥 Import](#import)
 - [🔄 Sync with GitHub teams](#apply)
 - [✍️ Write back to Slack, Okta and PagerDuty](#apply-to)
+- [🔎 Assess an existing organization](#assessment)
 - [💻 CLI reference](#cli-reference)
   - [🤖 Machine-readable output](#machine-readable)
   - [🔀 Versions and migration](#migrate)
@@ -1696,3 +1697,5 @@ The pagination check asks for one item per page and counts what comes back: gett
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup, everyday commands, and the release process.
 Security issues: see [SECURITY.md](SECURITY.md) rather than filing a public issue.
+Project direction, decisions and maintenance expectations are public in [ROADMAP.md](ROADMAP.md),
+[GOVERNANCE.md](GOVERNANCE.md) and [SUPPORT.md](SUPPORT.md).

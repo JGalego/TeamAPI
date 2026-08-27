@@ -256,6 +256,17 @@ function collectPages() {
       });
     }
   }
+  for (const name of ["GOVERNANCE.md", "ROADMAP.md", "SUPPORT.md"]) {
+    if (existsSync(join(source, name))) {
+      pages.push({
+        src: name,
+        out: `${name.toLowerCase().replace(/\.md$/, "")}.html`,
+        title: titleCase(name.replace(/\.md$/, "").toLowerCase()),
+        group: "Project",
+        markdown: read(name),
+      });
+    }
+  }
 
   const integrationsDir = join(source, "docs", "integrations");
   if (existsSync(integrationsDir)) {
