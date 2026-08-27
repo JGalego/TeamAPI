@@ -13,6 +13,7 @@ export * from "./gaps/rules";
 export * from "./policy/check";
 export * from "./topology/heuristics";
 export * from "./report/sarif";
+export * from "./report/findings";
 export * from "./shadow-ai/scan";
 export * from "./shadow-ai/plan";
 export * from "./context-map/patterns";

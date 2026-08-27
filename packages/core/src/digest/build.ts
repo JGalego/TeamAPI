@@ -1,8 +1,14 @@
 import type { OrgGraph } from "../model/org-graph";
-import { planGaps, type GapFinding } from "../gaps/plan";
-import { checkPolicies, type PolicyFinding } from "../policy/check";
-import { checkTopology, type TopologyFinding } from "../topology/heuristics";
+import { planGaps } from "../gaps/plan";
+import { checkPolicies } from "../policy/check";
+import { checkTopology } from "../topology/heuristics";
 import { snapshotOrg, type OrgSnapshot } from "../history/trends";
+import {
+  normalizeGapFinding,
+  normalizePolicyFinding,
+  normalizeTopologyFinding,
+  sortFindings,
+} from "../report/findings";
 
 export interface DigestItem {
   severity: "blocking" | "warning" | "info";
@@ -43,25 +49,6 @@ export interface DigestOptions {
 }
 
 const DEFAULT_LIMIT = 25;
-const SEVERITY_ORDER: Record<DigestItem["severity"], number> = { blocking: 0, warning: 1, info: 2 };
-
-function fromGap(finding: GapFinding): DigestItem {
-  return { severity: finding.severity, teamId: finding.teamId, kind: finding.kind, detail: finding.detail };
-}
-
-function fromPolicy(finding: PolicyFinding): DigestItem {
-  return {
-    severity: finding.severity,
-    teamId: finding.teamId,
-    kind: `policy/${finding.ruleKey}`,
-    detail: `${finding.policyName}: ${finding.detail}`,
-  };
-}
-
-function fromTopology(finding: TopologyFinding): DigestItem {
-  return { severity: finding.severity, teamId: finding.teamId, kind: finding.kind, detail: finding.detail };
-}
-
 /**
  * The org's weekly state of play: what is unowned, what is overloaded, and what moved.
  *
@@ -82,16 +69,16 @@ export function buildOrgDigest(graph: OrgGraph, options: DigestOptions = {}): Or
   const limit = options.limit ?? DEFAULT_LIMIT;
   const snapshot = snapshotOrg(graph);
 
-  const all = [
-    ...planGaps(graph).findings.map(fromGap),
-    ...checkPolicies(graph).findings.map(fromPolicy),
-    ...checkTopology(graph).findings.map(fromTopology),
-  ].sort(
-    (a, b) =>
-      SEVERITY_ORDER[a.severity] - SEVERITY_ORDER[b.severity] ||
-      a.teamId.localeCompare(b.teamId) ||
-      a.kind.localeCompare(b.kind),
-  );
+  const all: DigestItem[] = sortFindings([
+    ...planGaps(graph).findings.map(normalizeGapFinding),
+    ...checkPolicies(graph).findings.map(normalizePolicyFinding),
+    ...checkTopology(graph).findings.map(normalizeTopologyFinding),
+  ]).map((finding) => ({
+    severity: finding.severity,
+    teamId: finding.teamId ?? finding.targetId,
+    kind: finding.source === "policy" ? `policy/${finding.metadata?.ruleKey ?? finding.ruleId}` : finding.ruleId,
+    detail: finding.source === "policy" ? `${finding.summary}: ${finding.detail}` : finding.detail,
+  }));
 
   const previous = options.previous;
   const deltas: DigestDelta[] = [];
