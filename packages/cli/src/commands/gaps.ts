@@ -24,6 +24,8 @@ const GAP_RULES: { id: GapKind; description: string }[] = [
   { id: "dangling-owner", description: "An agent's ownerId names nobody on the team" },
   { id: "unaccountable-agent", description: "An agent names no human owner at all" },
   { id: "unscored-supervision", description: "Active agents, but no cognitiveLoad.supervision score" },
+  { id: "owner-fan-out", description: "One member owns more active agents than they can supervise" },
+  { id: "rationale-gap", description: "An AI session generated artifacts but recorded no decisions" },
   { id: "vacant-load-bearing", description: "A vacant role another team's reporting line terminates in" },
   { id: "unacknowledged", description: "A declared collaboration the other team declares nothing back for" },
 ];

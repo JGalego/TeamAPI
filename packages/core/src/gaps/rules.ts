@@ -174,6 +174,8 @@ export function isGapKind(value: string): value is GapKind {
       "unacknowledged",
       "unaccountable-agent",
       "unscored-supervision",
+      "owner-fan-out",
+      "rationale-gap",
     ] as const
   ).includes(value as GapKind);
 }

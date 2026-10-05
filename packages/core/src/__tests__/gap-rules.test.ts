@@ -245,6 +245,8 @@ describe("isGapKind", () => {
       "unacknowledged",
       "unaccountable-agent",
       "unscored-supervision",
+      "owner-fan-out",
+      "rationale-gap",
     ]) {
       expect(isGapKind(kind), kind).toBe(true);
     }

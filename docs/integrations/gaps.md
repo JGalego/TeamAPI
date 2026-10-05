@@ -23,15 +23,17 @@ teamapi gaps examples/acme-org
 4 finding(s), 0 blocking; 9 seam(s) checked.
 ```
 
-| finding                | meaning                                                        | blocking |
-| ---------------------- | -------------------------------------------------------------- | -------- |
-| `orphan-subscription`  | a service subscribes to an event no declared service publishes | **yes**  |
-| `dangling-owner`       | an agent's `ownerId` names nobody in that team's `members[]`   | **yes**  |
-| `unconsumed-event`     | a service publishes an event no declared service subscribes to | no       |
-| `vacant-load-bearing`  | a vacant role another team's reporting line terminates in      | no       |
-| `unacknowledged`       | a `collaboration` the other team declares nothing back about   | no       |
-| `unaccountable-agent`  | an `agents[]` entry naming no `ownerId` at all                 | no       |
-| `unscored-supervision` | active agents, but no `cognitiveLoad.supervision` score        | no       |
+| finding                | meaning                                                         | blocking |
+| ---------------------- | --------------------------------------------------------------- | -------- |
+| `orphan-subscription`  | a service subscribes to an event no declared service publishes  | **yes**  |
+| `dangling-owner`       | an agent's `ownerId` names nobody in that team's `members[]`    | **yes**  |
+| `unconsumed-event`     | a service publishes an event no declared service subscribes to  | no       |
+| `vacant-load-bearing`  | a vacant role another team's reporting line terminates in       | no       |
+| `unacknowledged`       | a `collaboration` the other team declares nothing back about    | no       |
+| `unaccountable-agent`  | an `agents[]` entry naming no `ownerId` at all                  | no       |
+| `unscored-supervision` | active agents, but no `cognitiveLoad.supervision` score         | no       |
+| `owner-fan-out`        | one member owns more than 3 active agents                       | no       |
+| `rationale-gap`        | a `sessions[]` entry with artifacts but no recorded `decisions` | no       |
 
 **Two findings exit non-zero:** `orphan-subscription` and `dangling-owner`. Both declarations look
 complete while pointing to something that does not exist. [`okta.md`](okta.md) treats deactivated
@@ -59,6 +61,13 @@ broken or depends on a publisher nobody has written down, and both are worth sto
   describes and no sprint budgets for, and a cognitive-load assessment that omits it is describing
   a quieter team than the one doing the work. Only reported for teams that assess their load at all
   and run at least one active agent.
+
+- **`owner-fan-out`** catches what `dangling-owner` cannot: every `ownerId` resolves, yet one person is
+  named on a whole fleet and cannot review what each agent produces. The limit is 3 active agents per
+  member; use a severity override or a waiver for a team that has a reason to exceed it.
+- **`rationale-gap`** is about cognitive debt. A session that generated artifacts but recorded no
+  `decisions` leaves agent-written output with no explanation of why, which is the thing a later
+  maintainer will need and cannot reconstruct.
 
 ## Matching
 

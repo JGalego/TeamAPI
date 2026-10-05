@@ -73,7 +73,7 @@ export function scoreProposalImpact(scenario: ProposalScenario): ProposalImpactS
   ]);
 
   const agentFindings = scenario.gaps.added.filter((finding) =>
-    ["dangling-owner", "unaccountable-agent", "unscored-supervision"].includes(finding.kind),
+    ["dangling-owner", "unaccountable-agent", "unscored-supervision", "owner-fan-out"].includes(finding.kind),
   );
   const agentGovernance = component(
     agentFindings.length * 30,

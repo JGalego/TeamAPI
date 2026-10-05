@@ -241,6 +241,12 @@ work itself rather than avoidable friction around it.
 load and runs active `agents[]` but leaves this blank — the load exists whether or not anyone
 scored it.
 
+Two more `teamapi gaps` warnings cover the people side of agent work. `owner-fan-out` fires when one
+member is the resolving `ownerId` of more than 3 active agents, since a named owner is only
+accountable as far as they can review what each agent produces. `rationale-gap` fires when a
+`sessions[]` entry lists `generatedArtifacts` but no `decisions`, leaving agent-written output with no
+recorded reason behind it.
+
 Because it sits outside `total`, `teamapi diff` tracks it as its own field: a team whose
 supervision load doubles without touching the other three types would otherwise show up as no
 change at all, which is exactly the quiet growth this field exists to expose. The Port generator

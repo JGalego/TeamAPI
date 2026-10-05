@@ -34,7 +34,17 @@ export type GapKind =
   /** An `agents[]` entry naming no human owner at all. */
   | "unaccountable-agent"
   /** Active agents, but no `cognitiveLoad.supervision` score for the work of supervising them. */
-  | "unscored-supervision";
+  | "unscored-supervision"
+  /** One member owns more active agents than a person can meaningfully supervise. */
+  | "owner-fan-out"
+  /** An AI session produced artifacts but recorded no decisions: the why was never written down. */
+  | "rationale-gap";
+
+/** Past this many active agents, `ownerId` still resolves but the named human cannot realistically
+ * review what each one produces. Fixed rather than configurable: severity overrides and waivers
+ * already let an org re-grade or excuse the finding, and a tunable number is one more thing to
+ * keep consistent across teams. */
+export const MAX_ACTIVE_AGENTS_PER_OWNER = 3;
 
 export interface GapFinding {
   kind: GapKind;
@@ -204,6 +214,37 @@ export function planGaps(graph: OrgGraph): GapsReport {
       });
     }
 
+    // A resolving owner is accountable only as far as they can supervise. Counted per member so
+    // one person quietly named on a whole fleet shows up even though every `ownerId` is valid.
+    const owned = new Map<string, number>();
+    for (const agent of doc.agents) {
+      if (agent.status !== "active" || !agent.ownerId || !memberIds.has(agent.ownerId)) continue;
+      owned.set(agent.ownerId, (owned.get(agent.ownerId) ?? 0) + 1);
+    }
+    for (const [ownerId, count] of [...owned.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+      if (count <= MAX_ACTIVE_AGENTS_PER_OWNER) continue;
+      findings.push({
+        kind: "owner-fan-out",
+        severity: "warning",
+        teamId,
+        subject: ownerId,
+        detail: `'${ownerId}' owns ${count} active agents on ${teamId} (more than ${MAX_ACTIVE_AGENTS_PER_OWNER})`,
+      });
+    }
+
+    // Cognitive debt: code an agent wrote that nobody can explain later. A session that produced
+    // artifacts but recorded no decisions leaves the output with no rationale attached.
+    for (const session of doc.sessions) {
+      if (session.generatedArtifacts.length === 0 || session.decisions.length > 0) continue;
+      findings.push({
+        kind: "rationale-gap",
+        severity: "warning",
+        teamId,
+        subject: session.id,
+        detail: `session '${session.id}' generated ${session.generatedArtifacts.length} artifact(s) but recorded no decisions`,
+      });
+    }
+
     // Vacant seats that other teams report into. A vacancy inside one team is a staffing question;
     // a vacancy other teams' reporting lines terminate in is an accountability hole.
     const filled = new Set(doc.members.flatMap((m) => m.roleIds));
@@ -249,6 +290,8 @@ const MARK: Record<GapKind, string> = {
   "unconsumed-event": "-",
   "unaccountable-agent": "-",
   "unscored-supervision": "-",
+  "owner-fan-out": "-",
+  "rationale-gap": "-",
   unacknowledged: "~",
   "vacant-load-bearing": "?",
 };

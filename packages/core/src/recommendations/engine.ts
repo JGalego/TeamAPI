@@ -61,7 +61,7 @@ export function recommendOrgChanges(
   for (const finding of planGaps(graph).findings) {
     const category = ["dangling-owner", "unaccountable-agent", "vacant-load-bearing"].includes(finding.kind)
       ? "accountability"
-      : finding.kind === "unscored-supervision"
+      : finding.kind === "unscored-supervision" || finding.kind === "owner-fan-out"
         ? "cognitive-load"
         : "architecture";
     recommendations.push(

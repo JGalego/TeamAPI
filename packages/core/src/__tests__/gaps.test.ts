@@ -1,6 +1,6 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { formatGaps, planGaps, type GapFinding, type GapKind } from "../gaps/plan";
+import { formatGaps, MAX_ACTIVE_AGENTS_PER_OWNER, planGaps, type GapFinding, type GapKind } from "../gaps/plan";
 import { buildOrgGraph } from "../resolve/graph-builder";
 
 const ACME_ROOT = path.resolve(__dirname, "../../../../examples/acme-org");
@@ -122,6 +122,58 @@ describe("planGaps", () => {
   it("stays quiet about supervision once a team has scored it", async () => {
     // platform-payments runs five agents and declares cognitiveLoad.supervision.
     expect(kinds(planGaps(await acme()).findings, "unscored-supervision")).toEqual([]);
+  });
+
+  it("warns when one member owns more active agents than the limit", async () => {
+    const graph = await acme();
+    const doc = graph.teams.get("platform-payments")!.doc;
+    // priya-raman owns two active agents (and one paused); two more put her over the limit.
+    expect(kinds(planGaps(graph).findings, "owner-fan-out")).toEqual([]);
+    const template = doc.agents.find((a) => a.ownerId === "priya-raman" && a.status === "active")!;
+    doc.agents.push({ ...template, id: "extra-one" }, { ...template, id: "extra-two" });
+    const found = kinds(planGaps(graph).findings, "owner-fan-out");
+    expect(found).toEqual([
+      {
+        kind: "owner-fan-out",
+        severity: "warning",
+        teamId: "platform-payments",
+        subject: "priya-raman",
+        detail: `'priya-raman' owns ${MAX_ACTIVE_AGENTS_PER_OWNER + 1} active agents on platform-payments (more than ${MAX_ACTIVE_AGENTS_PER_OWNER})`,
+      },
+    ]);
+  });
+
+  it("does not count inactive agents toward the owner limit", async () => {
+    const graph = await acme();
+    const doc = graph.teams.get("platform-payments")!.doc;
+    const template = doc.agents.find((a) => a.ownerId === "priya-raman")!;
+    doc.agents.push(
+      { ...template, id: "retired-one", status: "inactive" },
+      { ...template, id: "retired-two", status: "inactive" },
+    );
+    expect(kinds(planGaps(graph).findings, "owner-fan-out")).toEqual([]);
+  });
+
+  it("warns on a session that generated artifacts but recorded no decisions", async () => {
+    const graph = await acme();
+    const doc = graph.teams.get("platform-payments")!.doc;
+    expect(kinds(planGaps(graph).findings, "rationale-gap")).toEqual([]);
+    doc.sessions.push({
+      ...doc.sessions[0]!,
+      id: "unexplained",
+      decisions: [],
+      generatedArtifacts: [{ $ref: "https://example.com/pr/1" }],
+    });
+    const found = kinds(planGaps(graph).findings, "rationale-gap");
+    expect(found.map((f) => f.subject)).toEqual(["unexplained"]);
+    expect(found[0]!.detail).toContain("generated 1 artifact(s) but recorded no decisions");
+  });
+
+  it("ignores a session that generated nothing, with or without decisions", async () => {
+    const graph = await acme();
+    const doc = graph.teams.get("platform-payments")!.doc;
+    doc.sessions.push({ ...doc.sessions[0]!, id: "chat-only", decisions: [], generatedArtifacts: [] });
+    expect(kinds(planGaps(graph).findings, "rationale-gap")).toEqual([]);
   });
 
   it("counts cross-team role ties by whether the reporting hierarchy explains them", async () => {
