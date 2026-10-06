@@ -1,0 +1,6 @@
+repos:
+  - repo: https://github.com/JGalego/slopcop
+    rev: v0.2.0
+    hooks:
+      - id: slopcop
+      - id: slopcop-commit-msg
