@@ -1,3 +1,4 @@
+import { writeFileSync } from "node:fs";
 import * as fs from "node:fs/promises";
 import * as os from "node:os";
 import * as path from "node:path";
@@ -139,15 +140,20 @@ describe("watchOrgGraph", () => {
     const store = new OrgGraphStore({ seedUris: [file], allowPartial: true });
     await store.load();
 
+    const debounceMs = 100;
     let reloads = 0;
-    watcher = watchOrgGraph({ store, watchPaths: [tmpDir], debounceMs: 60, onReload: () => reloads++ });
+    watcher = watchOrgGraph({ store, watchPaths: [tmpDir], debounceMs, onReload: () => reloads++ });
 
-    // An editor save is several events; so is any loop that touches a file repeatedly.
+    // An editor save is several events; so is any loop that touches a file repeatedly. Written
+    // synchronously on purpose: with awaited writes, a loaded CI runner can stall between two of
+    // them for longer than the window and split the burst — two reloads, for reasons that aren't
+    // the code's. Here no watch callback can run until every write has landed.
     for (let i = 0; i < 5; i++) {
-      await fs.writeFile(file, teamDoc("team-a", { info: { name: `v${i}`, type: "platform" } }), "utf-8");
+      writeFileSync(file, teamDoc("team-a", { info: { name: `v${i}`, type: "platform" } }), "utf-8");
     }
     await until(() => reloads > 0);
-    await new Promise((resolve) => setTimeout(resolve, 150));
+    // Long enough for a straggling event to have scheduled, and run, a second reload.
+    await new Promise((resolve) => setTimeout(resolve, debounceMs * 2));
 
     expect(reloads).toBe(1);
     expect(store.current.teams.get("team-a")!.doc.info.name).toBe("v4");
