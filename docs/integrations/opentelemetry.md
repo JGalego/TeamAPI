@@ -1,7 +1,7 @@
 # OpenTelemetry
 
 A trace arrives with a service name and nothing else. Working out which team to wake up means
-someone opening a wiki — at exactly the moment nobody has time to.
+someone opening a wiki, at exactly the moment nobody has time to.
 
 ```bash
 teamapi generate otel /path/to/your/org --out ./otel
@@ -33,7 +33,7 @@ this_, and squatting in the reserved namespace is how you collide with a future 
 
 ## Two ways to apply it, because two different people own the levers
 
-**Per service** — `checkout-api.env` holds one line an SDK reads directly:
+**Per service.** `checkout-api.env` holds one line an SDK reads directly:
 
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name=checkout-api,service.namespace=stream-checkout,teamapi.team=stream-checkout,teamapi.team_name=Stream%20Checkout,…
@@ -41,7 +41,7 @@ OTEL_RESOURCE_ATTRIBUTES=service.name=checkout-api,service.namespace=stream-chec
 
 Needs every service's deployment touched, but works with no collector changes.
 
-**Centrally** — `collector.yaml` is a `transform` processor that stamps the same attributes based
+**Centrally.** `collector.yaml` is a `transform` processor that stamps the same attributes based
 on `service.name`:
 
 ```yaml
@@ -54,13 +54,13 @@ processors:
           - set(attributes["service.namespace"], "stream-checkout") where attributes["service.name"] == "checkout-api"
 ```
 
-One config, no deployments touched — if you're the one who owns the collector.
+One config, no deployments touched, if you're the one who owns the collector.
 
 ## Two details that matter
 
 **Values are percent-encoded.** `OTEL_RESOURCE_ATTRIBUTES` is W3C Baggage: comma-separated
 `key=value`. A team name or focus containing a comma would silently truncate the list, dropping
-every attribute after it. Encoding is not cosmetic here — it's the difference between working and
+every attribute after it. Encoding is not cosmetic here. It's the difference between working and
 appearing to work.
 
 **One OTTL statement per attribute.** The grammar is a single editor with an optional `where`, so

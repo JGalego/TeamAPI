@@ -6,7 +6,7 @@ import type { ImportedTeam } from "./github-org";
  * Named apart from the generator's `BackstageEntity`, which is what this toolchain *writes*, and
  * they are genuinely different shapes: the generator emits a small, exact entity, while a catalog
  * in the wild is full of organization-specific annotations and custom kinds. Deliberately loose
- * for the same reason — a strict shape would reject a real catalog for carrying fields it is
+ * for the same reason: a strict shape would reject a real catalog for carrying fields it is
  * entitled to carry.
  */
 export interface BackstageCatalogEntity {
@@ -67,8 +67,8 @@ function isKind(entity: BackstageCatalogEntity, kind: string): boolean {
  * Bootstraps Team API documents from a Backstage catalog.
  *
  * This is the importer an org that has already done the work needs. A catalog holds exactly the
- * facts a Team API document wants — which groups exist, who is in them, which components they own
- * — and asking someone to retype all of it is the reason a format does not get adopted. The
+ * facts a Team API document wants (which groups exist, who is in them, which components they own),
+ * and asking someone to retype all of it is the reason a format does not get adopted. The
  * [Backstage generator](../generators/backstage.ts) already goes the other way; this closes the
  * loop.
  *
@@ -78,8 +78,8 @@ function isKind(entity: BackstageCatalogEntity, kind: string): boolean {
  * `catalog-info.yaml` and on the processed entities the catalog API returns, which are different
  * documents that people reasonably expect to behave the same.
  *
- * Everything Backstage has no equivalent for — Team Topologies types beyond the handful its
- * `spec.type` vocabulary maps onto, roles, cognitive load, interactions — comes out empty or
+ * Everything Backstage has no equivalent for (Team Topologies types beyond the handful its
+ * `spec.type` vocabulary maps onto, roles, cognitive load, interactions) comes out empty or
  * defaulted, and is meant to be filled in by hand.
  */
 export function importBackstageCatalog(entities: BackstageCatalogEntity[]): ImportedTeam[] {

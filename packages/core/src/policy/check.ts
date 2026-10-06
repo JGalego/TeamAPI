@@ -7,7 +7,7 @@ import { scoreCognitiveLoad } from "../cognitive-load/score";
  * Evaluates the `policies[]` teams declare against the org graph they were declared on.
  *
  * `policies[]` has always been documented as governance for *external* automation to enforce, and
- * that stays true for the rules that genuinely need an outside system — `min_approvals` is a fact
+ * that stays true for the rules that genuinely need an outside system. `min_approvals` is a fact
  * about a branch protection rule, not about this graph, and nothing here can honestly decide it.
  * But a good number of declared policies are statements about the org's own shape ("no agents on
  * this team", "every service names a repository"), and those the graph can answer completely, for
@@ -15,17 +15,17 @@ import { scoreCognitiveLoad } from "../cognitive-load/score";
  *
  * So this splits every rule three ways rather than pretending it's one problem:
  *
- * - **checkable here** — a built-in evaluator decides it against the graph: `satisfied` or
+ * - **checkable here**: a built-in evaluator decides it against the graph: `satisfied` or
  *   `violated`.
- * - **checkable elsewhere** — no evaluator, but `enforcedBy` names the automation that does it.
+ * - **checkable elsewhere**: no evaluator, but `enforcedBy` names the automation that does it.
  *   Reported as `delegated`, never as a pass: this tool has not verified anything.
- * - **checked nowhere** — no evaluator and no `enforcedBy`. This is the finding that matters
+ * - **checked nowhere**: no evaluator and no `enforcedBy`. This is the finding that matters
  *   most, and the reason this module exists. A policy nobody enforces is indistinguishable, in
  *   the document, from one that is enforced: same `severity: blocking`, same confident prose. It
  *   reads as governance and behaves as a comment.
  *
  * That last case is the same argument `planGaps` makes about an agent whose `ownerId` names
- * nobody — the missing enforcement is not the problem, the declaration that implies it exists is.
+ * nobody: the missing enforcement is not the problem, the declaration that implies it exists is.
  *
  * Pure: no I/O, no network. It only reads the graph it is handed.
  */

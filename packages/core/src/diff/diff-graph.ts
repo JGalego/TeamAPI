@@ -6,7 +6,7 @@ export interface CognitiveLoadSnapshot {
   label: string;
   /** Tracked separately from `total`, which deliberately excludes it. A team that doubles its
    * supervision load without touching the other three types would otherwise show up as no change
-   * at all — which is exactly the kind of quiet growth this field exists to make visible. */
+   * at all, which is exactly the kind of quiet growth this field exists to make visible. */
   supervision?: number;
 }
 
@@ -133,8 +133,8 @@ function diffTeam(teamId: TeamId, oldGraph: OrgGraph, newGraph: OrgGraph): TeamD
 }
 
 /**
- * Diffs two resolved org graphs — typically "the org as of some past git revision" vs. "the org
- * right now" — team-by-team and edge-by-edge. Built for `teamapi diff`, but independent of git:
+ * Diffs two resolved org graphs (typically "the org as of some past git revision" vs. "the org
+ * right now") team-by-team and edge-by-edge. Built for `teamapi diff`, but independent of git:
  * callers can build `oldGraph`/`newGraph` from any two sources (two directories, two branches,
  * whatever `buildOrgGraph` accepts).
  */

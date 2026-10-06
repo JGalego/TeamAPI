@@ -13,7 +13,7 @@ export interface CognitiveLoadResult {
  * Heuristic label derived from a 1-10x3 self-assessment. Three independent triggers decide the
  * label, and any one alone is sufficient: a high `extraneous` score alone can push a team into
  * "overloaded"/"elevated" even when intrinsic/germane load is fine (Team Topologies treats
- * extraneous load — avoidable overhead — as the one teams should actively minimize), OR a high
+ * extraneous load (avoidable overhead) as the one teams should actively minimize), OR a high
  * `total` alone does the same regardless of composition, OR a high `supervision` score alone does
  * too. This means two teams with the same `total` can land on the same label even when their load
  * looks very different underlying it (e.g. `intrinsic=10, extraneous=1, germane=10` and
@@ -26,7 +26,7 @@ export interface CognitiveLoadResult {
  * `supervision` is an independent trigger rather than a fourth term in `total`, and the two are
  * not the same choice. Summing it would re-scale `total` for every team that adopted an agent and
  * silently move thresholds calibrated against the three Team Topologies types. Triggering on it
- * changes nothing for a team that hasn't scored it — `undefined` reads as 0 — while making sure a
+ * changes nothing for a team that hasn't scored it (`undefined` reads as 0) while making sure a
  * team drowning in agent review can't report "sustainable" just because its other three scores are
  * modest. Supervising agents is load whether or not the model counts it, and a label that hides
  * that is worse than no label.

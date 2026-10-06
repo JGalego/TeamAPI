@@ -3,7 +3,7 @@ import type { OrgGraph, TeamId } from "../model/org-graph";
 /**
  * Finds the accountability holes *between* teams rather than inside any one of them.
  *
- * Every other check in this package compares the spec to an outside system — a directory, a
+ * Every other check in this package compares the spec to an outside system: a directory, a
  * pager, a running agent fleet. This one compares the spec to itself, because the gaps it looks
  * for are invisible from any single `teamapi.yml`: each team's document is individually valid and
  * the hole only appears once the graph is resolved. A service subscribing to an event nobody
@@ -12,8 +12,8 @@ import type { OrgGraph, TeamId } from "../model/org-graph";
  * vacancy load-bearing.
  *
  * The dangerous findings are the ones where the declaration *looks* finished. An agent carrying
- * an `ownerId` that names nobody presents, to every downstream consumer — `AGENTS.md`, the
- * context bundle, a generated crew — exactly like an agent with a real human owner. That is the
+ * an `ownerId` that names nobody presents, to every downstream consumer (`AGENTS.md`, the
+ * context bundle, a generated crew) exactly like an agent with a real human owner. That is the
  * same argument `okta-drift` makes about deactivated accounts: the missing name is not the
  * problem, the name that's still there is.
  *
@@ -61,7 +61,7 @@ export interface GapsReport {
    * cross-team edge both sides declare. The healthy case. */
   matched: number;
   /** Cross-team role relationships split by whether the reporting hierarchy explains them. Not a
-   * finding — a statistic, and the one that says most plainly how much of the org runs on ties the
+   * finding but a statistic, and the one that says most plainly how much of the org runs on ties the
    * chart does not draw. A high `informal` count is not a problem to fix; it is the shape of the
    * place, and worth knowing before reorganising anything. */
   roleTies: { formal: number; informal: number };
@@ -118,8 +118,8 @@ function outboundByTeam(graph: OrgGraph): Map<TeamId, Set<TeamId>> {
 }
 
 /** Collaborations are the only interaction mode that has to be mutual. `x-as-a-service` is
- * deliberately one-directional — a platform team publishes a service and consumers help
- * themselves, so it would be wrong to expect the platform to name every consumer back — and
+ * deliberately one-directional. A platform team publishes a service and consumers help
+ * themselves, so it would be wrong to expect the platform to name every consumer back. And
  * `facilitating` is coaching, which the enabling team drives. Collaboration is the high-bandwidth,
  * two-way mode Team Topologies expects both sides to have agreed to and to time-box, so one team
  * declaring it alone is real signal about a relationship the other side isn't budgeting for. */
@@ -203,7 +203,7 @@ export function planGaps(graph: OrgGraph): GapsReport {
 
     // Supervising agents is real work that no role describes and no sprint budgets for. A team
     // that has scored its cognitive load but left `supervision` blank while running a fleet has
-    // an assessment that is silently missing a term — the load exists either way.
+    // an assessment that is silently missing a term, and the load exists either way.
     const activeAgents = doc.agents.filter((a) => a.status === "active").length;
     if (activeAgents > 0 && doc.cognitiveLoad && doc.cognitiveLoad.supervision === undefined) {
       findings.push({

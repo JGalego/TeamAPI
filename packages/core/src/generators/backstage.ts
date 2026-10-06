@@ -63,14 +63,14 @@ function meta(name: string, extra: Partial<Omit<BackstageEntityMeta, "name">> = 
 
 /**
  * Builds one team's Backstage catalog entities from Team API data: a `Group` (the team, with its
- * `members[].id`), one `User` per member, and — when the team owns any `services[]` — a `System`
+ * `members[].id`), one `User` per member, and, when the team owns any `services[]`, a `System`
  * grouping them plus one `Component` per service.
  *
  * This only covers the well-defined, always-valid subset of Backstage's entity model (ownership
  * and grouping): cross-team `dependsOn` relations between `Component`s aren't attempted, since
  * Team API only models team-level `interactions[]`/`dependencies[]`, not service-level ones, and
  * guessing at a service-to-service mapping would produce misleading (if syntactically valid)
- * catalog data. `roles[]` aren't represented either — Backstage's `Group`/`User` model has no
+ * catalog data. `roles[]` aren't represented either: Backstage's `Group`/`User` model has no
  * concept of a role independent of the person filling it, unlike Team API's roles/members split.
  */
 export function buildBackstageCatalog(graph: OrgGraph, teamId: TeamId): BackstageCatalog {

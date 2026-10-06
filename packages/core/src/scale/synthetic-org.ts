@@ -4,7 +4,7 @@ import * as path from "node:path";
 export interface SyntheticOrgOptions {
   /** Total number of teams. */
   teams: number;
-  /** How many stream-aligned teams each platform team serves. Controls the graph's fan-out — and
+  /** How many stream-aligned teams each platform team serves. Controls the graph's fan-out, and
    * therefore how wide a single BFS level gets, which is the thing parallel loading acts on. */
   fanOut?: number;
   /** Roles per team, each with a member. */
@@ -27,9 +27,9 @@ export interface SyntheticOrg {
  *
  * The six example orgs top out at four teams, which says nothing about where resolution breaks:
  * a four-team graph has two BFS levels and resolves in single-digit milliseconds whether the
- * loader is serial or not. This produces the shape a real large org has — a handful of platform
+ * loader is serial or not. This produces the shape a real large org has: a handful of platform
  * teams each serving many stream-aligned teams, a wide enabling layer, cross-team reporting lines
- * and interactions — at whatever size the caller asks for.
+ * and interactions, at whatever size the caller asks for.
  *
  * Deterministic: no randomness, so a benchmark run twice measures the code and not the fixture.
  */

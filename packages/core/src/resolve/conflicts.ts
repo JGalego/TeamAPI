@@ -3,7 +3,7 @@ import type { OrgGraph, ResolvedTeam, TeamId } from "../model/org-graph";
 /**
  * Names two teams both claim, where exactly one of them can win.
  *
- * The schema enforces uniqueness *within* a document — role ids, member ids, agent ids — but
+ * The schema enforces uniqueness *within* a document (role ids, member ids, agent ids), but
  * nothing has ever checked the names that have to be unique across the whole org because a
  * consumer looks them up by name alone.
  *
@@ -28,7 +28,7 @@ export interface NameConflict {
   kind: ConflictKind;
   /** The contested name. */
   name: string;
-  /** Every team claiming it, sorted — all of them, not just the losers, since which one "wins" is
+  /** Every team claiming it, sorted: all of them, not just the losers, since which one "wins" is
    * an artifact of the tie-break rather than a fact about the org. */
   teamIds: TeamId[];
   detail: string;
@@ -40,7 +40,7 @@ interface Claim {
 }
 
 /**
- * Groups claimed names, keyed case-insensitively because `findServiceOwner` matches that way — a
+ * Groups claimed names, keyed case-insensitively because `findServiceOwner` matches that way. A
  * conflict that only appears at lookup time is exactly the kind this exists to surface first.
  */
 function contested(claims: Claim[]): { name: string; teamIds: TeamId[] }[] {
@@ -56,7 +56,7 @@ function contested(claims: Claim[]): { name: string; teamIds: TeamId[] }[] {
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([, group]) => ({
       name: group[0]!.name,
-      // Two entries from the *same* team are a duplicate within one document — that document's
+      // Two entries from the *same* team are a duplicate within one document, which is that document's
       // own problem, not an org-wide question about who owns the name.
       teamIds: [...new Set(group.map((claim) => claim.teamId))].sort(),
     }))

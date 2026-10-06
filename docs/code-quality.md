@@ -24,10 +24,10 @@ will not catch, and how to work with it.
 | Tests      | `pnpm test`          | Behavior regressions                                    |
 | Coverage   | `pnpm test:coverage` | Tests deleted or code added without them                |
 
-CI runs `test:coverage` rather than `test` — it executes the same suites and additionally enforces
+CI runs `test:coverage` rather than `test`. It executes the same suites and additionally enforces
 the floors, so running both would just be the suite twice.
 
-A pre-commit hook runs the first two over your staged files — the fast, file-scoped subset, around
+A pre-commit hook runs the first two over your staged files. That is the fast, file-scoped subset, around
 five seconds for a typical change. The rest are repo-wide and stay in CI. To bypass the hook
 deliberately: `git commit --no-verify`.
 
@@ -39,7 +39,7 @@ The hook installs itself: the root `prepare` script points `core.hooksPath` at `
 Prettier, `printWidth` 120, configured in `.prettierrc.json`. Run `pnpm format` to fix.
 
 The width matches the style the codebase was already written in. Prettier's default of 80 would
-have rewritten 8,945 lines on adoption instead of 863 — real changes drowning in reflow.
+have rewritten 8,945 lines on adoption instead of 863, drowning real changes in reflow.
 
 HTML is excluded (`.prettierignore`). The two hand-tuned pages carry inline `<script>` and
 `<style>`, and reflowing them churns thousands of lines for no readability gain.
@@ -51,7 +51,7 @@ last changed a line's content rather than whoever last reflowed it. GitHub honou
 locally the `prepare` script sets `blame.ignoreRevsFile` for you.
 
 Add a revision only if it is purely mechanical. A commit that also changes behaviour must never be
-listed — blame would skip past the real author of that behaviour.
+listed, because blame would skip past the real author of that behaviour.
 
 Worth knowing what it is currently worth: the Prettier adoption commit is attributed only 70 lines
 repo-wide, all of them closing brackets or blank lines the reflow created, so ignoring it
@@ -67,11 +67,11 @@ Type-aware linting is the half of the ruleset that can see across a call. A prom
 floor and an `any` bleeding out of a cast are both invisible to syntax-only rules. The rules worth
 knowing about:
 
-- `no-floating-promises` / `no-misused-promises` — a swallowed rejection is a silent failure.
-- `prefer-nullish-coalescing` — `||` treats `""` and `0` as absent, which is usually a bug and
+- `no-floating-promises` / `no-misused-promises`, because a swallowed rejection is a silent failure.
+- `prefer-nullish-coalescing`, because `||` treats `""` and `0` as absent, which is usually a bug and
   occasionally deliberate. When it is deliberate, write the empty-string case explicitly rather
   than reaching for a disable comment.
-- `no-console`, outside `packages/cli` — the CLI is where user-facing output belongs. Elsewhere a
+- `no-console`, outside `packages/cli`, because the CLI is where user-facing output belongs. Elsewhere a
   stray log is debug residue, and for the MCP server speaking JSON-RPC over stdio it corrupts the
   transport.
 
@@ -82,7 +82,7 @@ and holding them to the shipped-code bar makes fixtures unreadable without makin
 
 A rule is disabled inline only with a comment saying why removing it would break something
 concrete. There are two in the tree, both in `packages/mcp-server/src/tools/loose-register.ts`, and
-both are worth reading before you add a third — they are the shape of a justified exception.
+both are worth reading before you add a third. They are the shape of a justified exception.
 
 One is genuinely load-bearing. `no-unnecessary-type-assertion` autofixed away a double assertion
 there and turned the build into `TS2589: Type instantiation is excessively deep`. The assertion is
@@ -94,7 +94,7 @@ what stops the generic instantiation; the linter cannot see that.
 `tsconfig.test.json` for the tests.
 
 The second one matters. Every package's `tsconfig.json` excludes tests so they stay out of the
-published build — which for a long time meant 6,357 lines of test code, a little over 40% of the
+published build, which for a long time meant 6,357 lines of test code, a little over 40% of the
 repo, were never typechecked anywhere. Adding the test project surfaced nine real errors, all of
 them assertions being checked against a weaker type than the code they exercise.
 
@@ -107,7 +107,7 @@ Knip, configured in `knip.json`. Finds unreachable exports, unused dependencies,
 used but not declared.
 
 That last category is the one worth having a tool for. It is invisible to everyone whose
-`node_modules` already contains the package, and it fails only on a clean install — which is to say,
+`node_modules` already contains the package, and it fails only on a clean install. In other words,
 in CI, or on a new contributor's first day. Knip caught exactly that on its first run here.
 
 The config is near-empty by design. The one setting that earns its place is
@@ -136,7 +136,7 @@ Each floor sits at the measured value rounded down. That makes it a **ratchet**:
 coverage fails, and raising a floor is how a package records an improvement it earned. Lowering one
 should carry a reason in the commit message.
 
-Coverage measures shipped sources only — tests and barrel `index.ts` files are excluded from the
+Coverage measures shipped sources only. Tests and barrel `index.ts` files are excluded from the
 denominator. Counting files that execute by definition inflates the number and hides gaps in the
 code being tested.
 
@@ -162,5 +162,5 @@ Two things to establish before wiring one in:
    would have been noisy were tuned (Prettier's width) or scoped (`no-unsafe-*` off in tests) until
    the findings were all real.
 2. **Prove it fails.** A gate nobody has seen fail is a gate nobody knows works. Each of these was
-   verified by deliberately breaking it — an unreferenced file for knip, a raised floor for
+   verified by deliberately breaking it: an unreferenced file for knip, a raised floor for
    coverage, a floating promise for lint.

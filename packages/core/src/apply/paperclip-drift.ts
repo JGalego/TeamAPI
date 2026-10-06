@@ -9,11 +9,11 @@ import type { OrgGraph, TeamId } from "../model/org-graph";
  *
  * Three kinds of finding:
  *
- * - `undeclared` — an agent running in Paperclip that no `teamapi.yml` declares. The interesting
+ * - `undeclared`: an agent running in Paperclip that no `teamapi.yml` declares. The interesting
  *   case, because Paperclip's org is mutable from its UI while the spec is only mutable through
  *   review.
- * - `missing` — a declared, active agent with nothing running for it.
- * - `forbidden` — an agent running for a team whose policies say it shouldn't have one. Severity
+ * - `missing`: a declared, active agent with nothing running for it.
+ * - `forbidden`: an agent running for a team whose policies say it shouldn't have one. Severity
  *   is raised because this is a governance breach rather than ordinary drift.
  */
 

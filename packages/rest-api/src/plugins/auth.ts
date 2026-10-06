@@ -13,10 +13,10 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
  *
  * Routes exempted from the check, and why:
  *
- * - `/health` — liveness probes come from load balancers and orchestrators that have no way to
+ * - `/health`: liveness probes come from load balancers and orchestrators that have no way to
  *   carry a token, and the response ("ok") discloses nothing that isn't already implied by the
  *   port accepting a connection.
- * - `/slack/*` — Slack authenticates itself with an HMAC over the request body, which is strictly
+ * - `/slack/*`: Slack authenticates itself with an HMAC over the request body, which is strictly
  *   stronger than a shared bearer token, and Slack cannot be configured to send an `Authorization`
  *   header. Requiring both would mean the route could never be called.
  */
@@ -60,7 +60,7 @@ export function tokenMatches(expected: string, presented: string | undefined): b
  *
  * `@fastify/rate-limit` attaches its counter as a *route-level* `onRequest` hook (via `onRoute`),
  * and Fastify runs every instance-level `onRequest` hook before any route-level one. An auth hook
- * at `onRequest` would therefore answer 401 before the limiter ever counted the request — leaving
+ * at `onRequest` would therefore answer 401 before the limiter ever counted the request, leaving
  * failed authentication, the one thing a limiter is most needed for here, completely uncounted and
  * a token guessable at whatever rate the network allows. `preParsing` is the earliest stage that
  * runs after route-level `onRequest`, so the limiter sees and counts every rejected attempt.

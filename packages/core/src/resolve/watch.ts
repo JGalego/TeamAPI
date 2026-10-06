@@ -9,7 +9,7 @@ export interface WatchOrgGraphOptions {
   /**
    * Re-run seed discovery before each reload, so a team document *added* after startup is picked
    * up rather than ignored. Without it, watching would only ever notice edits to the set of files
-   * that happened to exist when the process started — which is the case a growing org hits first.
+   * that happened to exist when the process started, which is the case a growing org hits first.
    */
   resolveSeeds?: () => Promise<string[]>;
   /** Coalescing window for filesystem events. */
@@ -19,21 +19,21 @@ export interface WatchOrgGraphOptions {
 }
 
 export interface OrgGraphWatcher {
-  /** Reload now, outside the watch loop — for a signal handler or an HTTP trigger. */
+  /** Reload now, outside the watch loop, for a signal handler or an HTTP trigger. */
   reload: () => Promise<void>;
   close: () => void;
 }
 
 /**
  * Editors do not save a file once. They write a temp file, rename it over the target, and touch
- * the mtime — several events for one logical change, and a reader that acts on the first one
+ * the mtime: several events for one logical change, and a reader that acts on the first one
  * frequently reads a half-written file. Anything below this and a single save reloads the graph
  * two or three times; much above it and a save feels unresponsive.
  */
 const DEFAULT_DEBOUNCE_MS = 150;
 
 /** Only these ever change the resolved graph, and a `.git` directory churns constantly during
- * ordinary git operations — watching it would mean reloading on every branch switch and index
+ * ordinary git operations. Watching it would mean reloading on every branch switch and index
  * update, none of which imply the documents changed. */
 function isRelevant(filename: string | null): boolean {
   if (!filename) return true; // some platforms omit the name; reloading is the safe assumption
@@ -47,7 +47,7 @@ function isRelevant(filename: string | null): boolean {
  *
  * The failure mode this is built around is not "a reload was missed" but "a reload was taken from
  * a file mid-write". A document saved by an editor is briefly truncated or absent, and a reload
- * landing in that window resolves an org that is missing teams — or empty. So a failed reload is
+ * landing in that window resolves an org that is missing teams, or empty. So a failed reload is
  * never allowed to replace a working graph: `OrgGraphStore.load()` only assigns after
  * `buildOrgGraph` resolves, so a throw leaves the previous graph in place, and the error is
  * reported rather than swallowed. The server keeps answering from the last good state, which is

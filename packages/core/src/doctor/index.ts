@@ -10,13 +10,13 @@ import type { PaperclipAgent } from "../apply/paperclip-drift";
  * we depend on there, and does pagination actually get followed.
  *
  * This exists because of a specific failure shape. Every one of these integrations degrades
- * silently rather than loudly — a rejected Slack token reads as an empty workspace and every
+ * silently rather than loudly: a rejected Slack token reads as an empty workspace and every
  * channel comes back `missing`; an Okta page-one stop makes everyone past the first batch look
  * like a leaver, which is a *blocking* finding about people who never left. Those are wrong
  * answers delivered confidently, and nothing downstream can tell.
  *
- * So the first question a user has when a drift report surprises them — "is my token even
- * right?" — deserves a command, not a guess.
+ * So the first question a user has when a drift report surprises them ("is my token even
+ * right?") deserves a command, not a guess.
  */
 
 export type CheckStatus = "pass" | "fail" | "skip";
@@ -48,7 +48,7 @@ async function attempt(name: string, run: () => Promise<string>): Promise<Doctor
  * Proves pagination is followed without needing a large account.
  *
  * Asking for one item per page and getting more than one back can only happen if the next page
- * was fetched — no request counting, no mocking. With nothing to page through the check reports
+ * was fetched, with no request counting, no mocking. With nothing to page through the check reports
  * `skip` rather than a pass it hasn't earned.
  */
 async function paginationCheck(total: number, onePerPage: () => Promise<{ length: number }>): Promise<DoctorCheck> {
@@ -66,7 +66,7 @@ async function paginationCheck(total: number, onePerPage: () => Promise<{ length
       : {
           name: "pagination",
           status: "fail",
-          detail: `one page at a time returned ${paged.length} of ${total} — the next page was not followed`,
+          detail: `one page at a time returned ${paged.length} of ${total}; the next page was not followed`,
         };
   } catch (err) {
     return { name: "pagination", status: "fail", detail: err instanceof Error ? err.message : String(err) };
@@ -222,7 +222,7 @@ export async function doctorPaperclip(client: PaperclipClient, companyId: string
   );
 
   // Paperclip's agents route returns the whole list in one response, so there is no cursor to
-  // follow — and no way from here to tell a complete list from a silently truncated one
+  // follow, and no way from here to tell a complete list from a silently truncated one
   checks.push({
     name: "pagination",
     status: "skip",

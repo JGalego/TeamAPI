@@ -17,13 +17,13 @@
 
 Every team has an API: what it owns, who's accountable for what, how to ask it for things, how much it can take on. Usually this information is scattered across wikis, onboarding docs, and people's heads, where it drifts out of date.
 
-[Team API as Code](docs/spec/teamapi-extended-v1.md) solves this by writing it all down: one `teamapi.yml` per team declaring `services`, `roles`, `members`, `interactions`, and `cognitiveLoad` — reviewed in pull requests and versioned in git.
+[Team API as Code](docs/spec/teamapi-extended-v1.md) solves this by writing it all down: one `teamapi.yml` per team declaring `services`, `roles`, `members`, `interactions`, and `cognitiveLoad`, reviewed in pull requests and versioned in git.
 
 **TeamAPI** makes that spec executable. It renders diagrams, serves a read-only REST API and an MCP server for LLM assistants, gives any team a chat persona, and generates config for tools like [CrewAI](https://crewai.com/) and [Backstage](https://backstage.io/).
 
 The format is a superset of [TeamTopologies/TeamAPI-As-Code](https://github.com/TeamTopologies/TeamAPI-As-Code), adding roles, people, and cognitive load. The concept comes from [Team Topologies](https://teamtopologies.com/); the bounded-context and context-map vocabulary from [Domain-Driven Design](https://en.wikipedia.org/wiki/Domain-driven_design).
 
-> 📖 Everything below is also published, with navigation and a version for each release, at **[teamapi.dev/latest](https://teamapi.dev/latest/)**. If you are on an older version, read that version's page rather than this one — this file describes `main`.
+> 📖 Everything below is also published, with navigation and a version for each release, at **[teamapi.dev/latest](https://teamapi.dev/latest/)**. If you are on an older version, read that version's page rather than this one, because this file describes `main`.
 
 ## 🧭 Contents
 
@@ -152,20 +152,20 @@ They work with every command in this README. Swap in the path, e.g. `teamapi ren
 
 A team includes the AI agents working alongside its people, and the knowledge they all draw on. Both live as optional sections in the same `teamapi.yml` document as everything else:
 
-| Section               | What it is                                                                                                                                                                             |
-| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `agents[]`            | AI assistants treated as first-class team participants — provider, model, role, capabilities, permissions.                                                                             |
-| `memory[]`            | Persistent organizational memory: architecture decisions, conventions, lessons learned, recurring issues.                                                                              |
-| `specifications[]`    | Specification-driven-development artifacts — requirements/design/tasks/acceptance criteria, with a lifecycle, reviewers, approvals, and linked PRs/issues.                             |
-| `steeringDocuments[]` | Coding standards, API conventions, security guidelines, architecture principles — inherited **organization → team → project** by walking the existing `platform` team-reference chain. |
-| `prompts[]`           | A version-controlled, renderable prompt library (`{{variable}}` templating, with history).                                                                                             |
-| `playbooks[]`         | Ordered operational procedures — incident response, release, onboarding — with required roles and automation hooks.                                                                    |
-| `policies[]`          | Machine-readable governance (PR requirements, required approvals, security/dependency policy) for external automation to enforce.                                                      |
-| `knowledgeBase[]`     | ADRs, FAQs, meeting notes, runbooks, design docs.                                                                                                                                      |
-| `workflows[]`         | Process state machines (e.g. testing → approval → deployment → announcement), independent of any particular CI/CD system.                                                              |
-| `sessions[]`          | A record of AI collaboration sessions: objective, prompts used, artifacts produced, decisions made.                                                                                    |
+| Section               | What it is                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `agents[]`            | AI assistants treated as first-class team participants: provider, model, role, capabilities, permissions.                                                                             |
+| `memory[]`            | Persistent organizational memory: architecture decisions, conventions, lessons learned, recurring issues.                                                                             |
+| `specifications[]`    | Specification-driven-development artifacts: requirements/design/tasks/acceptance criteria, with a lifecycle, reviewers, approvals, and linked PRs/issues.                             |
+| `steeringDocuments[]` | Coding standards, API conventions, security guidelines, architecture principles, inherited **organization → team → project** by walking the existing `platform` team-reference chain. |
+| `prompts[]`           | A version-controlled, renderable prompt library (`{{variable}}` templating, with history).                                                                                            |
+| `playbooks[]`         | Ordered operational procedures (incident response, release, onboarding) with required roles and automation hooks.                                                                     |
+| `policies[]`          | Machine-readable governance (PR requirements, required approvals, security/dependency policy) for external automation to enforce.                                                     |
+| `knowledgeBase[]`     | ADRs, FAQs, meeting notes, runbooks, design docs.                                                                                                                                     |
+| `workflows[]`         | Process state machines (e.g. testing → approval → deployment → announcement), independent of any particular CI/CD system.                                                             |
+| `sessions[]`          | A record of AI collaboration sessions: objective, prompts used, artifacts produced, decisions made.                                                                                   |
 
-> **Backward compatible by design.** Every section is optional, so existing documents keep validating without migration. Like the rest of the toolchain, these sections are edited in git and exposed read-only—never `POST`ed.
+> **Backward compatible by design.** Every section is optional, so existing documents keep validating without migration. Like the rest of the toolchain, these sections are edited in git and exposed read-only, never `POST`ed.
 
 ### A worked example
 
@@ -193,7 +193,7 @@ It also returns `seams[]`, listing every pair of teams spanned by the matched en
 
 ### One interface for every resource
 
-Each section gets the same read-only REST shape — `GET /<plural>`, `GET /teams/:id/<plural>`, `GET /teams/:id/<plural>/:resourceId`, e.g. `/teams/platform-payments/prompts/code-review` — plus a matching `list_*`/`get_*` MCP tool pair, and all of them are covered by `GET /search?q=`. `POST /teams/:id/prompts/:promptId/render` (or `render_prompt`) fills a prompt's `{{variable}}` placeholders. Field-by-field reference: [`docs/spec/teamapi-extended-v1.md`](docs/spec/teamapi-extended-v1.md).
+Each section gets the same read-only REST shape (`GET /<plural>`, `GET /teams/:id/<plural>`, `GET /teams/:id/<plural>/:resourceId`, e.g. `/teams/platform-payments/prompts/code-review`) plus a matching `list_*`/`get_*` MCP tool pair, and all of them are covered by `GET /search?q=`. `POST /teams/:id/prompts/:promptId/render` (or `render_prompt`) fills a prompt's `{{variable}}` placeholders. Field-by-field reference: [`docs/spec/teamapi-extended-v1.md`](docs/spec/teamapi-extended-v1.md).
 
 <a id="diagrams"></a>
 
@@ -260,9 +260,9 @@ flowchart TD
 
 The same reporting lines, zoomed out to the whole company, one box per team. A solid arrow is formal reporting (`reportsTo`/`reportsToRef`, same-team or cross-team); a dashed one is `alignsWith`, for the ties the hierarchy doesn't draw.
 
-Add `--with-agents` to draw each team's declared `agents[]` too, hanging off the human whose `ownerId` names them by a dotted "supervises" edge. Agents are drawn as participants but never as boxes in the chart — an agent placed in the hierarchy the way a person is would imply accountability sits with it, when it never does. An agent nobody owns gets no incoming edge and visibly floats, which is exactly what it is.
+Add `--with-agents` to draw each team's declared `agents[]` too, hanging off the human whose `ownerId` names them by a dotted "supervises" edge. Agents are drawn as participants but never as boxes in the chart. An agent placed in the hierarchy the way a person is would imply accountability sits with it, when it never does. An agent nobody owns gets no incoming edge and visibly floats, which is exactly what it is.
 
-Each `alignsWith[]` entry takes an optional `kind` — `aligns-with` (the default), `advises`, `learns-from`, or `community-of-practice` — naming the informal network work actually travels along. Those relationships tend to exist for months before anyone draws a box for them, so `teamapi gaps` also reports how many cross-team role relationships the reporting lines explain, and how many they don't.
+Each `alignsWith[]` entry takes an optional `kind` (`aligns-with` (the default), `advises`, `learns-from`, or `community-of-practice`) naming the informal network work actually travels along. Those relationships tend to exist for months before anyone draws a box for them, so `teamapi gaps` also reports how many cross-team role relationships the reporting lines explain, and how many they don't.
 
 ```mermaid
 flowchart TD
@@ -321,7 +321,7 @@ flowchart TD
 | `GET /knowledge-graph`, `/knowledge-graph/:nodeId/traverse`                        | [Knowledge graph](#ai-native) traversal                                                                                                                                        |
 | `GET /health`                                                                      | Health check                                                                                                                                                                   |
 
-**Example:** `curl http://127.0.0.1:3000/cognitive-load` — note `supervision`, the optional load of supervising a team's AI agents. It stays out of `total` (whose thresholds are calibrated against the three Team Topologies types), but it's one of the label's independent triggers, on the same thresholds as `extraneous` — a team drowning in agent review shouldn't be able to report "sustainable" on the strength of three modest other scores. A team that hasn't scored it is unaffected.
+**Example:** `curl http://127.0.0.1:3000/cognitive-load` and note `supervision`, the optional load of supervising a team's AI agents. It stays out of `total` (whose thresholds are calibrated against the three Team Topologies types), but it's one of the label's independent triggers, on the same thresholds as `extraneous`, because a team drowning in agent review shouldn't be able to report "sustainable" on the strength of three modest other scores. A team that hasn't scored it is unaffected.
 
 ```json
 [
@@ -384,7 +384,7 @@ curl -s -o /dev/null -w '%{http_code}\n' -H 'If-None-Match: "<etag>"' http://127
 # 304
 ```
 
-The validator is derived from the response body, not from the graph's `resolvedAt`. That timestamp changes on every reload — every `--watch` trigger, every `POST /reload`, every SIGHUP — including the common case where a document was touched and nothing a given endpoint returns actually changed. Hashing the body means the graph can be re-resolved a hundred times and `/teams` keeps the same `ETag` until `/teams` genuinely differs.
+The validator is derived from the response body, not from the graph's `resolvedAt`. That timestamp changes on every reload (every `--watch` trigger, every `POST /reload`, every SIGHUP), including the common case where a document was touched and nothing a given endpoint returns actually changed. Hashing the body means the graph can be re-resolved a hundred times and `/teams` keeps the same `ETag` until `/teams` genuinely differs.
 
 ### 🔎 Semantic search
 
@@ -444,7 +444,7 @@ TEAMAPI_API_TOKEN=$(openssl rand -hex 32) teamapi serve-api examples/acme-org \
   --host 0.0.0.0 --rate-limit 120 --cors-origin https://intranet.example
 ```
 
-`/health` stays open so liveness probes work, and `/slack/*` keeps authenticating with Slack's own request signature — which is stronger than a shared token, and the only thing Slack can actually send. Everything else needs the token.
+`/health` stays open so liveness probes work, and `/slack/*` keeps authenticating with Slack's own request signature, which is stronger than a shared token, and the only thing Slack can actually send. Everything else needs the token.
 
 Token comparison is constant-time, and a rejection never echoes the presented credential back into the response or the logs. Failed attempts are counted by the rate limiter, so a token can't be guessed at line rate.
 
@@ -461,7 +461,7 @@ Three events use the same reload path: a watched document changes, `POST /reload
 
 Watching is anchored on the directory you pointed at, and seed discovery re-runs on every reload, so a **new** `teamapi.yml` is picked up rather than only edits to the files that existed at startup.
 
-A failed reload never replaces a working graph. A document saved by an editor is briefly truncated, and a reload landing in that window would otherwise resolve an org missing half its teams — so the store publishes only on success, logs the failure, and keeps answering from the last good state until the file is valid again:
+A failed reload never replaces a working graph. A document saved by an editor is briefly truncated, and a reload landing in that window would otherwise resolve an org missing half its teams. So the store publishes only on success, logs the failure, and keeps answering from the last good state until the file is valid again:
 
 ```text
 Reload failed, still serving the last good graph: Invalid Team API document at …
@@ -508,9 +508,9 @@ The same `teamapi serve-api` process serves a live dashboard at **`/dashboard`**
 
 The **Live digital twin** turns that graph into an original pixel-art operations floor. Teams occupy rooms, people and agents appear as attributed sprites, and declared interactions, dependencies, services, and agent states play through an event rail. Playback can be paused, stepped, or sped up, and selecting a room opens its normal team detail panel. This is deliberately a **declared-state replay**, not fake activity telemetry: `GET /digital-twin` derives every cue from the resolved TeamAPI documents and never claims that an agent or team is executing work right now.
 
-![The Health section: Gaps 4, Policy 1 and Topology 1 as counts, above one merged finding list — unconsumed events, a vacant load-bearing role, a one-sided collaboration, an overrunning collaboration, and a policy delegated to an external enforcer.](docs/assets/dashboard-health.png)
+![The Health section: Gaps 4, Policy 1 and Topology 1 as counts, above one merged finding list: unconsumed events, a vacant load-bearing role, a one-sided collaboration, an overrunning collaboration, and a policy delegated to an external enforcer.](docs/assets/dashboard-health.png)
 
-A **Health** section runs all three graph-only checks at once — [gaps](#gaps), [policy](#policy), and [topology](#topology) — as counts plus a combined finding list sorted most-serious-first, so a blocking finding is never buried under twenty warnings. These are served by `GET /gaps`, `/policy` and `/topology`, all pure functions of the resolved graph, and each is fetched independently: a server built before `/policy` and `/topology` existed shows those two as unavailable rather than blanking the section.
+A **Health** section runs all three graph-only checks ([gaps](#gaps), [policy](#policy), and [topology](#topology)) at once, as counts plus a combined finding list sorted most-serious-first, so a blocking finding is never buried under twenty warnings. These are served by `GET /gaps`, `/policy` and `/topology`, all pure functions of the resolved graph, and each is fetched independently: a server built before `/policy` and `/topology` existed shows those two as unavailable rather than blanking the section.
 
 **Clicking a team** opens a detail panel: its roles (with vacancies marked, since a vacancy is what `gaps` escalates when another team reports into it), members and contacts, services, declared agents and who owns each, and its interactions and dependencies. Cards are keyboard-operable, not mouse-only.
 
@@ -521,14 +521,14 @@ teamapi serve-api examples/acme-org --port 3000
 open http://127.0.0.1:3000/dashboard
 ```
 
-![Searching the dashboard for "oauth" and "architecture" surfaces steering docs, prompts, ADRs, sessions, a specification, an AI agent, and a memory entry — all through the same search box.](docs/assets/dashboard-demo.gif)
+![Searching the dashboard for "oauth" and "architecture" surfaces steering docs, prompts, ADRs, sessions, a specification, an AI agent, and a memory entry, all through the same search box.](docs/assets/dashboard-demo.gif)
 
 Four more sections expose data that was already available through the API:
 
-- **AI agents** — the whole fleet, with counts by status and provider. Every agent with **no human owner** is marked in red. Without that mark, downstream consumers such as `AGENTS.md`, context bundles, and generated crews present an unowned agent exactly like one with a real owner.
-- **Sessions** — what was actually built with an assistant, newest first.
-- **Context map** — as a list beside the diagram, because the diagram can show the relationships but not the **conflicts**: two teams describing one relationship differently. Conflicts are listed first, unconditionally; a disagreement buried under thirty healthy relationships is a disagreement nobody acts on.
-- **Knowledge graph** — a node picker and depth control for walking the graph. Drawing the entire graph would be unreadable; selecting a node answers questions such as "what's connected to this ADR?"
+- **AI agents**: the whole fleet, with counts by status and provider. Every agent with **no human owner** is marked in red. Without that mark, downstream consumers such as `AGENTS.md`, context bundles, and generated crews present an unowned agent exactly like one with a real owner.
+- **Sessions**: what was actually built with an assistant, newest first.
+- **Context map**, as a list beside the diagram, because the diagram can show the relationships but not the **conflicts**: two teams describing one relationship differently. Conflicts are listed first, unconditionally; a disagreement buried under thirty healthy relationships is a disagreement nobody acts on.
+- **Knowledge graph**: a node picker and depth control for walking the graph. Drawing the entire graph would be unreadable; selecting a node answers questions such as "what's connected to this ADR?"
 
 Every section fetches independently and says so when it fails, so a server built before one of these routes existed degrades to a message rather than to a box that stays on "Loading…".
 
@@ -556,12 +556,12 @@ The change remains reviewed, attributable, CI-checked, and declinable. More peop
 
 Four things make it safe to hand to somebody who has never seen the schema:
 
-- **The patch is a closed list**: `info.name`, `info.focus`, `cognitiveLoad`, `channels`, `searchTerms`. Nothing that changes what other documents resolve to — no `$ref`, no id rename, no team removal. An unknown field is **rejected**, not dropped, so a client sending `interactions` gets told no rather than a pull request that did nothing.
-- **Comments survive.** The YAML is edited in place rather than re-serialized from the resolved object, because these files carry the reasons things are the way they are — the `notes:` explaining a load score, the comment above an interaction saying when it should end. A write path that deleted those would make the format worse for having a UI.
+- **The patch is a closed list**: `info.name`, `info.focus`, `cognitiveLoad`, `channels`, `searchTerms`. Nothing that changes what other documents resolve to is accepted, so no `$ref`, no id rename, no team removal. An unknown field is **rejected**, not dropped, so a client sending `interactions` gets told no rather than a pull request that did nothing.
+- **Comments survive.** The YAML is edited in place rather than re-serialized from the resolved object, because these files carry the reasons things are the way they are, like the `notes:` explaining a load score or the comment above an interaction saying when it should end. A write path that deleted those would make the format worse for having a UI.
 - **The result is re-validated and re-formatted before it's pushed**, so the pull request can't fail `teamapi validate` or `teamapi fmt --check`. Somebody who used a web form should never be handed a red build they have no way to fix.
 - **Proposing the same change twice updates one pull request** instead of accumulating near-identical ones: the branch name is derived from the resulting content.
 
-`GET /health` reports which optional surfaces this server has, so the dashboard knows whether to offer the form at all — an edit button that 404s is worse than no edit button. Add `"dryRun": true` to get the proposed file and change summary back without writing anything.
+`GET /health` reports which optional surfaces this server has, so the dashboard knows whether to offer the form at all; an edit button that 404s is worse than no edit button. Add `"dryRun": true` to get the proposed file and change summary back without writing anything.
 
 <a id="docker"></a>
 
@@ -579,19 +579,19 @@ docker run --rm -p 3000:3000 \
 
 Org documents are mounted read-only at `/data`. They remain in your git repository as the source of truth and are never baked into someone else's image.
 
-The token isn't decoration. Inside a container every useful bind is non-loopback, and `serve-api` [refuses that without a credential](#rest-api) — so the refusal fires on the first `docker run` rather than after the org chart has been on the network for a month. `--allow-anonymous` is still there for the case where a trusted network really is the intent.
+The token isn't decoration. Inside a container every useful bind is non-loopback, and `serve-api` [refuses that without a credential](#rest-api), so the refusal fires on the first `docker run` rather than after the org chart has been on the network for a month. `--allow-anonymous` is still there for the case where a trusted network really is the intent.
 
 `docker compose up api` runs the same image with MCP over Streamable HTTP on the same port and mounts `POST /reload` for a deploy hook. It uses the endpoint because inotify does not propagate across every bind-mount implementation, so a filesystem watch can silently miss a change.
 
-Full deployment notes — health checks, one-shot commands, published images — are in [`docs/deployment.md`](docs/deployment.md).
+Full deployment notes (health checks, one-shot commands, published images) are in [`docs/deployment.md`](docs/deployment.md).
 
 <a id="mcp-tools"></a>
 
 ## 🤖 MCP tools
 
-`teamapi serve-mcp examples/acme-org` starts an MCP server you can point Claude Desktop or Claude Code at, then ask about ACME Org like you'd ask a colleague — "who owns checkout-api?", "which team's overloaded?" — no query language needed.
+`teamapi serve-mcp examples/acme-org` starts an MCP server you can point Claude Desktop or Claude Code at, then ask about ACME Org like you'd ask a colleague ("who owns checkout-api?", "which team's overloaded?"), with no query language needed.
 
-The core tools are `list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, `get_org_cognitive_load_report`, and `get_org_gaps`. Each [AI-native section](#ai-native) adds a `list_*`/`get_*` pair — `list_agents`/`get_agent`, `list_prompts`/`get_prompt`, and so on — alongside `render_prompt`, `get_context_bundle`, `get_knowledge_graph`, and `traverse_knowledge_graph`.
+The core tools are `list_teams`, `get_team`, `get_team_roles`, `get_team_cognitive_load`, `find_service_owner`, `list_services`, `get_team_interactions`, `get_team_dependencies`, `get_context_map`, `render_org_diagram`, `search_org`, `get_org_graph`, `get_org_cognitive_load_report`, and `get_org_gaps`. Each [AI-native section](#ai-native) adds a `list_*`/`get_*` pair (`list_agents`/`get_agent`, `list_prompts`/`get_prompt`, and so on) alongside `render_prompt`, `get_context_bundle`, `get_knowledge_graph`, and `traverse_knowledge_graph`.
 
 **Example:** an assistant calling `find_service_owner` with `{ "serviceName": "checkout-api" }`
 
@@ -662,7 +662,7 @@ not overloaded. PCI compliance scope is adding real intrinsic load, and their on
 could use work, but nothing critical right now.
 ```
 
-**Example, with `--debug`** — every tool call the persona makes, shown inline:
+**Example, with `--debug`**, which shows every tool call the persona makes inline:
 
 ```
 $ teamapi chat examples/acme-org --team stream-checkout --member diego-alves --debug
@@ -728,20 +728,20 @@ The OpenAI path is `fetch` against a base URL rather than a vendor SDK, which is
 teamapi chat examples/acme-org --team stream-checkout --ask "who owns checkout-api, and are they overloaded?"
 ```
 
-Everything except the answer goes to **stderr** — the banner, the tool-call progress, the note about a turn that ended early — so stdout is exactly the answer and the command composes with a pipe:
+Everything except the answer goes to **stderr** (the banner, the tool-call progress, the note about a turn that ended early), so stdout is exactly the answer and the command composes with a pipe:
 
 ```bash
 OWNER=$(teamapi chat ./org --team platform-payments --quiet \
   --ask "reply with only the team id that owns the ledger service")
 ```
 
-It exits `2`, not `0`, when the answer is incomplete — the model hit the tool-call ceiling, or the response was truncated. A script acting on half a reply is the failure this mode is most likely to cause and least likely to notice.
+It exits `2`, not `0`, when the answer is incomplete: the model hit the tool-call ceiling, or the response was truncated. A script acting on half a reply is the failure this mode is most likely to cause and least likely to notice.
 
 <a id="generators"></a>
 
 ## ⚙️ Generators
 
-`teamapi generate crewai examples/acme-org --out ./crews` turns each team into a [CrewAI](https://docs.crewai.com/) crew — roles become agents, responsibilities become tasks. A responsibility's optional `doneWhen` becomes that task's `expected_output`; without one, you get a generic status-report stand-in.
+`teamapi generate crewai examples/acme-org --out ./crews` turns each team into a [CrewAI](https://docs.crewai.com/) crew: roles become agents, responsibilities become tasks. A responsibility's optional `doneWhen` becomes that task's `expected_output`; without one, you get a generic status-report stand-in.
 
 **Example:** `crews/platform-payments/agents.yaml`
 
@@ -760,7 +760,7 @@ tech_lead:
 
 ### ▶️ Running it
 
-`crewai create crew acme_payments` scaffolds a project with its own `config/agents.yaml` and `config/tasks.yaml` — replace those with ours, then wire them up in `crew.py`:
+`crewai create crew acme_payments` scaffolds a project with its own `config/agents.yaml` and `config/tasks.yaml`. Replace those with ours, then wire them up in `crew.py`:
 
 ```python
 from crewai import Agent, Crew, Process, Task
@@ -797,13 +797,13 @@ class AcmePaymentsCrew:
 AcmePaymentsCrew().crew().kickoff()
 ```
 
-For a crew `org.yaml` marks `sequential` (most of them), skip `process`/`manager_agent` entirely — just `Crew(agents=self.agents, tasks=self.tasks)`.
+For a crew `org.yaml` marks `sequential` (most of them), skip `process`/`manager_agent` entirely and use just `Crew(agents=self.agents, tasks=self.tasks)`.
 
 <a id="backstage-catalog"></a>
 
 ### 🗂️ Backstage catalog
 
-`teamapi generate backstage examples/acme-org --out ./catalog` turns the same org graph into a `catalog-info.yaml` for [Backstage](https://backstage.io/): one `Group` per team (with its `members[]`), one `User` per member, and — for any team that owns `services[]` — a `System` grouping them plus one `Component` per service, owned by that team's `Group`. Drop the file at your catalog's discovery root (or point Backstage's `catalog.locations` config at it) and it imports directly — no hand-maintained catalog YAML to keep in sync with your org chart.
+`teamapi generate backstage examples/acme-org --out ./catalog` turns the same org graph into a `catalog-info.yaml` for [Backstage](https://backstage.io/): one `Group` per team (with its `members[]`), one `User` per member, and, for any team that owns `services[]`, a `System` grouping them plus one `Component` per service, owned by that team's `Group`. Drop the file at your catalog's discovery root (or point Backstage's `catalog.locations` config at it) and it imports directly, with no hand-maintained catalog YAML to keep in sync with your org chart.
 
 **Example:** `catalog/catalog-info.yaml` (excerpt, `--team stream-checkout`)
 
@@ -836,7 +836,7 @@ spec:
   system: stream-checkout
 ```
 
-Cross-team `interactions[]`/`dependencies[]` aren't translated into Backstage's `dependsOn` relations — those model service-to-service dependencies, and Team API only tracks team-level ones, so guessing a mapping would produce plausible-looking but misleading catalog data. `roles[]` aren't represented either: Backstage's `Group`/`User` model has no concept of a role independent of the person filling it.
+Cross-team `interactions[]`/`dependencies[]` aren't translated into Backstage's `dependsOn` relations. Those model service-to-service dependencies, and Team API only tracks team-level ones, so guessing a mapping would produce plausible-looking but misleading catalog data. `roles[]` aren't represented either: Backstage's `Group`/`User` model has no concept of a role independent of the person filling it.
 
 <a id="codeowners"></a>
 
@@ -856,11 +856,11 @@ builder.addEntityProvider(
 
 The catalog stays within one refresh interval of TeamAPI. The provider serves output from the existing generator, so there is no second mapping between the two models to maintain.
 
-The plugin has **no `@backstage/*` dependency**. `EntityProvider` is a structural interface, and depending on the framework to get it would pin this to one Backstage version — the thing most likely to be wrong for any given installation. It applies a `full` mutation under one stable location, so a team removed from the org graph leaves the catalog too; and a failed refresh leaves the previously ingested entities alone, because a briefly unreachable server is not a reason to empty somebody's service catalog.
+The plugin has **no `@backstage/*` dependency**. `EntityProvider` is a structural interface, and depending on the framework to get it would pin this to one Backstage version, the thing most likely to be wrong for any given installation. It applies a `full` mutation under one stable location, so a team removed from the org graph leaves the catalog too; and a failed refresh leaves the previously ingested entities alone, because a briefly unreachable server is not a reason to empty somebody's service catalog.
 
 ### 👥 CODEOWNERS
 
-`teamapi generate codeowners examples/acme-org --out ./codeowners --org acme` writes one `CODEOWNERS` per repository, so every pull request routes to the team that declared the service. Owners are written as `@acme/<team-id>` — the same slug [`teamapi apply`](#apply) provisions — or as members' `githubUsername` handles when no `--org` is given.
+`teamapi generate codeowners examples/acme-org --out ./codeowners --org acme` writes one `CODEOWNERS` per repository, so every pull request routes to the team that declared the service. Owners are written as `@acme/<team-id>` (the same slug [`teamapi apply`](#apply) provisions) or as members' `githubUsername` handles when no `--org` is given.
 
 ```text
 # Generated by TeamAPI — edit the team's teamapi.yml, not this file.
@@ -870,7 +870,7 @@ The plugin has **no `@backstage/*` dependency**. `EntityProvider` is a structura
 * @acme/stream-checkout
 ```
 
-Team API is written per team and CODEOWNERS lives per repository, so generating one inverts the index — and that surfaces a question the per-team view hides. A repository claimed by two teams has no correct answer, so none is written and the command exits non-zero:
+Team API is written per team and CODEOWNERS lives per repository, so generating one inverts the index, and that surfaces a question the per-team view hides. A repository claimed by two teams has no correct answer, so none is written and the command exits non-zero:
 
 ```text
 ! acme/checkout-api is claimed by platform-payments and stream-checkout — no CODEOWNERS written
@@ -911,7 +911,7 @@ The Port and Backstage targets mostly overlap, but Port also carries **cognitive
 
 Two artifacts, because two different people own the levers: one `.env` per service holding a single `OTEL_RESOURCE_ATTRIBUTES` line an SDK reads directly, and a `collector.yaml` `transform` processor that stamps the same attributes centrally with no deployments touched.
 
-Values are percent-encoded — `OTEL_RESOURCE_ATTRIBUTES` is W3C Baggage, so a comma in a team name would otherwise truncate the list and silently drop every attribute after it. Details in [`docs/integrations/opentelemetry.md`](docs/integrations/opentelemetry.md).
+Values are percent-encoded. `OTEL_RESOURCE_ATTRIBUTES` is W3C Baggage, so a comma in a team name would otherwise truncate the list and silently drop every attribute after it. Details in [`docs/integrations/opentelemetry.md`](docs/integrations/opentelemetry.md).
 
 <a id="import"></a>
 
@@ -924,7 +924,7 @@ $ teamapi import github-org acme-example --out ./imported
 Wrote 4 team(s) to ./imported/ — every team defaulted to type: stream-aligned with no roles[]; review and adjust both by hand, then run `teamapi validate`.
 ```
 
-GitHub teams carry no Team Topologies typing or role hierarchy, so every generated team defaults to `type: stream-aligned` with an empty `roles[]` — both are meant to be corrected by hand, not taken as ground truth. Run `teamapi validate ./imported` next, then fill in `roles[]`, fix each team's `type`, and add `cognitiveLoad`/`interactions`/`dependencies` as you would for any hand-authored team. Requires a GitHub token via `--token` or `GITHUB_TOKEN`/`GH_TOKEN`.
+GitHub teams carry no Team Topologies typing or role hierarchy, so every generated team defaults to `type: stream-aligned` with an empty `roles[]`. Both are meant to be corrected by hand, not taken as ground truth. Run `teamapi validate ./imported` next, then fill in `roles[]`, fix each team's `type`, and add `cognitiveLoad`/`interactions`/`dependencies` as you would for any hand-authored team. Requires a GitHub token via `--token` or `GITHUB_TOKEN`/`GH_TOKEN`.
 
 ### 🗃️ Five import sources
 
@@ -965,7 +965,7 @@ Every source is deliberately incomplete in the same way: nothing outside the sou
 
 ## 🔄 Sync with GitHub teams
 
-Everything above reads the spec; `teamapi apply` is the one command that writes back to a real system — it reconciles actual GitHub teams and memberships in a GitHub org with what the spec declares, the way `terraform plan`/`apply` reconciles infrastructure. One GitHub team per Team API team, matched by slug === team `id`; members are resolved via each member's `githubUsername` (add it alongside `contact` — see the [spec](docs/spec/teamapi-extended-v1.md#member)). A member with no `githubUsername` set is reported as skipped, not silently dropped from the plan.
+Everything above reads the spec; `teamapi apply` is the one command that writes back to a real system. It reconciles actual GitHub teams and memberships in a GitHub org with what the spec declares, the way `terraform plan`/`apply` reconciles infrastructure. One GitHub team per Team API team, matched by slug === team `id`; members are resolved via each member's `githubUsername` (add it alongside `contact`; see the [spec](docs/spec/teamapi-extended-v1.md#member)). A member with no `githubUsername` set is reported as skipped, not silently dropped from the plan.
 
 It always prints a plan first. ACME Org's members don't carry a `githubUsername` (they're fictional), so running it as-is reports every member as skipped; add the field to see adds/removes, e.g.:
 
@@ -1005,14 +1005,14 @@ Re-run with --yes to apply this plan.
 | `okta`      | group membership                               | groups themselves — created or deleted    |
 | `pagerduty` | team membership                                | **schedules, escalation policies**, teams |
 
-The Slack one is the one that pays for itself: `@platform-payments` in a message is how people actually reach a team, it's maintained by hand, and it's wrong within weeks of anybody joining or leaving — silently, in the one place where being wrong means the message reaches nobody.
+The Slack one is the one that pays for itself: `@platform-payments` in a message is how people actually reach a team, it's maintained by hand, and it goes silently wrong within weeks of anybody joining or leaving, in the one place where being wrong means the message reaches nobody.
 
 The command leaves several operations out because the source data cannot perform them safely:
 
 - **PagerDuty schedules are never written.** Schedules record temporary facts such as swaps and holidays; `teamapi.yml` records structure. Generating a schedule from team membership could silently overwrite an incident-time override during the next CI run. Team membership is safe to sync because the org graph already holds that fact, and stale membership commonly leaves escalation policies pointing to people who moved teams. The plan repeats this limit on every run.
 - **Directory groups are never created or deleted.** A missing group is reported, because creating one is how a directory quietly acquires a second grouping scheme nobody governs; and deleting one can revoke access to everything mapped onto it, which no static document should do as a side effect.
 - **Deactivated accounts aren't removals.** `okta-drift` reports those, because offboarding is a different operation usually owned by somebody else.
-- **Members are matched by email**, the only field both systems reliably carry. Anything unresolved is listed rather than guessed at — a fuzzy name match that picks the wrong Ana is worse than a line in a report.
+- **Members are matched by email**, the only field both systems reliably carry. Anything unresolved is listed rather than guessed at, since a fuzzy name match that picks the wrong Ana is worse than a line in a report.
 
 None of these APIs has a transaction, so a failure partway through says so and tells you to re-run, rather than reporting success over a half-applied change.
 
@@ -1021,7 +1021,7 @@ None of these APIs has a transaction, so a failure partway through says so and t
 ## 🔎 Assess an existing organization
 
 Start with a bounded baseline before deciding how deeply to adopt TeamAPI. `assess` resolves the organization once,
-then combines accountability gaps, policy checks, topology heuristics and—when `--scan` is supplied—repository AI
+then combines accountability gaps, policy checks, topology heuristics and (when `--scan` is supplied) repository AI
 evidence into one report.
 
 ```bash
@@ -1038,13 +1038,13 @@ is useful enough to automate.
 
 ## 💻 CLI reference
 
-`npm install -g @jgalego/teamapi` — or `pnpm build` from a source checkout — puts `teamapi` on your PATH. If you built with `CI=true`, which skips linking, run `pnpm teamapi <command> ...` from the repo root instead.
+`npm install -g @jgalego/teamapi` (or `pnpm build` from a source checkout) puts `teamapi` on your PATH. If you built with `CI=true`, which skips linking, run `pnpm teamapi <command> ...` from the repo root instead.
 
 | Command                                                                                                                                                                                                                                           | Purpose                                                                                                                                                                                                                                  |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `teamapi validate <patterns...> [--format text\|json\|sarif]`                                                                                                                                                                                     | Resolve every `$ref` transitively; report unresolved refs and [org-wide name conflicts](#name-conflicts)                                                                                                                                 |
 | `teamapi assess <patterns...> [--scan <dir>] [--state <file>] [--format text\|json\|html\|sarif] [--out <file>]`                                                                                                                                  | Establish and compare an [organization-wide accountability baseline](#assessment)                                                                                                                                                        |
-| `teamapi gaps <patterns...>`                                                                                                                                                                                                                      | Report [accountability holes between teams](#gaps) — unowned event contracts, vacant seats, unowned agents                                                                                                                               |
+| `teamapi gaps <patterns...>`                                                                                                                                                                                                                      | Report [accountability holes between teams](#gaps): unowned event contracts, vacant seats, unowned agents                                                                                                                                |
 | `teamapi policy <patterns...>`                                                                                                                                                                                                                    | Check [declared policies](#policy) against the org graph, and report the ones nothing enforces                                                                                                                                           |
 | `teamapi shadow-ai <patterns...> --scan <dir>`                                                                                                                                                                                                    | Report [AI adoption found in repositories](#shadow-ai) against what teams declare in `agents[]`                                                                                                                                          |
 | `teamapi render <patterns...> --scope topology\|hierarchy\|context-map\|org-hierarchy [--format mermaid\|dot] [--team <id>] [--with-agents] [--out <file>]`                                                                                       | Render a diagram                                                                                                                                                                                                                         |
@@ -1082,7 +1082,7 @@ is useful enough to automate.
 teamapi gaps examples/driftwood-org --format json | jq '.findings[] | select(.severity == "blocking")'
 ```
 
-`json` emits the report object the library itself returns, not a re-rendering of the text — anything you can do with `planGaps`'s return value in code, you can do here in `jq`. The `text` format's "N unresolved reference(s)" warning is suppressed for the structured formats, since a stray line would make the document unparseable for the consumer the format exists for.
+`json` emits the report object the library itself returns, not a re-rendering of the text. Anything you can do with `planGaps`'s return value in code, you can do here in `jq`. The `text` format's "N unresolved reference(s)" warning is suppressed for the structured formats, since a stray line would make the document unparseable for the consumer the format exists for.
 
 `sarif` is [SARIF 2.1.0](https://docs.github.com/en/code-security/code-scanning/integrating-with-code-scanning/sarif-support-for-code-scanning), which GitHub's code scanning ingests:
 
@@ -1098,9 +1098,9 @@ teamapi gaps examples/driftwood-org --format json | jq '.findings[] | select(.se
     sarif_file: teamapi-sarif
 ```
 
-That turns every finding into an inline annotation on the pull request diff and an entry in the repository's security tab, with history and dismissal — which is a different thing from a list in a job log. The person who introduced an orphaned event contract sees it on their own diff, at review time, without having gone looking for it.
+That turns every finding into an inline annotation on the pull request diff and an entry in the repository's security tab, with history and dismissal, which is a different thing from a list in a job log. The person who introduced an orphaned event contract sees it on their own diff, at review time, without having gone looking for it.
 
-Paths are emitted relative to the working directory, because SARIF consumers resolve them against the repository root — an absolute path from a CI runner matches no file in the repository and the annotation silently disappears. Severity maps to SARIF's levels on the same line the exit codes draw: `blocking` becomes `error`, `warning` stays `warning`, `info` becomes `note`.
+Paths are emitted relative to the working directory, because SARIF consumers resolve them against the repository root, and an absolute path from a CI runner matches no file in the repository and the annotation silently disappears. Severity maps to SARIF's levels on the same line the exit codes draw: `blocking` becomes `error`, `warning` stays `warning`, `info` becomes `note`.
 
 The output format never changes an exit code.
 
@@ -1140,9 +1140,9 @@ teamapi fmt --check  # report what would change, write nothing, exit non-zero
 
 Formatting protects review quality. People across the org edit these documents by hand and place new sections according to their own habits. Without a canonical format, two teams making the same change produce unrelated-looking diffs, making reviews harder on files that define accountability.
 
-Top-level keys are ordered the way the schema declares them, not alphabetically: the document reads top to bottom — what this team is, what it owns, who is on it, how it relates to everyone else — and sorting alphabetically would open every file with `agents` and bury `info` in the middle. Keys the schema doesn't know stay, after the rest and in their original order, since the format passes unknown fields through and dropping them would be data loss.
+Top-level keys are ordered the way the schema declares them, not alphabetically: the document reads top to bottom (what this team is, what it owns, who is on it, how it relates to everyone else), and sorting alphabetically would open every file with `agents` and bury `info` in the middle. Keys the schema doesn't know stay, after the rest and in their original order, since the format passes unknown fields through and dropping them would be data loss.
 
-**Comments survive.** A load-and-dump round trip silently deletes every one of them, which across an org means deleting the explanations of why a role reports across a boundary or why a team runs no agents — data loss discovered one file at a time, long after the commit. `fmt` parses to a comment-preserving document tree instead, so a section that moves takes its commentary with it.
+**Comments survive.** A load-and-dump round trip silently deletes every one of them, which across an org means deleting the explanations of why a role reports across a boundary or why a team runs no agents. That is data loss discovered one file at a time, long after the commit. `fmt` parses to a comment-preserving document tree instead, so a section that moves takes its commentary with it.
 
 A file that doesn't parse is reported and left alone rather than rewritten on a guess, and one broken document doesn't stop the other forty.
 
@@ -1187,11 +1187,11 @@ teamapi topology
 teamapi serve-api
 ```
 
-A command line that names patterns wins and does **not** merge with the config's — naming patterns is being explicit about scope, and quietly adding the org's default set would resolve teams you didn't ask about. Same precedence for every flag: CLI, then config, then the built-in default.
+A command line that names patterns wins and does **not** merge with the config's. Naming patterns is being explicit about scope, and quietly adding the org's default set would resolve teams you didn't ask about. Same precedence for every flag: CLI, then config, then the built-in default.
 
 **The schema has no `token:` field and rejects one if present.** The config file lives in the repository, where a convenient token field would invite secret leaks. Every command reads its token from an environment variable.
 
-Parsing is strict throughout: an unknown key, a misspelled section, an unknown gap or topology kind, an out-of-range port — all errors. A `waviers:` typo that quietly does nothing while you believe a rule is in force is worse than no config at all.
+Parsing is strict throughout: an unknown key, a misspelled section, an unknown gap or topology kind, an out-of-range port are all errors. A `waviers:` typo that quietly does nothing while you believe a rule is in force is worse than no config at all.
 
 `--config <file>` points at a specific file; `--no-config` ignores any.
 
@@ -1199,7 +1199,7 @@ Parsing is strict throughout: an unknown key, a misspelled section, an unknown g
 
 ### ⚔️ Name conflicts
 
-The schema enforces uniqueness _within_ a document — role ids, member ids, agent ids — because that's all one document can see. Some names have to be unique across the whole org, though, because consumers look them up by name alone:
+The schema enforces uniqueness _within_ a document (role ids, member ids, agent ids) because that's all one document can see. Some names have to be unique across the whole org, though, because consumers look them up by name alone:
 
 ```console
 $ teamapi validate org
@@ -1208,7 +1208,7 @@ $ teamapi validate org
   - channel 'slack:payments' is declared by team-a, team-b — slack-sync would set its topic to whichever ran last
 ```
 
-Ask `findServiceOwner` who owns `payments-api` when two teams declare it and it answers with whichever team id sorts first — deterministically, and silently. Every consumer inherits that: `GET /services/payments-api`, the `who_owns_service` MCP tool, the Slack `/whoowns` command, generated CODEOWNERS. The other team believes it owns the service and nothing says otherwise.
+Ask `findServiceOwner` who owns `payments-api` when two teams declare it and it answers with whichever team id sorts first, deterministically and silently. Every consumer inherits that: `GET /services/payments-api`, the `who_owns_service` MCP tool, the Slack `/whoowns` command, generated CODEOWNERS. The other team believes it owns the service and nothing says otherwise.
 
 Queries still need a deterministic result, but sorting cannot settle ownership. Validation reports the ambiguity once and names both claimants, sparing each consumer from rediscovering it. The sorted "winner" is an implementation artifact, not an organizational fact.
 
@@ -1226,11 +1226,11 @@ teamApiVersion: "1.0.0"
 id: stream-checkout
 ```
 
-That one line gives you completion, hover documentation, and inline validation in any editor running the [YAML language server](https://github.com/redhat-developer/yaml-language-server) — VS Code (Red Hat YAML extension), Neovim, JetBrains IDEs — with nothing to configure per workspace. `teamapi scaffold` writes it into every document it generates, so new teams get it for free.
+That one line gives you completion, hover documentation, and inline validation in any editor running the [YAML language server](https://github.com/redhat-developer/yaml-language-server), whether VS Code with the Red Hat YAML extension, Neovim, or a JetBrains IDE, with nothing to configure per workspace. `teamapi scaffold` writes it into every document it generates, so new teams get it for free.
 
 Errors surface as you type rather than at `teamapi validate` time: an unknown `info.type`, a misspelled top-level key, a `roles[]` entry missing its `kind`.
 
-The schema is generated from the same Zod schemas the resolver validates against — there is no second, hand-maintained copy to drift. Print it yourself with `teamapi schema`, or write it somewhere with `teamapi schema --out schema.json`. A test regenerates it and fails if the published copy is stale, so the URL above always matches the code that ships.
+The schema is generated from the same Zod schemas the resolver validates against, so there is no second, hand-maintained copy to drift. Print it yourself with `teamapi schema`, or write it somewhere with `teamapi schema --out schema.json`. A test regenerates it and fails if the published copy is stale, so the URL above always matches the code that ships.
 
 For a schema that isn't reachable over the network (air-gapped setups, or pinning a specific version), vendor it into your org's repo and point the modeline at a relative path:
 
@@ -1246,7 +1246,7 @@ teamapi schema --out .teamapi/schema.json
 
 ## 🕰️ Org history
 
-Since your org is just files in git, its history is git history. `teamapi diff <patterns...> --against <ref>` resolves the same patterns two ways — the working tree, and as they existed at any commit, tag, or branch — and reports what changed: teams added/removed, roles/members/services added/removed per team, cognitive-load deltas, and edge changes (interactions, dependencies, cross-team reporting lines). Requires running inside a git repository.
+Since your org is just files in git, its history is git history. `teamapi diff <patterns...> --against <ref>` resolves the same patterns two ways (the working tree, and as they existed at any commit, tag, or branch) and reports what changed: teams added/removed, roles/members/services added/removed per team, cognitive-load deltas, and edge changes (interactions, dependencies, cross-team reporting lines). Requires running inside a git repository.
 
 **Example**, run against this very repo — `teamapi diff examples/acme-org --against 931fe6b` (the initial commit, before the org-wide role hierarchy was added):
 
@@ -1262,7 +1262,7 @@ Role edges:
   + aligns-with stream-onboarding.tech-lead -> enabling-devex.coach
 ```
 
-When nothing has changed, it prints a single line rather than an empty report. Either way it exits 0 — this is an inspection tool, not a validation gate (see [CI integration](#ci-integration) for that).
+When nothing has changed, it prints a single line rather than an empty report. Either way it exits 0, because this is an inspection tool, not a validation gate (see [CI integration](#ci-integration) for that).
 
 ### 📉 Trends
 
@@ -1283,7 +1283,7 @@ teamapi history examples/acme-org --period quarter --since "2 years ago"
 
 That `+6` in `sup~` is the case this exists for: supervision load went from unmeasured to a mean of 6 across the org, and no single snapshot could have told you.
 
-`--period commit | day | week | month | quarter` keeps the **last** commit in each period, so a row reads as "where the org ended up". `--format csv` for the spreadsheet this is going to end up in anyway, `--format json` for everything else. Revisions the current seed list can't resolve — the org had fewer teams then — are skipped with a note rather than failing the report.
+`--period commit | day | week | month | quarter` keeps the **last** commit in each period, so a row reads as "where the org ended up". `--format csv` for the spreadsheet this is going to end up in anyway, `--format json` for everything else. Revisions the current seed list can't resolve (the org had fewer teams then) are skipped with a note rather than failing the report.
 
 Everything it reports is already in git. It just needed resolving at more than one point, with the same resolver the live graph uses: a historical snapshot built by a simpler one would differ from today's for reasons that have nothing to do with the org changing.
 
@@ -1291,7 +1291,7 @@ Everything it reports is already in git. It just needed resolving at more than o
 
 ## 🕳️ Gaps
 
-Every other check here compares the spec to an outside system. This one compares it to itself, because the holes it looks for are invisible from any single `teamapi.yml` — each document is individually valid, and the gap only appears once the graph is resolved. A service subscribing to an event nobody publishes reads as complete from inside the subscriber. A vacant seat reads as ordinary from inside the team that declared it; it's the two _other_ teams reporting into it that make the vacancy load-bearing.
+Every other check here compares the spec to an outside system. This one compares it to itself, because the holes it looks for are invisible from any single `teamapi.yml`. Each document is individually valid, and the gap only appears once the graph is resolved. A service subscribing to an event nobody publishes reads as complete from inside the subscriber. A vacant seat reads as ordinary from inside the team that declared it; it's the two _other_ teams reporting into it that make the vacancy load-bearing.
 
 ```bash
 teamapi gaps examples/acme-org
@@ -1306,7 +1306,7 @@ teamapi gaps examples/acme-org
 4 finding(s), 0 blocking; 9 seam(s) checked.
 ```
 
-Only `orphan-subscription` and `dangling-owner` exit non-zero, and they share a shape: the declaration _looks_ complete and isn't. An agent whose `ownerId` resolves to nobody presents to every downstream consumer — `AGENTS.md`, the context bundle, a generated crew — exactly like an agent with a real human behind it, which makes it strictly worse than an agent with no owner at all. Only `collaboration` is expected to be mutual; `x-as-a-service` is deliberately one-directional, so consuming a platform is never reported. Pure, offline, no token — so unlike the drift checks it's also served over HTTP as `GET /gaps` and as the `get_org_gaps` MCP tool, which is what lets an assistant answer "what is nobody responsible for here?" without being handed a report. Details in [`docs/integrations/gaps.md`](docs/integrations/gaps.md).
+Only `orphan-subscription` and `dangling-owner` exit non-zero, and they share a shape: the declaration _looks_ complete and isn't. An agent whose `ownerId` resolves to nobody presents to every downstream consumer (`AGENTS.md`, the context bundle, a generated crew) exactly like an agent with a real human behind it, which makes it strictly worse than an agent with no owner at all. Only `collaboration` is expected to be mutual; `x-as-a-service` is deliberately one-directional, so consuming a platform is never reported. Pure, offline, no token, so unlike the drift checks it's also served over HTTP as `GET /gaps` and as the `get_org_gaps` MCP tool, which is what lets an assistant answer "what is nobody responsible for here?" without being handed a report. Details in [`docs/integrations/gaps.md`](docs/integrations/gaps.md).
 
 <a id="gap-rules"></a>
 
@@ -1328,7 +1328,7 @@ gaps:
       expires: "2026-12-31"
 ```
 
-The two do different jobs. **`severity`** re-grades a whole kind, permanently — the org saying this class of thing is, or isn't, a gate for us. **Waivers** exempt one specific finding, temporarily, with a reason.
+The two do different jobs. **`severity`** re-grades a whole kind, permanently: the org saying this class of thing is, or isn't, a gate for us. **Waivers** exempt one specific finding, temporarily, with a reason.
 
 ```text
 = waived dangling-owner: agent 'pipeline-reviewer' is owned by 'dana-whitfield', who is not a member of platform-data (Dana left; replacement owner named in Q3 planning, until 2026-12-31)
@@ -1342,7 +1342,7 @@ Waivers **expire** so that somebody reviews the recorded reason again. An exempt
 
 `reason` is mandatory. A waiver without one is indistinguishable, six months later, from one added to make a build pass.
 
-Waivers that match nothing are reported too (`- unused waiver … matched nothing, delete it`), so the file doesn't silently accumulate exemptions for gaps that were fixed years ago. And an unknown gap kind is an **error**, not a shrug — a `waviers:` typo that does nothing while the org believes a rule is in force is worse than no config at all.
+Waivers that match nothing are reported too (`- unused waiver … matched nothing, delete it`), so the file doesn't silently accumulate exemptions for gaps that were fixed years ago. And an unknown gap kind is an **error**, not a shrug, because a `waviers:` typo that does nothing while the org believes a rule is in force is worse than no config at all.
 
 `--config <file>` points at a specific file; `--no-config` ignores any and reports everything at its declared severity.
 
@@ -1370,12 +1370,12 @@ Every rule lands in one of five outcomes:
 | `satisfied`     | A built-in evaluator ran and the team complies                              |
 | `violated`      | A built-in evaluator ran and the team does not                              |
 | `delegated`     | No evaluator here, but `enforcedBy` names the automation that does check it |
-| `unenforced`    | No evaluator here **and** no `enforcedBy` — nothing, anywhere, checks this  |
+| `unenforced`    | No evaluator here **and** no `enforcedBy`; nothing, anywhere, checks this   |
 | `misconfigured` | An evaluator exists, but the rule's `value` is the wrong shape for it       |
 
 The command exists to find `unenforced` policies. Inside the document, an unenforced policy looks complete: it has the same `severity: blocking` and confident prose as an enforced one, while behaving only as a comment. TeamAPI reports it at its declared severity, and a blocking policy exits non-zero.
 
-`delegated` never fails a build: naming an external enforcer is the right thing to do, not a finding. It's reported at `info` and deliberately kept out of the "checked here pass" ratio, so that number never implies this tool verified something it didn't. `misconfigured` stays at `warning` even on a blocking policy — a typo in a document isn't evidence a team is out of compliance.
+`delegated` never fails a build: naming an external enforcer is the right thing to do, not a finding. It's reported at `info` and deliberately kept out of the "checked here pass" ratio, so that number never implies this tool verified something it didn't. `misconfigured` stays at `warning` even on a blocking policy, because a typo in a document isn't evidence a team is out of compliance.
 
 The rule keys with built-in evaluators:
 
@@ -1422,7 +1422,7 @@ teamapi topology examples/acme-org
 | `platform-depends-on-stream` | A platform team depending on a team it exists to serve                   |
 | `blocking-dependency`        | A dependency the team itself labelled `Blocking`                         |
 
-The collaboration checks are the ones worth having. Team Topologies is emphatic that collaboration is the _expensive_ mode — high bandwidth, both teams paying for it — and therefore deliberately temporary. A collaboration with no `expectedDuration` isn't a collaboration, it's two teams that have merged without saying so; one still declared six months past its end date is the same thing arrived at by drift. Both are invisible until something reads the dates, which is what this does.
+The collaboration checks are the ones worth having. Team Topologies is emphatic that collaboration is the _expensive_ mode (high bandwidth, both teams paying for it) and therefore deliberately temporary. A collaboration with no `expectedDuration` isn't a collaboration, it's two teams that have merged without saying so; one still declared six months past its end date is the same thing arrived at by drift. Both are invisible until something reads the dates, which is what this does.
 
 `platform-depends-on-stream` catches inverted flow: a platform exists to be consumed, so one that depends on a team it serves has the consumer waiting on the platform which is waiting on the consumer.
 
@@ -1441,7 +1441,7 @@ topology:
 
 ## 🫥 Shadow AI
 
-[Paperclip drift](#paperclip) answers "which agents are running that nothing declares" — for one runtime, behind one gateway. Most shadow AI never reaches a runtime. It's a `.mcp.json` somebody committed during a crunch, an SDK added to a manifest, a workflow step that calls a model. None of those needed anyone's approval, which is why they spread faster than the process meant to sanction them — and all of them are checked into git, so they can be read off the same source of truth as everything else.
+[Paperclip drift](#paperclip) answers "which agents are running that nothing declares", but only for one runtime, behind one gateway. Most shadow AI never reaches a runtime. It's a `.mcp.json` somebody committed during a crunch, an SDK added to a manifest, a workflow step that calls a model. None of those needed anyone's approval, which is why they spread faster than the process meant to sanction them. And all of them are checked into git, so they can be read off the same source of truth as everything else.
 
 ```bash
 teamapi shadow-ai examples/acme-org --scan ~/src
@@ -1455,7 +1455,7 @@ teamapi shadow-ai examples/acme-org --scan ~/src
 3 finding(s), 1 blocking; 1 repo(s) matched, 1 quiet.
 ```
 
-`--scan` reads repository checkouts already on disk — no clone, no fetch, no token. Only `forbidden` exits non-zero: undeclared usage is a conversation, but a team that wrote down "no agents on this code" in review and has one anyway is not a documentation problem. The report counts `quiet` repos separately and names that number when it finds nothing, because this detects _declaration_, not use — a clean result over an empty tree must not read like a clean bill of health. Details in [`docs/integrations/shadow-ai.md`](docs/integrations/shadow-ai.md).
+`--scan` reads repository checkouts already on disk, with no clone, no fetch, and no token. Only `forbidden` exits non-zero: undeclared usage is a conversation, but a team that wrote down "no agents on this code" in review and has one anyway is not a documentation problem. The report counts `quiet` repos separately and names that number when it finds nothing, because this detects _declaration_, not use, and a clean result over an empty tree must not read like a clean bill of health. Details in [`docs/integrations/shadow-ai.md`](docs/integrations/shadow-ai.md).
 
 <a id="ci-integration"></a>
 
@@ -1483,13 +1483,13 @@ jobs:
           check-gaps: true # also fail on a blocking `teamapi gaps` finding
 ```
 
-It installs `@jgalego/teamapi` and runs `teamapi validate`, then posts a single PR comment with the result — kept up to date on later pushes, and carrying a live-rendered Mermaid preview when validation passes. The job fails when validation fails, so it can gate a required check; `check-gaps: true` additionally runs [`teamapi gaps`](#gaps) after validation passes and fails on a blocking finding (warnings print but never fail). This repo dogfoods it against [`examples/acme-org`](examples/acme-org); see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml) and the action's [inputs and outputs](.github/actions/validate/README.md).
+It installs `@jgalego/teamapi` and runs `teamapi validate`, then posts a single PR comment with the result, kept up to date on later pushes, and carrying a live-rendered Mermaid preview when validation passes. The job fails when validation fails, so it can gate a required check; `check-gaps: true` additionally runs [`teamapi gaps`](#gaps) after validation passes and fails on a blocking finding (warnings print but never fail). This repo dogfoods it against [`examples/acme-org`](examples/acme-org); see [`.github/workflows/teamapi-preview.yml`](.github/workflows/teamapi-preview.yml) and the action's [inputs and outputs](.github/actions/validate/README.md).
 
 <a id="drift-watch"></a>
 
 ### 🛰️ Drift watch
 
-Pull-request checks only fire when somebody touches a `teamapi.yml`. Most drift is the opposite: the documents sit still while the org moves around them — someone leaves and their agents keep an `ownerId` nobody holds, a service starts publishing an event nothing consumes. Nothing in a PR-triggered workflow ever notices.
+Pull-request checks only fire when somebody touches a `teamapi.yml`. Most drift is the opposite: the documents sit still while the org moves around them: someone leaves and their agents keep an `ownerId` nobody holds, a service starts publishing an event nothing consumes. Nothing in a PR-triggered workflow ever notices.
 
 [`JGalego/TeamAPI/.github/actions/drift`](.github/actions/drift) runs the checks on a schedule and keeps **one** tracking issue in sync with what they find:
 
@@ -1514,11 +1514,11 @@ jobs:
           assignees: your-github-login
 ```
 
-It runs `validate`, `gaps`, and (optionally) `policy` and `shadow-ai`, and every check runs even when an earlier one fails — a report describing only the first problem found would be worth less than no report.
+It runs `validate`, `gaps`, and (optionally) `policy` and `shadow-ai`, and every check runs even when an earlier one fails, because a report describing only the first problem found would be worth less than no report.
 
 The issue is found by a marker in its body rather than by title, so it survives being renamed and the action updates it in place instead of opening a new one every morning. When everything comes back clean it closes the issue; if none is open it does nothing at all, because opening an issue to announce that there is no problem is how a bot gets muted.
 
-This repo ships [`.github/workflows/drift.yml`](.github/workflows/drift.yml) wired to `examples/acme-org`. Its schedule is inert until you set the repository variable `TEAMAPI_DRIFT_ENABLED` to `true` — `workflow_dispatch` always works, so you can try it before committing to the cadence.
+This repo ships [`.github/workflows/drift.yml`](.github/workflows/drift.yml) wired to `examples/acme-org`. Its schedule is inert until you set the repository variable `TEAMAPI_DRIFT_ENABLED` to `true`. `workflow_dispatch` always works, so you can try it before committing to the cadence.
 
 <a id="paperclip"></a>
 
@@ -1544,19 +1544,19 @@ Since last time:
   - stream-insights [unaccountable-agent] agent 'report-writer' names no ownerId, so nobody is accountable for it
 ```
 
-`gaps`, `policy` and `topology` could always answer this. Getting the answer meant remembering to run three commands — and the findings that matter most are also the least urgent-feeling, so they wait behind whatever is on fire. Indefinitely.
+`gaps`, `policy` and `topology` could always answer this. Getting the answer meant remembering to run three commands, and the findings that matter most are also the least urgent-feeling, so they wait behind whatever is on fire. Indefinitely.
 
 **`--state` records changes between digests.** People learn to scroll past "four blocking gaps," while "two more than last week" shows movement. State is a JSON file that can live in a workflow cache, an artifact, or the repository; receiving a weekly summary requires no database. The digest lists only changed numbers so that repeated, unchanged summaries do not become noise.
 
 `--format html` for email, `--format json` for anything else, `--webhook` (or `TEAMAPI_DIGEST_WEBHOOK`, since a webhook URL is a credential and shouldn't have to appear in a command line that lands in a CI log). It always exits 0: a digest that failed the build on a warning would be switched off within a fortnight, and then nobody would get the digest either.
 
-`.github/workflows/digest.yml` runs it weekly, keeping the state file in the Actions cache. Like the drift watch, it's inert until you set `TEAMAPI_DIGEST_ENABLED` — a workflow that started posting into somebody's Slack the moment they merged it would be a bad neighbour.
+`.github/workflows/digest.yml` runs it weekly, keeping the state file in the Actions cache. Like the drift watch, it's inert until you set `TEAMAPI_DIGEST_ENABLED`, because a workflow that started posting into somebody's Slack the moment they merged it would be a bad neighbour.
 
 ## 🔗 Paperclip
 
 [Paperclip](https://github.com/paperclipai/paperclip) orchestrates teams of AI agents, including their tasks, org chart, budgets, and governed tool gateway. The two systems have separate jobs: **TeamAPI declares; Paperclip enforces and executes.** `AgentSchema.permissions` is documented as requiring external enforcement, which Paperclip supplies.
 
-The flow runs one way, spec to runtime. Nothing writes back into `teamapi.yml` — runtime facts that should inform the spec belong in a pull request, so they stay reviewable.
+The flow runs one way, spec to runtime. Nothing writes back into `teamapi.yml`. Runtime facts that should inform the spec belong in a pull request, so they stay reviewable.
 
 ```bash
 teamapi serve-mcp examples/acme-org                    # register with Paperclip's tool gateway
@@ -1564,7 +1564,7 @@ teamapi generate paperclip examples/acme-org --out ./company --company "ACME Org
 teamapi paperclip-drift examples/acme-org --url http://localhost:3000 --company <id>
 ```
 
-Registering the MCP server gives every agent `find_service_owner`, `get_team_cognitive_load`, and `get_context_bundle` as governed tools. `generate paperclip` emits an [`agentcompanies/v1`](https://github.com/paperclipai/paperclip/blob/main/docs/companies/companies-spec.md) package — a vendor-neutral, git-native markdown format. `paperclip-drift` reports agents running that nothing declares, declared agents that aren't running, and agents on teams whose policies forbid them; only that last one exits non-zero, so it can gate a required check.
+Registering the MCP server gives every agent `find_service_owner`, `get_team_cognitive_load`, and `get_context_bundle` as governed tools. `generate paperclip` emits an [`agentcompanies/v1`](https://github.com/paperclipai/paperclip/blob/main/docs/companies/companies-spec.md) package, a vendor-neutral, git-native markdown format. `paperclip-drift` reports agents running that nothing declares, declared agents that aren't running, and agents on teams whose policies forbid them; only that last one exits non-zero, so it can gate a required check.
 
 Full mapping, the deliberate gaps, and the suggested loop: [`docs/integrations/paperclip.md`](docs/integrations/paperclip.md).
 
@@ -1584,7 +1584,7 @@ Every other surface here assumes someone already decided to go and look somethin
   Ask in #stream-checkout.
 ```
 
-The route is only registered when the signing secret is set — not "401s when unset", it doesn't exist — so a misconfigured deployment can't expose an unauthenticated endpoint. Signatures are checked in constant time against Slack's `v0:<timestamp>:<body>` HMAC, and anything older than five minutes is rejected.
+The route is only registered when the signing secret is set. Unset, it doesn't answer 401; it doesn't exist at all, so a misconfigured deployment can't expose an unauthenticated endpoint. Signatures are checked in constant time against Slack's `v0:<timestamp>:<body>` HMAC, and anything older than five minutes is rejected.
 
 **Channel topics that name their owner.** `teamapi slack-sync examples/acme-org` prints a plan; `--yes` applies it:
 
@@ -1594,13 +1594,13 @@ The route is only registered when the signing secret is set — not "401s when u
     + Stream Checkout — Shopping cart, checkout flow, and order placement · Owns: checkout-api
 ```
 
-Only topics — not channel creation, invites or archiving. Channels no team declares are counted and left alone, and a channel two teams claim gets nothing, the same call [CODEOWNERS](#codeowners) makes. Details in [`docs/integrations/slack.md`](docs/integrations/slack.md).
+Only topics, not channel creation, invites or archiving. Channels no team declares are counted and left alone, and a channel two teams claim gets nothing, the same call [CODEOWNERS](#codeowners) makes. Details in [`docs/integrations/slack.md`](docs/integrations/slack.md).
 
 <a id="pagerduty"></a>
 
 ## 📟 PagerDuty
 
-Ownership without escalation is half an answer. "Who owns `checkout-api`" at three in the morning doesn't mean the org chart, it means the rotation — and those two drift apart quietly, because PagerDuty gets edited _during_ an incident and `teamapi.yml` gets edited in review.
+Ownership without escalation is half an answer. "Who owns `checkout-api`" at three in the morning doesn't mean the org chart, it means the rotation, and those two drift apart quietly, because PagerDuty gets edited _during_ an incident and `teamapi.yml` gets edited in review.
 
 ```bash
 export PAGERDUTY_TOKEN=...
@@ -1616,7 +1616,7 @@ teamapi pagerduty-drift examples/acme-org
 4 finding(s), 1 blocking; 2 service(s) matched.
 ```
 
-Only `unresponsive` exits non-zero, so this can gate a required check without ordinary drift failing the build — a monitored service that pages nobody is worse than an unmonitored one, because the alert fires and everyone assumes it was handled. Service names match loosely (`Checkout API` = `checkout-api`), and read-only in both directions. Details, and why there is deliberately no `generate pagerduty`, in [`docs/integrations/pagerduty.md`](docs/integrations/pagerduty.md).
+Only `unresponsive` exits non-zero, so this can gate a required check without ordinary drift failing the build. A monitored service that pages nobody is worse than an unmonitored one, because the alert fires and everyone assumes it was handled. Service names match loosely (`Checkout API` = `checkout-api`), and read-only in both directions. Details, and why there is deliberately no `generate pagerduty`, in [`docs/integrations/pagerduty.md`](docs/integrations/pagerduty.md).
 
 <a id="okta"></a>
 
@@ -1661,9 +1661,9 @@ teamapi_cognitive_load{team="stream-onboarding",label="sustainable"} 11
 teamapi_org_agents{status="active"} 6
 ```
 
-Teams by type, cognitive and supervision load per team, agents by status, gaps/policy/topology findings, unresolved references, and how old the served graph is — plus this server's own request counts and latencies. These are the things that are invisible in a report somebody runs manually and obvious on a chart: a team's load climbing over two quarters, an agent count growing while supervision stays at zero, a `--watch` that quietly stopped firing.
+Teams by type, cognitive and supervision load per team, agents by status, gaps/policy/topology findings, unresolved references, and how old the served graph is, plus this server's own request counts and latencies. These are the things that are invisible in a report somebody runs manually and obvious on a chart: a team's load climbing over two quarters, an agent count growing while supervision stays at zero, a `--watch` that quietly stopped firing.
 
-Off by default, and behind the same bearer token as everything else — unlike `/health`, it carries team ids and per-team scores, and a scraper can send a header where a liveness probe cannot. Team ids are the only unbounded-looking label, and they are bounded by the org; member names and finding messages are deliberately absent, since a series per person is both a cardinality problem and a directory of everybody's name.
+Off by default, and behind the same bearer token as everything else. Unlike `/health`, it carries team ids and per-team scores, and a scraper can send a header where a liveness probe cannot. Team ids are the only unbounded-looking label, and they are bounded by the org; member names and finding messages are deliberately absent, since a series per person is both a cardinality problem and a directory of everybody's name.
 
 Scrape config and some alerts worth having are in [`docs/integrations/prometheus.md`](docs/integrations/prometheus.md).
 

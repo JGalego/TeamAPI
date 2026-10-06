@@ -6,21 +6,21 @@ import type { GapFinding, GapKind, GapsReport } from "./plan";
  *
  * The problem this solves is adoption. `teamapi gaps` run against an org that has been operating
  * for years reports its entire accumulated history at once, and a check that goes red on the day
- * it is switched on — with dozens of findings, none of them today's fault — gets switched back
+ * it is switched on, with dozens of findings and none of them today's fault, gets switched back
  * off. There has to be a way to say "we know, not now" that is narrower than disabling the check.
  *
  * Two mechanisms, deliberately different:
  *
  * - **severity** re-grades a whole *kind* of finding, permanently. It is the org saying this class
  *   of thing is or isn't a gate for us. `off` exists because some findings genuinely don't apply
- *   to some orgs — a company that treats every published event as a public contract will never
+ *   to some orgs. A company that treats every published event as a public contract will never
  *   care about `unconsumed-event`.
  * - **waivers** exempt one specific finding, temporarily, with a reason. They are for "yes, that
  *   one, we've decided, here's why".
  *
  * Waivers expire because an exemption that doesn't is just a deletion with extra steps, and the
  * whole value of writing the reason down is that somebody reads it again later. An expired waiver
- * doesn't silently start failing the build, either — it is reported as its own finding, so the
+ * doesn't silently start failing the build, either. It is reported as its own finding, so the
  * team learns the exemption lapsed rather than discovering it through a red build.
  */
 
@@ -62,7 +62,7 @@ export interface WaivedGapFinding {
 
 export interface AppliedGapsReport extends GapsReport {
   /** Findings a live waiver excused. Kept rather than dropped, so `--format json` can still show
-   * what the org has chosen to live with — an exemption nobody can see is not a decision, it's a
+   * what the org has chosen to live with. An exemption nobody can see is not a decision, it's a
    * silence. */
   waived: WaivedGapFinding[];
   /** Waivers past their `expires` date that matched a finding. The finding is reported as normal

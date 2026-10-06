@@ -72,12 +72,12 @@ Seven packages expose the same org graph. Install the ones you need:
 
 | Package                                                                                    | What it does                                                                        |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| [`@jgalego/teamapi`](https://www.npmjs.com/package/@jgalego/teamapi)                       | The CLI — validate, diagram, check, import, reconcile, serve and chat with your org |
+| [`@jgalego/teamapi`](https://www.npmjs.com/package/@jgalego/teamapi)                       | The CLI: validate, diagram, check, import, reconcile, serve and chat with your org  |
 | [`@jgalego/teamapi-core`](https://www.npmjs.com/package/@jgalego/teamapi-core)             | The engine: `$ref` resolution, the org graph, scoring, checks, diagrams, generators |
 | [`@jgalego/teamapi-schema`](https://www.npmjs.com/package/@jgalego/teamapi-schema)         | Zod schemas and TypeScript types for the extended spec                              |
 | [`@jgalego/teamapi-rest-api`](https://www.npmjs.com/package/@jgalego/teamapi-rest-api)     | REST API, live dashboard, Swagger UI, Prometheus metrics                            |
 | [`@jgalego/teamapi-mcp-server`](https://www.npmjs.com/package/@jgalego/teamapi-mcp-server) | The org graph as MCP tools for LLM assistants                                       |
-| **`@jgalego/teamapi-chat`** (this package)                                                 | Chat as a team or member — Anthropic or any OpenAI-compatible endpoint              |
+| **`@jgalego/teamapi-chat`** (this package)                                                 | Chat as a team or member, via Anthropic or any OpenAI-compatible endpoint           |
 | [`@jgalego/teamapi-backstage`](https://www.npmjs.com/package/@jgalego/teamapi-backstage)   | Live Backstage catalog entity provider                                              |
 
 Docs, examples and the extended spec: **[teamapi.dev](https://teamapi.dev/latest/index.html)** · **[github.com/JGalego/TeamAPI](https://github.com/JGalego/TeamAPI)**

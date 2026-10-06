@@ -30,7 +30,7 @@ export interface ContextBundleRequest {
   /** Max items returned per resource category. Defaults to 5. */
   limit?: number;
   /**
-   * Optional relevance signal layered on top of keyword overlap — in practice, embeddings.
+   * Optional relevance signal layered on top of keyword overlap. In practice, embeddings.
    *
    * Injected rather than built in, so this function stays synchronous and pure: embedding is I/O,
    * and every existing caller (the MCP tool, `POST /context`) would otherwise have to become async
@@ -57,8 +57,8 @@ export interface ScoredEntry<T> {
  *
  * A context bundle otherwise reads as if the goal belongs to whichever team was scoped. But the
  * entries that scored highest routinely span teams, and that is where the risk is: the work is
- * about to cross a boundary. Naming the seam — and how the two sides declared their relationship,
- * or that they declared nothing — tells an assistant who else has a stake before it starts, rather
+ * about to cross a boundary. Naming the seam (and how the two sides declared their relationship,
+ * or that they declared nothing) tells an assistant who else has a stake before it starts, rather
  * than after someone notices.
  */
 export interface SeamEntry {
@@ -114,7 +114,7 @@ function scoreText(
   return { score: matchedTerms.length, matchedTerms };
 }
 
-/** The text a scorer sees for a candidate — the same fields keyword overlap reads, joined, so the
+/** The text a scorer sees for a candidate: the same fields keyword overlap reads, joined, so the
  * two signals are scored against identical material. */
 export function candidateText(fields: Array<string | undefined>, tags: readonly string[]): string {
   return [...fields, ...tags].filter(Boolean).join(" ");
@@ -192,8 +192,8 @@ function relatedTeamIds(graph: OrgGraph, teamId: TeamId): TeamId[] {
  * external model and is transparent about *why* something was included (`matchedTerms`), which is
  * why it remains the default.
  *
- * `request.scorer` layers a second signal on top — `createEmbeddingScorer` builds one from
- * embeddings — and is what surfaces the document that answers the goal while sharing none of its
+ * `request.scorer` layers a second signal on top (`createEmbeddingScorer` builds one from
+ * embeddings) and is what surfaces the document that answers the goal while sharing none of its
  * words. Additive rather than a replacement, so `matchedTerms` still says what it always said and
  * a bundle stays explicable.
  */
@@ -243,7 +243,7 @@ export function deriveContextBundle(graph: OrgGraph, request: ContextBundleReque
 
 /**
  * Every pair of teams the ranked entries touch, with the relationship the graph declares between
- * them. Derived from data the bundle already computed — each `ScoredEntry` carries its `teamId` —
+ * them. Derived from data the bundle already computed (each `ScoredEntry` carries its `teamId`),
  * so this costs one pass over the results and no extra lookups.
  */
 function deriveSeams(graph: OrgGraph, bundle: Omit<ContextBundle, "seams">): SeamEntry[] {

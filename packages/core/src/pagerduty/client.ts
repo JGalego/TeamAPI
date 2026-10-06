@@ -31,7 +31,7 @@ interface RawPolicy {
  * A minimal client over the two PagerDuty endpoints `teamapi pagerduty-drift` needs.
  *
  * Both are paginated with `offset`/`limit` and a `more` flag rather than a cursor, so the loop
- * has to advance the offset itself — and stop if a page ever comes back empty while `more` is
+ * has to advance the offset itself, and stop if a page ever comes back empty while `more` is
  * still set, which would otherwise spin forever.
  */
 export class PagerDutyClient {
@@ -95,7 +95,7 @@ export class PagerDutyClient {
   }
 
   /** Teams with their members resolved to addresses. Membership is fetched per team, since the
-   * team list carries no members — one call each, which is the API's shape rather than a choice. */
+   * team list carries no members: one call each, which is the API's shape rather than a choice. */
   async listTeams(pageSize = 100): Promise<PagerDutyTeam[]> {
     const teams = await this.page<{ id: string; name: string }>("/teams", "teams", pageSize);
     const out: PagerDutyTeam[] = [];
@@ -133,7 +133,7 @@ export class PagerDutyClient {
   }
 
   /** Probes the token. PagerDuty API keys are account-scoped, so there is no identity to
-   * report — `/abilities` is the documented way to ask whether a key is accepted at all. */
+   * report. `/abilities` is the documented way to ask whether a key is accepted at all. */
   async verify(): Promise<string> {
     const abilities = await this.page<string>("/abilities", "abilities", 100);
     return `${abilities.length} account ability(ies) visible`;

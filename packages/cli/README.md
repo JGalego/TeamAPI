@@ -11,8 +11,8 @@
 
 **Who owns this? Just `curl` your org.**
 
-Write your org as **Team API as Code** — one `teamapi.yml` per team declaring services, roles,
-members, interactions and cognitive load, reviewed in pull requests and versioned in git — and
+Write your org as **Team API as Code**: one `teamapi.yml` per team declaring services, roles,
+members, interactions and cognitive load, reviewed in pull requests and versioned in git. Then
 `teamapi` turns it into organigrams, org-health checks, a REST API with a live dashboard, an MCP
 server for LLM assistants, a chat persona per team, trend reports over your git history, and
 config for tools like [CrewAI](https://crewai.com/) and [Backstage](https://backstage.io/).
@@ -35,7 +35,7 @@ teamapi chat examples/acme-org --team stream-checkout --ask "is payments overloa
 ```
 
 `<patterns>` in every command accepts a file, a glob, or a directory to auto-discover every
-`teamapi.yml`/`.yaml` under it — or comes from `teamapi.config.yml` so the everyday commands
+`teamapi.yml`/`.yaml` under it, or comes from `teamapi.config.yml` so the everyday commands
 take no arguments at all.
 
 ## Commands
@@ -56,12 +56,12 @@ take no arguments at all.
 `teamapi assess <patterns...>` combines every check into text, JSON, HTML or SARIF, with optional baseline
 comparison.
 
-| Command                                        | Purpose                                                                                           |
-| ---------------------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `teamapi gaps <patterns...>`                   | Report accountability holes between teams — unowned event contracts, vacant seats, unowned agents |
-| `teamapi policy <patterns...>`                 | Check declared `policies[]`, and report the ones nothing enforces                                 |
-| `teamapi topology <patterns...>`               | Report Team Topologies design smells — overrunning collaborations, inverted platform flow         |
-| `teamapi shadow-ai <patterns...> --scan <dir>` | Report AI adoption found in repositories against what teams declare in `agents[]`                 |
+| Command                                        | Purpose                                                                                          |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `teamapi gaps <patterns...>`                   | Report accountability holes between teams: unowned event contracts, vacant seats, unowned agents |
+| `teamapi policy <patterns...>`                 | Check declared `policies[]`, and report the ones nothing enforces                                |
+| `teamapi topology <patterns...>`               | Report Team Topologies design smells: overrunning collaborations, inverted platform flow         |
+| `teamapi shadow-ai <patterns...> --scan <dir>` | Report AI adoption found in repositories against what teams declare in `agents[]`                |
 
 The individual checks take `--format text|json|sarif`. `assess` also supports a self-contained HTML report and
 `--state <file>` for stable new/resolved finding comparison. See the
@@ -82,7 +82,7 @@ The individual checks take `--format text|json|sarif`. `assess` also supports a 
 | ---------------------------------------------------- | -------------------------------------------------------------------------------------------- |
 | `teamapi serve-api <patterns...>`                    | REST API + dashboard; opt-in `--metrics`, `--mcp`, `--embeddings`, `--propose-to`, `--watch` |
 | `teamapi serve-mcp <patterns...>`                    | MCP server over stdio, for Claude Desktop/Code                                               |
-| `teamapi chat <patterns...> --team <id> [--ask <q>]` | Chat as a team or member — Anthropic or any OpenAI-compatible endpoint                       |
+| `teamapi chat <patterns...> --team <id> [--ask <q>]` | Chat as a team or member, via Anthropic or any OpenAI-compatible endpoint                    |
 
 **Connect it to everything else**
 
@@ -102,16 +102,16 @@ diagrams, REST/MCP reference, and the extended spec.
 
 ## The TeamAPI toolchain
 
-One org graph, seven doors into it — install only the ones you need:
+One org graph, seven doors into it. Install only the ones you need:
 
 | Package                                                                                    | What it does                                                                        |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| **`@jgalego/teamapi`** (this package)                                                      | The CLI — validate, diagram, check, import, reconcile, serve and chat with your org |
+| **`@jgalego/teamapi`** (this package)                                                      | The CLI: validate, diagram, check, import, reconcile, serve and chat with your org  |
 | [`@jgalego/teamapi-core`](https://www.npmjs.com/package/@jgalego/teamapi-core)             | The engine: `$ref` resolution, the org graph, scoring, checks, diagrams, generators |
 | [`@jgalego/teamapi-schema`](https://www.npmjs.com/package/@jgalego/teamapi-schema)         | Zod schemas and TypeScript types for the extended spec                              |
 | [`@jgalego/teamapi-rest-api`](https://www.npmjs.com/package/@jgalego/teamapi-rest-api)     | REST API, live dashboard, Swagger UI, Prometheus metrics                            |
 | [`@jgalego/teamapi-mcp-server`](https://www.npmjs.com/package/@jgalego/teamapi-mcp-server) | The org graph as MCP tools for LLM assistants                                       |
-| [`@jgalego/teamapi-chat`](https://www.npmjs.com/package/@jgalego/teamapi-chat)             | Chat as a team or member — Anthropic or any OpenAI-compatible endpoint              |
+| [`@jgalego/teamapi-chat`](https://www.npmjs.com/package/@jgalego/teamapi-chat)             | Chat as a team or member, via Anthropic or any OpenAI-compatible endpoint           |
 | [`@jgalego/teamapi-backstage`](https://www.npmjs.com/package/@jgalego/teamapi-backstage)   | Live Backstage catalog entity provider                                              |
 
 Docs, examples and the extended spec: **[teamapi.dev](https://teamapi.dev/latest/index.html)** · **[github.com/JGalego/TeamAPI](https://github.com/JGalego/TeamAPI)**

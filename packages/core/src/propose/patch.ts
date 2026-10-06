@@ -9,8 +9,8 @@ import type { ResolvedTeam } from "../model/org-graph";
  * What a proposal is allowed to change.
  *
  * A deliberately small list, and the smallness is the design. This exists so somebody who is not
- * going to open an editor can correct the two things that are wrong about their team most often —
- * what it says it does, and how loaded it says it is — without that being a licence to restructure
+ * going to open an editor can correct the two things that are wrong about their team most often
+ * (what it says it does, and how loaded it says it is) without that being a licence to restructure
  * the graph from a web form. Adding a `$ref`, renaming an id, or removing a team changes what
  * every other document resolves to; those stay where they belong, in a branch, in review, with a
  * diff somebody reads.
@@ -85,8 +85,8 @@ function describe(before: unknown, after: unknown, label: string): string | unde
  *
  * Edits the parsed YAML in place rather than re-serializing the resolved object, so every comment
  * in the file survives. That is not a nicety: these documents carry the reasons things are the way
- * they are — a `notes:` explaining a cognitive load score, a comment above an interaction saying
- * when it should end — and a write path that silently deleted them would make the format worse for
+ * they are, like a `notes:` explaining a cognitive load score or a comment above an interaction
+ * saying when it should end, and a write path that silently deleted them would make the format worse for
  * having a UI.
  *
  * The result is re-validated against the schema and re-formatted through `formatDocumentText`, so

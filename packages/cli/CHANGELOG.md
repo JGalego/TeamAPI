@@ -37,7 +37,7 @@
 
 ### Minor Changes
 
-- 36e83c6: Add `teamapi topology` — the Team Topologies design smells.
+- 36e83c6: Add `teamapi topology` for the Team Topologies design smells.
 
   `gaps` asks what nobody owns. This asks whether the shape is right when everything _is_ owned:
   collaborations past the duration they declared for themselves or with no duration at all, teams
@@ -45,18 +45,18 @@
   can sustain, platform teams depending on the teams they exist to serve, and dependencies a team has
   itself labelled blocking.
 
-  The collaboration checks are the point — Team Topologies is emphatic that collaboration is the
+  The collaboration checks are the point. Team Topologies is emphatic that collaboration is the
   expensive, deliberately temporary mode, and a collaboration with no end date is two teams that have
   merged without saying so. Nothing here was visible until something read the dates.
 
   Everything is a warning and exits 0; thresholds and per-kind severities are configurable in
   `teamapi.config.yml`. These are prompts for a conversation, not defects.
 
-- 543da37: Add `teamapi fmt` — canonical formatting for Team API documents.
+- 543da37: Add `teamapi fmt` for canonical formatting for Team API documents.
 
   Documents edited by hand across an org accumulate their authors' habits about where a section
   goes, so two teams adding the same thing produce diffs that look nothing alike. `fmt` orders
-  top-level keys the way the schema declares them (not alphabetically — the document is meant to be
+  top-level keys the way the schema declares them (not alphabetically, since the document is meant to be
   read top to bottom), keeps unknown keys rather than dropping them, and `--check` fails a build
   without writing.
 
@@ -67,26 +67,26 @@
 - d4d0372: Add severity overrides and expiring waivers for `teamapi gaps`, via a `teamapi.config.yml`.
 
   Run the check against an org that has existed for years and it reports the whole accumulated
-  history at once — and a check that goes red on the day it's switched on gets switched back off.
+  history at once, and a check that goes red on the day it's switched on gets switched back off.
   `severity` re-grades a whole kind (including `off`), waivers exempt one specific finding with a
   mandatory reason.
 
   Waivers expire, because an exemption that doesn't is a deletion with extra steps, and a lapsed one
   is reported as its own finding rather than silently turning a build red. Waivers matching nothing
-  are reported so the file doesn't accumulate dead exemptions, and an unknown gap kind is an error —
-  a typo that quietly does nothing while the org believes a rule is in force is worse than no config.
+  are reported so the file doesn't accumulate dead exemptions, and an unknown gap kind is an error,
+  because a typo that quietly does nothing while the org believes a rule is in force is worse than no config.
 
 - ec29a2c: `teamapi digest` merges gaps, policy and topology findings with what moved since the last run, and posts it to a Slack/Teams webhook, an HTML file for email, or stdout. State is a JSON file rather than a database, so a scheduled run can keep it in a workflow cache. `.github/workflows/digest.yml` runs it weekly, opt-in.
 - 41f5fe3: Fail validation on org-wide name conflicts.
 
   The schema enforces uniqueness within a document, because that is all one document can see. Names
-  that have to be unique across the whole org — service names, channels — were never checked, so two
+  that have to be unique across the whole org (service names, channels) were never checked, so two
   teams could both declare `payments-api` and `findServiceOwner` would answer with whichever team id
   sorted first. Silently, and for every consumer downstream of it: the REST route, the MCP tool, the
   Slack command, generated CODEOWNERS.
 
-  `teamapi validate` now reports both claimants and exits non-zero. The tie-break stays — a query
-  has to return something — but the org no longer has to discover it by noticing that a service it
+  `teamapi validate` now reports both claimants and exits non-zero. The tie-break stays (a query
+  has to return something), but the org no longer has to discover it by noticing that a service it
   owns answers with someone else's team.
 
   **Breaking for orgs that currently have duplicates**: validation that passed before will now fail
@@ -94,7 +94,7 @@
 
 - f41844d: Add the schema migration mechanism, and version-aware diagnostics.
 
-  There is one `teamApiVersion`, so there is nothing to migrate yet — which is when the mechanism
+  There is one `teamApiVersion`, so there is nothing to migrate yet, which is when the mechanism
   has to exist. A format with one version and no migration path has a migration problem scheduled
   for the day the second version ships, by which point documents are spread across every repository
   in an org.
@@ -105,13 +105,13 @@
 
   The half that helps today is diagnosis. A version mismatch used to fail as `teamApiVersion:
 Invalid literal value, expected "1.0.0"`, which reads identically whether documents are behind the
-  toolchain or ahead of it — opposite problems needing opposite fixes. `assessVersion` tells them
+  toolchain or ahead of it: opposite problems needing opposite fixes. `assessVersion` tells them
   apart, and both `migrate` and `validate` now say which one you have.
 
 - 6152e09: Keep the long-running servers current with `--watch`.
 
   `OrgGraphStore.reload()` existed and nothing ever called it, so both servers answered from a
-  startup snapshot for as long as they ran — worst for `serve-mcp`, where an assistant holds the
+  startup snapshot for as long as they ran. That was worst for `serve-mcp`, where an assistant holds the
   connection open for a whole session.
 
   `--watch` re-resolves on change, `POST /reload` (or `--reload-endpoint` on its own) covers
@@ -131,19 +131,19 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 
 - 01b480b: Let `teamapi.config.yml` supply seed patterns and per-command defaults.
 
-  The config file introduced for gap waivers now also carries `patterns:` — so the commands run
-  dozens of times a day lose their argument entirely — and a `defaults:` section for the flags that
+  The config file introduced for gap waivers now also carries `patterns:` (so the commands run
+  dozens of times a day lose their argument entirely) and a `defaults:` section for the flags that
   are constant for an org: its GitHub login, Okta URL, Paperclip company, serve host/port/CORS/rate
   limit. `--org` and `--url` are no longer required flags when the config supplies them.
 
   Precedence is CLI, then config, then built-in default, and command-line patterns replace rather
   than merge with the configured ones.
 
-  There is deliberately no `token:` key anywhere in the schema — the file lives in the repository,
+  There is deliberately no `token:` key anywhere in the schema. The file lives in the repository,
   tokens come from the environment, and the schema rejects the key rather than ignoring it.
 
 - 9f25986: `teamapi serve-api --metrics` mounts `GET /metrics` in the Prometheus exposition format: teams by type, cognitive and supervision load per team, agents by status, gaps/policy/topology findings, unresolved references, graph age, and the server's own request counts and latencies. `collectOrgMetrics`/`renderPrometheus` are exported from core for other exporters to reuse.
-- 23c56b3: Four more `teamapi import` sources beyond `github-org`: `backstage` (a catalog file or the catalog API), `okta` (directory groups, also usable for Entra via `importDirectoryGroups`), `slack` (channels as team skeletons) and `csv` (an HRIS export — the only source that can populate `roles[]`).
+- 23c56b3: Four more `teamapi import` sources beyond `github-org`: `backstage` (a catalog file or the catalog API), `okta` (directory groups, also usable for Entra via `importDirectoryGroups`), `slack` (channels as team skeletons) and `csv` (an HRIS export, the only source that can populate `roles[]`).
 - 81e6c7b: Chat is no longer hardwired to one vendor. `ChatTool` is a provider-neutral tool definition, `createChatSession` picks an adapter, and `--provider openai --base-url ...` reaches any OpenAI-compatible server (Azure, Ollama, vLLM, Together, Groq, OpenRouter, …) with no vendor SDK. `teamapi chat --ask "<question>"` runs one turn, prints the answer on stdout with everything else on stderr, and exits 2 if the answer is incomplete.
 - 7bfb3d1: Add `--format json` and `--format sarif` to the reporting commands.
 
@@ -160,7 +160,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
   unresolved-reference warning is suppressed for structured formats so the output stays parseable.
   Exit codes are unchanged by the format.
 
-- 9c804ee: Add `teamapi init` — scaffold a whole org repository, not one document.
+- 9c804ee: Add `teamapi init` to scaffold a whole org repository, not one document.
 
   `scaffold` produced a single team and left open every decision that actually stands between
   trying this and using it: where documents live, how CI runs them, how an editor validates them.
@@ -177,12 +177,12 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 
 - eca4cde: Check declared `policies[]` against the org graph with `teamapi policy`.
 
-  Policies were declared but never evaluated — the schema said "external automation enforces this"
+  Policies were declared but never evaluated. The schema said "external automation enforces this"
   and nothing verified that any such automation existed. The new engine decides every rule it can
   from the graph alone (agent bans and caps, owner requirements, provider allow-lists, cognitive
   load ceilings, required steering/playbook categories, service repository and bounded-context
   requirements, dependency caps), reports rules it can't as `delegated` when `enforcedBy` names an
-  enforcer, and — the point of the exercise — reports them as `unenforced` when nothing does.
+  enforcer, and (the point of the exercise) reports them as `unenforced` when nothing does.
 
   A blocking policy that nothing enforces now exits non-zero, as does a violated one. Available in
   CI via `check-policies: true` on the bundled action.
@@ -194,7 +194,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 - 5da3465: Make the REST API safe to expose: bearer auth, CORS and rate limiting.
 
   `serve-api` had no authentication, no CORS control and no rate limiting, which meant the only
-  correct place to run it was localhost — and nothing stopped anyone from binding `0.0.0.0` anyway.
+  correct place to run it was localhost, and nothing stopped anyone from binding `0.0.0.0` anyway.
 
   Auth is opt-in (`--token`, or `TEAMAPI_API_TOKEN`) so the local workflow is unchanged, and binding
   a non-loopback address without one is now refused outright rather than warned about, since an
@@ -202,12 +202,12 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
   hatch. `/health` stays open for liveness probes and `/slack/*` keeps its own request signature.
 
   Token comparison is constant-time, rejections never echo the presented credential, and the auth
-  hook runs at `preParsing` so the rate limiter counts failed attempts — at `onRequest` it could
+  hook runs at `preParsing` so the rate limiter counts failed attempts. At `onRequest` it could
   not, leaving token guessing effectively unlimited.
 
 - a932887: Serve MCP over Streamable HTTP with `serve-api --mcp`.
 
-  MCP was stdio-only, which requires the documents on the same machine as the model — so every
+  MCP was stdio-only, which requires the documents on the same machine as the model, so every
   laptop held its own copy of the org graph, each as current as the last time somebody pulled. The
   same tools are now served at `POST /mcp` on the REST API's port, behind the same bearer token,
   alongside `--watch` so one endpoint answers with the org as of the last commit.
@@ -218,7 +218,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 
   The handler is injected into `buildServer`, so the REST API package keeps no MCP dependency.
 
-- a713d92: `teamapi apply-to <slack|okta|pagerduty>` reconciles membership in those systems with the org graph, behind the same plan-then-`--yes` shape as `apply`. Slack usergroups (created if missing), Okta group membership, and PagerDuty team membership. Schedules, escalation policies, directory groups and PagerDuty teams are never written — see each planner for why.
+- a713d92: `teamapi apply-to <slack|okta|pagerduty>` reconciles membership in those systems with the org graph, behind the same plan-then-`--yes` shape as `apply`. Slack usergroups (created if missing), Okta group membership, and PagerDuty team membership. Schedules, escalation policies, directory groups and PagerDuty teams are never written; see each planner for why.
 
 ### Patch Changes
 
@@ -228,7 +228,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
   Pull-request checks only fire when somebody edits a `teamapi.yml`, but most drift is the reverse:
   the documents sit still while the org moves around them. `.github/actions/drift` runs `validate`,
   `gaps`, and optionally `policy` and `shadow-ai` on a schedule, then opens, updates, or closes one
-  tracking issue — found by a marker in its body so it survives renaming, and never opened merely to
+  tracking issue, found by a marker in its body so it survives renaming, and never opened merely to
   report that nothing is wrong.
 
 - Updated dependencies [36e83c6]
@@ -268,7 +268,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 - e676027: Add `teamapi shadow-ai <patterns...> --scan <dir>`, which reports AI adoption found in repository
   checkouts against what teams declare in `agents[]`: MCP configs, agent instruction files,
   assistant config directories, LLM SDKs in manifests, and workflow steps that call a model. Local
-  and offline — it reads checkouts already on disk, with no clone, fetch or token.
+  and offline: it reads checkouts already on disk, with no clone, fetch or token.
 
   Only `forbidden` (artifacts in a repo owned by a team whose policies forbid agents) exits non-zero;
   undeclared usage warns. `scanForAiArtifacts`, `planShadowAi`, `formatShadowAi` and `repoNameFromUrl`
@@ -284,7 +284,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 
   Ships `examples/driftwood-org`, an org that validates cleanly but is deliberately built to fail the
   new check. It is a second test fixture alongside `acme-org`, which `CONTRIBUTING.md` normally
-  discourages — a broken org can't live inside the one every other example renders from without
+  discourages, because a broken org can't live inside the one every other example renders from without
   breaking those examples.
 
 - a7ecce1: `buildOrgHierarchyDiagram` takes an optional `{ includeAgents }`, exposed as
@@ -292,11 +292,11 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
   hanging off the human whose `ownerId` names them, by a dotted "supervises" edge.
 
   Agents appear as participants but never as boxes in the chart. An agent placed in the hierarchy
-  the way a person is would suggest accountability sits with it, when it never does — so an agent
+  the way a person is would suggest accountability sits with it, when it never does. So an agent
   with no resolvable owner gets no incoming edge and visibly floats, which is exactly what an unowned
   agent is. Paused agents are labelled with their status rather than hidden.
 
-  Off by default, so every existing render — including the Mermaid committed in the README — is
+  Off by default, so every existing render (including the Mermaid committed in the README) is
   byte-identical.
 
 ### Patch Changes
@@ -321,7 +321,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 ### Minor Changes
 
 - ca583e4: Add a `generate agents-md` target: one AGENTS.md per repository, rendered from the
-  team that owns the service in it — ownership, the bounded context's ubiquitous
+  team that owns the service in it: ownership, the bounded context's ubiquitous
   language, domain events, policies and steering documents. Policies and steering
   are reproduced verbatim rather than summarised, so an agent reads what a reviewer
   would quote back.
@@ -338,7 +338,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
   a `verify()` so a rejected token can no longer be mistaken for an empty account.
   Read-only; exits 1 on any failing check.
 - 42d5982: Add an `okta-drift` command reconciling declared `members[]` against an Okta
-  directory group. Only a `deactivated` finding exits non-zero — a member whose
+  directory group. Only a `deactivated` finding exits non-zero: a member whose
   account is no longer active but who is still listed, and therefore still reads as
   an owner to everything downstream. Joiners and leavers are reported as warnings.
   Read-only: nothing is written back to `teamapi.yml`.
@@ -349,13 +349,13 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
   since the variable is W3C Baggage and a comma in a team name would otherwise
   truncate the list.
 - 6eff7a3: Add a `pagerduty-drift` command reporting where PagerDuty and the declared org
-  graph disagree about who gets paged. Only an `unresponsive` finding — a declared
-  service with no escalation policy, or one with nobody on it — exits non-zero, so
+  graph disagree about who gets paged. Only an `unresponsive` finding (a declared
+  service with no escalation policy, or one with nobody on it) exits non-zero, so
   it can gate a required check without ordinary drift failing the build. Read-only
   in both directions.
 - 9c426a5: Move Paperclip's HTTP out of `paperclip-drift` into a `PaperclipClient`, matching
   the other four providers, and add `teamapi doctor paperclip`. Its `verify()`
-  separates a refused token from a company id that doesn't exist — two outcomes that
+  separates a refused token from a company id that doesn't exist, two outcomes that
   need different fixes and previously arrived as the same error. The doctor report
   also shows how many running agents carry `metadata.teamapi`, since the rest fall
   back to slug matching.
@@ -363,7 +363,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
   `agentcompanies/v1` package, and a `paperclip-drift` command that reports where a
   running Paperclip company diverges from the declared org graph.
 - fe754b3: Add a `generate port` target emitting a Port catalog as `blueprints.json` and
-  `entities.json` — a team, service and person blueprint, with services related to
+  `entities.json`: a team, service and person blueprint, with services related to
   their owning team. Unlike the Backstage target it carries `cognitiveLoad` and its
   label, which Port can score, threshold and alert on.
 - e96acc8: Add a Slack integration: a `/whoowns` slash-command endpoint on the REST API,
@@ -400,9 +400,9 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 
 ### Patch Changes
 
-- ed56c2e: Stop shipping each package's own compiled test suite (`dist/__tests__/**`) in the published npm tarball — `tsc -b` was compiling `src/**/*.test.ts` alongside real source since nothing excluded it, and `"files": ["dist"]` then published the result. Cuts `@jgalego/teamapi-core`'s published file count by about 40% with no change in behavior; `pnpm test` is unaffected since Vitest runs the `.ts` sources directly rather than the built output.
+- ed56c2e: Stop shipping each package's own compiled test suite (`dist/__tests__/**`) in the published npm tarball. `tsc -b` was compiling `src/**/*.test.ts` alongside real source since nothing excluded it, and `"files": ["dist"]` then published the result. Cuts `@jgalego/teamapi-core`'s published file count by about 40% with no change in behavior; `pnpm test` is unaffected since Vitest runs the `.ts` sources directly rather than the built output.
 
-  Rename a local variable in the CrewAI generator from `process` to `crewProcess` (the object's `process` field, matching CrewAI's own config shape, is unchanged) — a variable literally named `process` was tripping supply-chain scanners' "environment variable access" heuristic even though this code never touches `process.env` or any other global.
+  Rename a local variable in the CrewAI generator from `process` to `crewProcess` (the object's `process` field, matching CrewAI's own config shape, is unchanged). A variable literally named `process` was tripping supply-chain scanners' "environment variable access" heuristic even though this code never touches `process.env` or any other global.
 
 - Updated dependencies [ed56c2e]
   - @jgalego/teamapi-schema@0.4.1
@@ -427,7 +427,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 ### Minor Changes
 
 - dbf75f6: Add `teamapi apply <patterns...> --org <github-org> [--yes]`: reconciles real GitHub teams and memberships with the resolved org graph, the way `terraform plan`/`apply` reconciles infrastructure. One GitHub team per Team API team (matched by slug === team id), members resolved via a new optional `Member.githubUsername` field. Always prints a plan first (`+ create team`, `+`/`- add`/`remove @user`, `!` for members with no `githubUsername` set) and only writes to GitHub when re-run with `--yes`. Exported from `@jgalego/teamapi-core` as `GithubClient`, `planGithubTeamsApply`, `formatApplyPlan`, and `executeGithubTeamsApply`.
-- b73cbfd: Add `teamapi import github-org <org> --out <dir>`: bootstraps `teamapi.yml` documents from an existing GitHub org instead of hand-authoring every team from scratch — one `<team-id>/teamapi.yml` per GitHub team, with members enriched from GitHub user profiles (name, email, `githubUsername`) and `services[]` inferred from the team's repos. Every generated team defaults to `type: stream-aligned` with empty `roles[]`, since GitHub teams carry neither Team Topologies typing nor a role hierarchy — both are meant to be reviewed and corrected by hand. Exported from `@jgalego/teamapi-core` as `importGithubOrg`.
+- b73cbfd: Add `teamapi import github-org <org> --out <dir>`: bootstraps `teamapi.yml` documents from an existing GitHub org instead of hand-authoring every team from scratch: one `<team-id>/teamapi.yml` per GitHub team, with members enriched from GitHub user profiles (name, email, `githubUsername`) and `services[]` inferred from the team's repos. Every generated team defaults to `type: stream-aligned` with empty `roles[]`, since GitHub teams carry neither Team Topologies typing nor a role hierarchy, and both are meant to be reviewed and corrected by hand. Exported from `@jgalego/teamapi-core` as `importGithubOrg`.
 
 ### Patch Changes
 
@@ -443,8 +443,8 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 
 ### Minor Changes
 
-- df017b2: Add a Backstage catalog generator: `teamapi generate backstage <patterns...> [--team <id>] --out <dir>` turns the resolved org graph into a Backstage `catalog-info.yaml` — a `Group` per team (with its members), a `User` per member, and, for any team with `services[]`, a `System` grouping them plus a `Component` per service, owned by that team's `Group`. Exported from `@jgalego/teamapi-core` as `buildBackstageCatalog`/`buildBackstageOrgCatalog`/`toBackstageYaml`.
-- 1a5ce98: Add org-history diffing: `teamapi diff <patterns...> --against <ref>` resolves the same patterns against the working tree and against a git revision (a branch, tag, or commit sha), then reports teams added/removed, per-team role/member/service changes, cognitive-load deltas, and edge changes (interactions, dependencies, cross-team reporting lines). Exported from `@jgalego/teamapi-core` as `diffOrgGraphs`/`isEmptyDiff`/`formatOrgGraphDiff`, independent of git — `teamapi diff` is what supplies "the org as of a revision" as one side of the comparison via a git-show-backed loader.
+- df017b2: Add a Backstage catalog generator: `teamapi generate backstage <patterns...> [--team <id>] --out <dir>` turns the resolved org graph into a Backstage `catalog-info.yaml`: a `Group` per team (with its members), a `User` per member, and, for any team with `services[]`, a `System` grouping them plus a `Component` per service, owned by that team's `Group`. Exported from `@jgalego/teamapi-core` as `buildBackstageCatalog`/`buildBackstageOrgCatalog`/`toBackstageYaml`.
+- 1a5ce98: Add org-history diffing: `teamapi diff <patterns...> --against <ref>` resolves the same patterns against the working tree and against a git revision (a branch, tag, or commit sha), then reports teams added/removed, per-team role/member/service changes, cognitive-load deltas, and edge changes (interactions, dependencies, cross-team reporting lines). Exported from `@jgalego/teamapi-core` as `diffOrgGraphs`/`isEmptyDiff`/`formatOrgGraphDiff`, independent of git; `teamapi diff` is what supplies "the org as of a revision" as one side of the comparison via a git-show-backed loader.
 
 ### Patch Changes
 
@@ -461,7 +461,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
 ### Patch Changes
 
 - caebd20: Fixes from a full code + docs review:
-  - **schema**: enforce previously-undocumented-but-unenforced rules — `roles[].id`/`members[].id`
+  - **schema**: enforce previously-undocumented-but-unenforced rules: `roles[].id`/`members[].id`
     uniqueness, `reportsTo` must reference an existing role and can't form a cycle (including
     self-reports), `reportsTo`/`reportsToRef` are now genuinely mutually exclusive, and `x-*` vendor
     extension fields are preserved on `platform`/`reportsToRef`/`alignsWith[]` refs (previously
@@ -491,7 +491,7 @@ Invalid literal value, expected "1.0.0"`, which reads identically whether docume
     real package version instead of a hardcoded literal.
   - **chat**: pinned `zod` back to the same range as every sibling package (was on a different major
     than `core`/`schema`/`mcp-server`), while keeping `betaZodTool` working correctly by importing
-    the `zod/v4` subpath explicitly — zod 3.25+ bundles both APIs in one package, so this eliminates
+    the `zod/v4` subpath explicitly. zod 3.25+ bundles both APIs in one package, so this eliminates
     two coexisting zod majors in the workspace without breaking the Anthropic SDK's zod helper.
 
 - Updated dependencies [caebd20]

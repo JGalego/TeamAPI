@@ -13,7 +13,7 @@ authority to prevent their org charts from competing.
 
 TeamAPI's `AgentSchema.permissions` field is documented as _"enforced by whatever external
 automation actually executes the agent's actions, not by this schema."_ Paperclip is that
-automation — it has a governed tool gateway, budgets, and approval workflows. TeamAPI has the
+automation: it has a governed tool gateway, budgets, and approval workflows. TeamAPI has the
 reviewed, versioned statement of what _should_ be true.
 
 So the flow runs one way: **spec → runtime**, the way Terraform config relates to infrastructure.
@@ -60,7 +60,7 @@ teamapi generate paperclip /path/to/your/org --out ./company --company "ACME Org
 ```
 
 This emits an [`agentcompanies/v1`](https://github.com/paperclipai/paperclip/blob/main/docs/companies/companies-spec.md)
-package — markdown with YAML frontmatter, filesystem- and git-native. The spec is explicitly
+package: markdown with YAML frontmatter, filesystem- and git-native. The spec is explicitly
 vendor-neutral, so the output is useful to any agent-company runtime, not only Paperclip.
 
 ```text
@@ -81,7 +81,7 @@ skills/<team-id>-<prompt-id>/SKILL.md
 
 The export omits three things that the source data cannot represent:
 
-- **No `reportsTo` on agents.** TeamAPI models reporting between _roles_ — people — not between
+- **No `reportsTo` on agents.** TeamAPI models reporting between _roles_ (people), not between
   agents. Any agent hierarchy here would be invented, so the runtime arranges them.
 - **No per-agent `skills`.** Prompts become real skill packages, but nothing in the schema says
   which agent uses which, so they attach at team level rather than being guessed.
@@ -102,9 +102,9 @@ teamapi paperclip-drift /path/to/your/org --url http://localhost:3000 --company 
 
 Read-only in both directions. It reports:
 
-- **undeclared** — running in Paperclip, declared nowhere
-- **missing** — declared and active, nothing running
-- **forbidden** — running for a team whose policies deny agents
+- **undeclared**: running in Paperclip, declared nowhere
+- **missing**: declared and active, nothing running
+- **forbidden**: running for a team whose policies deny agents
 
 Only `forbidden` exits non-zero, so this can gate a required check without ordinary drift failing
 CI. In `examples/acme-org` that's a real case rather than a hypothetical: `stream-onboarding` is

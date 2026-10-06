@@ -34,14 +34,14 @@ const provider = new TeamApiEntityProvider({
 builder.addEntityProvider(provider);
 ```
 
-It polls `GET /backstage/catalog` — the same generator `teamapi generate backstage` uses, served
-rather than written — so there is no second mapping between the two models to keep in sync.
+It polls `GET /backstage/catalog`, which is the same generator `teamapi generate backstage` uses,
+served rather than written, so there is no second mapping between the two models to keep in sync.
 
 ## Decisions worth knowing about
 
 **No `@backstage/*` dependency.** `EntityProvider` is a structural interface, and depending on
 `@backstage/plugin-catalog-node` to get it would pull the framework and its peer set into a
-workspace of YAML parsers, and pin this to one Backstage version — the thing most likely to be
+workspace of YAML parsers, and pin this to one Backstage version, the thing most likely to be
 wrong for any given installation. The three shapes it needs are twenty lines, written out here, so
 this is a plain TypeScript module any Backstage version accepts.
 
@@ -50,7 +50,7 @@ graph leave the catalog. An incremental mutation would leave it there forever, w
 failure the generated-file approach already had.
 
 **A failed refresh leaves the catalog alone.** A Team API server being briefly unreachable is not
-a reason to empty somebody's service catalog — which is precisely what a `full` mutation of zero
+a reason to empty somebody's service catalog, which is precisely what a `full` mutation of zero
 entities would do. The previously ingested entities stay; the error goes to `onError` if you gave
 one, and is otherwise rethrown so the host's logger sees it. It is never logged from inside the
 library, and never swallowed — a catalog frozen by silent failures looks exactly like one that is
@@ -62,16 +62,16 @@ response instead.
 
 ## The TeamAPI toolchain
 
-One org graph, seven doors into it — install only the ones you need:
+One org graph, seven doors into it. Install only the ones you need:
 
 | Package                                                                                    | What it does                                                                        |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- |
-| [`@jgalego/teamapi`](https://www.npmjs.com/package/@jgalego/teamapi)                       | The CLI — validate, diagram, check, import, reconcile, serve and chat with your org |
+| [`@jgalego/teamapi`](https://www.npmjs.com/package/@jgalego/teamapi)                       | The CLI: validate, diagram, check, import, reconcile, serve and chat with your org  |
 | [`@jgalego/teamapi-core`](https://www.npmjs.com/package/@jgalego/teamapi-core)             | The engine: `$ref` resolution, the org graph, scoring, checks, diagrams, generators |
 | [`@jgalego/teamapi-schema`](https://www.npmjs.com/package/@jgalego/teamapi-schema)         | Zod schemas and TypeScript types for the extended spec                              |
 | [`@jgalego/teamapi-rest-api`](https://www.npmjs.com/package/@jgalego/teamapi-rest-api)     | REST API, live dashboard, Swagger UI, Prometheus metrics                            |
 | [`@jgalego/teamapi-mcp-server`](https://www.npmjs.com/package/@jgalego/teamapi-mcp-server) | The org graph as MCP tools for LLM assistants                                       |
-| [`@jgalego/teamapi-chat`](https://www.npmjs.com/package/@jgalego/teamapi-chat)             | Chat as a team or member — Anthropic or any OpenAI-compatible endpoint              |
+| [`@jgalego/teamapi-chat`](https://www.npmjs.com/package/@jgalego/teamapi-chat)             | Chat as a team or member, via Anthropic or any OpenAI-compatible endpoint           |
 | **`@jgalego/teamapi-backstage`** (this package)                                            | Live Backstage catalog entity provider                                              |
 
 Docs, examples and the extended spec: **[teamapi.dev](https://teamapi.dev/latest/index.html)** · **[github.com/JGalego/TeamAPI](https://github.com/JGalego/TeamAPI)**

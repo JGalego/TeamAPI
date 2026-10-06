@@ -38,7 +38,7 @@ code, yet an agent artifact is present. Updating the spec is not an acceptable f
 
 `declared-unseen` runs the check in reverse, and only for teams whose repos were actually part of
 the scan. A team that declares five agents and shows no trace of them has a document describing an
-org that has moved on — the same rot `okta-drift` finds in `members[]`, one layer up.
+org that has moved on. It is the same rot `okta-drift` finds in `members[]`, one layer up.
 
 ## What it detects
 
@@ -52,13 +52,13 @@ org that has moved on — the same rot `okta-drift` finds in `members[]`, one la
 
 Manifests are matched by package name rather than by import, because a manifest is the one place a
 dependency is declared once instead of scattered across call sites. Workflow matching is loose on
-purpose — an action reference naming a vendor is the signal, and pinning an exact allow-list of
+purpose. An action reference naming a vendor is the signal, and pinning an exact allow-list of
 action names would go stale faster than the check is worth.
 
 ## Matching
 
 Directory basename against the last segment of a declared `services[].repository`, minus any
-`.git`, case-insensitively — the same loose matching [`pagerduty-drift`](pagerduty.md) uses for
+`.git`, case-insensitively. This is the same loose matching [`pagerduty-drift`](pagerduty.md) uses for
 service names, and for the same reason. Being strict would only manufacture `unowned` findings for
 repositories that are plainly declared.
 
@@ -73,14 +73,14 @@ that number: a scan pointed at an empty tree would otherwise read exactly like a
 health.
 
 It is also why the check is deliberately **local-only**. Reading a file listing from a provider API
-would need a token and would still only see declarations — the same floor, at the cost of a network
+would need a token and would still only see declarations: the same floor, at the cost of a network
 dependency and a credential.
 
 ## Suggested loop
 
-1. Run it wherever your repositories are already checked out — a CI job with a workspace, or a
+1. Run it wherever your repositories are already checked out, such as a CI job with a workspace, or a
    developer machine. Only `forbidden` will fail a build.
 2. Take each `undeclared` finding to the owning team and either add the `agents[]` entry in a pull
    request, or remove the artifact. Both are fine answers; leaving it unanswered is not.
-3. Treat `unowned` as a `services[]` gap first — usually the repository is real and simply
+3. Treat `unowned` as a `services[]` gap first. Usually the repository is real and simply
    undeclared, which [`teamapi gaps`](gaps.md) will also have opinions about.

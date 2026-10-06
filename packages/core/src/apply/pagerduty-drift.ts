@@ -4,21 +4,21 @@ import type { OrgGraph, TeamId } from "../model/org-graph";
  * Detects drift between the declared org graph and PagerDuty.
  *
  * Ownership without escalation is half an answer. "Who owns `checkout-api`" at three in the
- * morning means the rotation, not the org chart — and those two drift apart quietly, because
+ * morning means the rotation, not the org chart, and those two drift apart quietly, because
  * PagerDuty is usually edited during an incident and `teamapi.yml` is edited in review.
  *
  * Read-only in both directions, like every other drift check here: it reports, a human decides.
  *
  * Four kinds of finding:
  *
- * - `unresponsive` — a declared service exists in PagerDuty with no escalation policy, or one
+ * - `unresponsive`: a declared service exists in PagerDuty with no escalation policy, or one
  *   with nobody on it. Blocking: the service is monitored and nobody is paged, which is worse
  *   than not monitoring it at all, because the alert looks handled.
- * - `unmonitored` — a declared service with nothing in PagerDuty. A warning, not an error: plenty
+ * - `unmonitored`: a declared service with nothing in PagerDuty. A warning, not an error: plenty
  *   of declared services are libraries nobody should be paged for.
- * - `undeclared` — a PagerDuty service no `teamapi.yml` claims. Someone is on call for something
+ * - `undeclared`: a PagerDuty service no `teamapi.yml` claims. Someone is on call for something
  *   the org chart doesn't know exists.
- * - `misattributed` — the escalation policy doesn't name the team that declares the service. A
+ * - `misattributed`: the escalation policy doesn't name the team that declares the service. A
  *   warning, since policy naming is a convention rather than a contract.
  */
 

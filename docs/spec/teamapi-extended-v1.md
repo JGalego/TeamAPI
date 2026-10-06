@@ -8,7 +8,7 @@ context and context-mapping annotations. The canonical schema is the Zod schema 
 mirror of it, in the spirit of the upstream project's own `spec/teamapi.md`.
 
 A mirror drifts, so the mirroring is tested. [`conformance/`](conformance/) holds one fixture per
-normative statement below — the documents and the outcome the statement promises — and the
+normative statement below (the documents and the outcome the statement promises), and the
 [runner](../../packages/core/src/__tests__/spec-conformance.test.ts) additionally reads the
 [enum reference](#enum-reference), the [root object table](#root-object), and the list of `$ref`
 fields in [File format and layout](#file-format-and-layout) straight out of this file and compares
@@ -18,7 +18,7 @@ fails the build.
 ## Relationship to the base spec
 
 This is a **new, non-strictly-backwards-compatible extension**, not a drop-in replacement. The
-root field is `teamApiVersion` (currently only `"1.0.0"` is supported) — a name deliberately
+root field is `teamApiVersion` (currently only `"1.0.0"` is supported), a name deliberately
 distinct from the upstream `teamapi:` field, so tooling that understands only the base spec and
 tooling that understands this extension never mistake one document for the other.
 
@@ -26,13 +26,13 @@ tooling that understands this extension never mistake one document for the other
 supported versions (`SCHEMA_REGISTRY` in `packages/schema/src/registry.ts`), currently just
 `"1.0.0"`. A document declaring an unsupported version fails validation rather than being parsed
 against the wrong schema. There is no `1.x` deprecation policy yet, since no second version has
-shipped — when one does, expect it to be additive (new optional fields) where possible, with a
+shipped. When one does, expect it to be additive (new optional fields) where possible, with a
 breaking change reflected as a new registry entry rather than silently changing `"1.0.0"`'s
 meaning out from under existing documents.
 
 The migration mechanism exists ahead of any migrations: `MIGRATIONS` in
 `packages/schema/src/migrate.ts` is an ordered chain a document walks toward
-`LATEST_TEAM_API_VERSION`, and `teamapi migrate` runs it. It is empty today, deliberately — a
+`LATEST_TEAM_API_VERSION`, and `teamapi migrate` runs it. It is empty today, deliberately, because a
 placeholder migration would be one real documents could hit. What it provides before a second
 version exists is diagnosis: `assessVersion` distinguishes a document that is _behind_ this build
 (migratable, or with no registered path) from one _ahead_ of it (the toolchain needs upgrading,
@@ -52,47 +52,47 @@ JSON-pointer fragments into another team's nested fields) in exactly five places
 - `roles[].reportsToRef.$ref` — the team owning a role's cross-team manager.
 - `roles[].alignsWith[].$ref` — the team owning a role's cross-team dotted-line relationship.
 
-`work.*[].$ref` is _not_ traversed by the resolver — it points at repos, wikis, or other non-team
+`work.*[].$ref` is _not_ traversed by the resolver. It points at repos, wikis, or other non-team
 resources, and `$ref` is optional there.
 
 Every object in the schema allows unknown `x-*`-style vendor extension fields (JSON Schema
-`.passthrough()`), so teams can attach organization-specific metadata without forking the schema —
-see `x-pagerduty-service` on the `ledger` service in
+`.passthrough()`), so teams can attach organization-specific metadata without forking the schema
+(see `x-pagerduty-service` on the `ledger` service in
 [`examples/acme-org/platform-payments/teamapi.yml`](../../examples/acme-org/platform-payments/teamapi.yml)
-for a worked example.
+for a worked example).
 
 ## Root object
 
 Several fields below are typed `slug`: a lowercase kebab-case identifier matching
-`^[a-z0-9]+(-[a-z0-9]+)*$` (e.g. `stream-checkout`, `head-of-engineering`) — not a display name,
+`^[a-z0-9]+(-[a-z0-9]+)*$` (e.g. `stream-checkout`, `head-of-engineering`), not a display name,
 which is what `info.name`/`role.name`/`member.name` are for.
 
-| Field               | Type                                                | Required | Description                                                                                                                                                                                                                                                                                                                                                       |
-| ------------------- | --------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `teamApiVersion`    | `"1.0.0"`                                           | Yes      | Version of this extended spec.                                                                                                                                                                                                                                                                                                                                    |
-| `id`                | slug                                                | Yes      | Stable identifier used for `$ref` linking (matched against another team's `id` once its `$ref`'d document is resolved — a referencing document itself only ever carries a `$ref` path/URL plus a human-readable `teamName`, never the target's `id` directly). Never renamed once other teams reference it — `info.name` is the renameable display label instead. |
-| `info`              | [Info](#info)                                       | Yes      | Core team identity.                                                                                                                                                                                                                                                                                                                                               |
-| `channels`          | [Channel](#channel)                                 | No       | Communication channels.                                                                                                                                                                                                                                                                                                                                           |
-| `searchTerms`       | [SearchTerm](#searchterm)                           | No       | Free-text terms for org-wide search.                                                                                                                                                                                                                                                                                                                              |
-| `platform`          | [Ref](#ref)                                         | No       | The platform team this team's services are built on.                                                                                                                                                                                                                                                                                                              |
-| `services`          | [Service](#services-and-bounded-contexts)           | No       | Services/software owned by this team.                                                                                                                                                                                                                                                                                                                             |
-| `work`              | [Work](#work)                                       | No       | Current work items (not traversed as team-graph edges).                                                                                                                                                                                                                                                                                                           |
-| `roles`             | [Role](#role)                                       | No       | Positions/functions within the team.                                                                                                                                                                                                                                                                                                                              |
-| `members`           | [Member](#member)                                   | No       | People on the team, optionally assigned to roles.                                                                                                                                                                                                                                                                                                                 |
-| `cognitiveLoad`     | [CognitiveLoadAssessment](#cognitiveloadassessment) | No       | Self-assessment.                                                                                                                                                                                                                                                                                                                                                  |
-| `meetings`          | [Meeting](#meeting)                                 | No       | Recurring meetings.                                                                                                                                                                                                                                                                                                                                               |
-| `interactions`      | [Interaction](#interactions-and-context-mapping)    | No       | Team Topologies interactions with other teams.                                                                                                                                                                                                                                                                                                                    |
-| `dependencies`      | [Dependency](#dependencies)                         | No       | Dependencies on other teams.                                                                                                                                                                                                                                                                                                                                      |
-| `agents`            | [Agent](#ai-native-domains)                         | No       | AI assistants treated as first-class team participants.                                                                                                                                                                                                                                                                                                           |
-| `memory`            | [MemoryEntry](#ai-native-domains)                   | No       | Persistent organizational memory.                                                                                                                                                                                                                                                                                                                                 |
-| `specifications`    | [Specification](#ai-native-domains)                 | No       | Specification-driven-development artifacts.                                                                                                                                                                                                                                                                                                                       |
-| `steeringDocuments` | [SteeringDocument](#ai-native-domains)              | No       | Coding standards, conventions, principles — inheritable org->team->project.                                                                                                                                                                                                                                                                                       |
-| `prompts`           | [Prompt](#ai-native-domains)                        | No       | Version-controlled, renderable prompt library.                                                                                                                                                                                                                                                                                                                    |
-| `playbooks`         | [Playbook](#ai-native-domains)                      | No       | Structured operational procedures.                                                                                                                                                                                                                                                                                                                                |
-| `policies`          | [Policy](#ai-native-domains)                        | No       | Machine-readable governance for external automation.                                                                                                                                                                                                                                                                                                              |
-| `knowledgeBase`     | [KnowledgeBaseEntry](#ai-native-domains)            | No       | ADRs, FAQs, meeting notes, runbooks, design docs.                                                                                                                                                                                                                                                                                                                 |
-| `workflows`         | [Workflow](#ai-native-domains)                      | No       | Process state machines, independent of any CI/CD system.                                                                                                                                                                                                                                                                                                          |
-| `sessions`          | [AiSession](#ai-native-domains)                     | No       | Record of AI collaboration sessions.                                                                                                                                                                                                                                                                                                                              |
+| Field               | Type                                                | Required | Description                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------- | --------------------------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `teamApiVersion`    | `"1.0.0"`                                           | Yes      | Version of this extended spec.                                                                                                                                                                                                                                                                                                                                  |
+| `id`                | slug                                                | Yes      | Stable identifier used for `$ref` linking (matched against another team's `id` once its `$ref`'d document is resolved; a referencing document itself only ever carries a `$ref` path/URL plus a human-readable `teamName`, never the target's `id` directly). Never renamed once other teams reference it; `info.name` is the renameable display label instead. |
+| `info`              | [Info](#info)                                       | Yes      | Core team identity.                                                                                                                                                                                                                                                                                                                                             |
+| `channels`          | [Channel](#channel)                                 | No       | Communication channels.                                                                                                                                                                                                                                                                                                                                         |
+| `searchTerms`       | [SearchTerm](#searchterm)                           | No       | Free-text terms for org-wide search.                                                                                                                                                                                                                                                                                                                            |
+| `platform`          | [Ref](#ref)                                         | No       | The platform team this team's services are built on.                                                                                                                                                                                                                                                                                                            |
+| `services`          | [Service](#services-and-bounded-contexts)           | No       | Services/software owned by this team.                                                                                                                                                                                                                                                                                                                           |
+| `work`              | [Work](#work)                                       | No       | Current work items (not traversed as team-graph edges).                                                                                                                                                                                                                                                                                                         |
+| `roles`             | [Role](#role)                                       | No       | Positions/functions within the team.                                                                                                                                                                                                                                                                                                                            |
+| `members`           | [Member](#member)                                   | No       | People on the team, optionally assigned to roles.                                                                                                                                                                                                                                                                                                               |
+| `cognitiveLoad`     | [CognitiveLoadAssessment](#cognitiveloadassessment) | No       | Self-assessment.                                                                                                                                                                                                                                                                                                                                                |
+| `meetings`          | [Meeting](#meeting)                                 | No       | Recurring meetings.                                                                                                                                                                                                                                                                                                                                             |
+| `interactions`      | [Interaction](#interactions-and-context-mapping)    | No       | Team Topologies interactions with other teams.                                                                                                                                                                                                                                                                                                                  |
+| `dependencies`      | [Dependency](#dependencies)                         | No       | Dependencies on other teams.                                                                                                                                                                                                                                                                                                                                    |
+| `agents`            | [Agent](#ai-native-domains)                         | No       | AI assistants treated as first-class team participants.                                                                                                                                                                                                                                                                                                         |
+| `memory`            | [MemoryEntry](#ai-native-domains)                   | No       | Persistent organizational memory.                                                                                                                                                                                                                                                                                                                               |
+| `specifications`    | [Specification](#ai-native-domains)                 | No       | Specification-driven-development artifacts.                                                                                                                                                                                                                                                                                                                     |
+| `steeringDocuments` | [SteeringDocument](#ai-native-domains)              | No       | Coding standards, conventions, principles, inheritable org->team->project.                                                                                                                                                                                                                                                                                      |
+| `prompts`           | [Prompt](#ai-native-domains)                        | No       | Version-controlled, renderable prompt library.                                                                                                                                                                                                                                                                                                                  |
+| `playbooks`         | [Playbook](#ai-native-domains)                      | No       | Structured operational procedures.                                                                                                                                                                                                                                                                                                                              |
+| `policies`          | [Policy](#ai-native-domains)                        | No       | Machine-readable governance for external automation.                                                                                                                                                                                                                                                                                                            |
+| `knowledgeBase`     | [KnowledgeBaseEntry](#ai-native-domains)            | No       | ADRs, FAQs, meeting notes, runbooks, design docs.                                                                                                                                                                                                                                                                                                               |
+| `workflows`         | [Workflow](#ai-native-domains)                      | No       | Process state machines, independent of any CI/CD system.                                                                                                                                                                                                                                                                                                        |
+| `sessions`          | [AiSession](#ai-native-domains)                     | No       | Record of AI collaboration sessions.                                                                                                                                                                                                                                                                                                                            |
 
 ## Info
 
@@ -102,15 +102,15 @@ which is what `info.name`/`role.name`/`member.name` are for.
 
 A communication channel for reaching the team.
 
-| Field  | Type   | Required | Description                                                                                                      |
-| ------ | ------ | -------- | ---------------------------------------------------------------------------------------------------------------- |
-| `type` | string | Yes      | The channel medium, e.g. `"slack"`, `"email"`, `"teams"` — not an enum, since organizations use different tools. |
-| `name` | string | Yes      | The channel identifier within that medium, e.g. a Slack channel name.                                            |
+| Field  | Type   | Required | Description                                                                                                     |
+| ------ | ------ | -------- | --------------------------------------------------------------------------------------------------------------- |
+| `type` | string | Yes      | The channel medium, e.g. `"slack"`, `"email"`, `"teams"`. Not an enum, since organizations use different tools. |
+| `name` | string | Yes      | The channel identifier within that medium, e.g. a Slack channel name.                                           |
 
 ## SearchTerm
 
 A free-text term surfaced by org-wide search (`searchOrg`/`GET /search`/`search_org`) in addition
-to whatever's already searchable on the team (name, focus, services, roles, members) — useful for
+to whatever's already searchable on the team (name, focus, services, roles, members), useful for
 synonyms, former team names, or jargon someone might search for that doesn't appear verbatim
 elsewhere in the document.
 
@@ -139,23 +139,23 @@ Tech Lead") and a **member** (a specific person) are different things worth keep
 - A role can be **vacant** (hiring in progress) or **job-shared** by more than one member.
 - A member can hold **more than one role**, or none at all (a general contributor).
 - Reporting lines (`reportsTo`) are a property of the _role_ hierarchy, independent of whoever
-  currently fills each seat — reorganizing who's in a seat shouldn't rewrite the org chart shape.
+  currently fills each seat; reorganizing who's in a seat shouldn't rewrite the org chart shape.
 
 ### Role
 
-| Field              | Type                                | Required | Description                                                                                                                                                                                         |
-| ------------------ | ----------------------------------- | -------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | slug                                | Yes      | Unique within this team's `roles[]`.                                                                                                                                                                |
-| `name`             | string                              | Yes      | The role's title, e.g. `"Payments Tech Lead"` — **not** a person's name.                                                                                                                            |
-| `kind`             | string                              | Yes      | A broad category for filtering/analytics, e.g. `TechLead`, `Engineer`, `Designer`, `SRE` (suggested values in `SUGGESTED_ROLE_KINDS`, not enforced).                                                |
-| `responsibilities` | [Responsibility](#responsibility)[] | No       | What this role owns.                                                                                                                                                                                |
-| `reportsTo`        | slug                                | No       | Another role's `id` within the same team. Validated: must match an existing role in this team's `roles[]`, and same-team `reportsTo` cycles (including a role reporting to itself) are rejected.    |
-| `reportsToRef`     | [RoleRef](#roleref)                 | No       | Formal reporting line to a role on another team. **Mutually exclusive with `reportsTo`** — a document setting both fails validation, since a role reports to exactly one manager, same-team or not. |
-| `alignsWith`       | [RoleRef](#roleref)[]               | No       | Dotted-line/matrix relationships that aren't formal reporting, e.g. a community-of-practice lead this role coordinates with. Same-team or cross-team.                                               |
+| Field              | Type                                | Required | Description                                                                                                                                                                                        |
+| ------------------ | ----------------------------------- | -------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | slug                                | Yes      | Unique within this team's `roles[]`.                                                                                                                                                               |
+| `name`             | string                              | Yes      | The role's title, e.g. `"Payments Tech Lead"`, **not** a person's name.                                                                                                                            |
+| `kind`             | string                              | Yes      | A broad category for filtering/analytics, e.g. `TechLead`, `Engineer`, `Designer`, `SRE` (suggested values in `SUGGESTED_ROLE_KINDS`, not enforced).                                               |
+| `responsibilities` | [Responsibility](#responsibility)[] | No       | What this role owns.                                                                                                                                                                               |
+| `reportsTo`        | slug                                | No       | Another role's `id` within the same team. Validated: must match an existing role in this team's `roles[]`, and same-team `reportsTo` cycles (including a role reporting to itself) are rejected.   |
+| `reportsToRef`     | [RoleRef](#roleref)                 | No       | Formal reporting line to a role on another team. **Mutually exclusive with `reportsTo`**: a document setting both fails validation, since a role reports to exactly one manager, same-team or not. |
+| `alignsWith`       | [RoleRef](#roleref)[]               | No       | Dotted-line/matrix relationships that aren't formal reporting, e.g. a community-of-practice lead this role coordinates with. Same-team or cross-team.                                              |
 
 ### Responsibility
 
-A plain string, or an object pairing the responsibility with an optional `doneWhen` — a definition of done, for consumers that need one (e.g. `teamapi generate crewai`, where it becomes a task's `expected_output`). Most consumers (diagrams, REST API, MCP tools) have no use for `doneWhen`, so it's never required — plain strings remain valid everywhere.
+A plain string, or an object pairing the responsibility with an optional `doneWhen`, a definition of done, for consumers that need one (e.g. `teamapi generate crewai`, where it becomes a task's `expected_output`). Most consumers (diagrams, REST API, MCP tools) have no use for `doneWhen`, so it's never required and plain strings remain valid everywhere.
 
 | Field      | Type   | Required | Description                                                       |
 | ---------- | ------ | -------- | ----------------------------------------------------------------- |
@@ -173,8 +173,8 @@ responsibilities:
 
 `kind` (new, optional) says what sort of informal tie an `alignsWith[]` entry is:
 `aligns-with` (the default when omitted, and the original dotted-line meaning) | `advises` |
-`learns-from` | `community-of-practice`. These name the network work actually travels along —
-who a role takes advice from, who it learned a practice from, which community it belongs to —
+`learns-from` | `community-of-practice`. These name the network work actually travels along
+(who a role takes advice from, who it learned a practice from, which community it belongs to),
 which the reporting hierarchy never explains, and which routinely exists for months before anyone
 draws a box for it.
 
@@ -185,7 +185,7 @@ cross-team role relationships the reporting lines explain, and how many they don
 `kind` is rejected on `reportsToRef`, which is always formal reporting, rather than being silently
 ignored.
 
-A reference to another team's role — same `$ref` convention as `Interaction`/`Dependency`.
+A reference to another team's role, with the same `$ref` convention as `Interaction`/`Dependency`.
 
 | Field      | Type   | Required | Description                                                             |
 | ---------- | ------ | -------- | ----------------------------------------------------------------------- |
@@ -219,7 +219,7 @@ a 1-10 self-assessment across the three load types from _Team Topologies_.
 | `assessedOn`  | string        | No       |
 
 `@jgalego/teamapi-core`'s `scoreCognitiveLoad` derives a `sustainable | elevated | overloaded` label,
-weighting `extraneous` load more heavily than the total score — Team Topologies treats extraneous
+weighting `extraneous` load more heavily than the total score, since Team Topologies treats extraneous
 (avoidable overhead) as the load type teams should actively minimize.
 
 `supervision` (new) is the load of supervising AI agents: reviewing what they produce, maintaining
@@ -229,8 +229,8 @@ overloaded).
 
 Those are two separate decisions. The three types above come from _Team Topologies_ and the
 thresholds are calibrated against their sum, so summing a fourth term would re-scale `total` for
-every team that adopted an agent. But the label has never been a function of `total` alone — a high
-`extraneous` score alone is already sufficient — and supervision joins it there, because a team
+every team that adopted an agent. But the label has never been a function of `total` alone (a high
+`extraneous` score alone is already sufficient), and supervision joins it there, because a team
 drowning in agent review must not be able to report "sustainable" on the strength of three modest
 other scores. A team that has not scored `supervision` is unaffected: an absent value reads as 0.
 
@@ -238,7 +238,7 @@ It is not folded into `extraneous` either, because reviewing an agent's output i
 work itself rather than avoidable friction around it.
 
 `teamapi gaps` reports an `unscored-supervision` warning for a team that assesses its cognitive
-load and runs active `agents[]` but leaves this blank — the load exists whether or not anyone
+load and runs active `agents[]` but leaves this blank, because the load exists whether or not anyone
 scored it.
 
 Two more `teamapi gaps` warnings cover the people side of agent work. `owner-fan-out` fires when one
@@ -271,7 +271,7 @@ boundedContext:
 
 ## Work
 
-Point-in-time work items — deliberately **not** resolved into graph edges (see
+Point-in-time work items, deliberately **not** resolved into graph edges (see
 [File format and layout](#file-format-and-layout)), since they describe transient work rather than
 a standing team-to-team relationship. Each of the three arrays holds the same shape: a required
 `name` plus an optional `$ref` to a repo, wiki page, ticket, or other resource (not necessarily
@@ -295,12 +295,12 @@ work:
 
 A recurring meeting.
 
-| Field             | Type             | Required | Description                                            |
-| ----------------- | ---------------- | -------- | ------------------------------------------------------ |
-| `purpose`         | string           | Yes      | What the meeting is for, e.g. `"daily sync"`.          |
-| `dayOfWeek`       | string           | No       | e.g. `"Tuesday"` — a free-text day name, not an enum.  |
-| `timeOfDay`       | string           | No       | e.g. `"09:30"` — a free-text time, no enforced format. |
-| `durationMinutes` | positive integer | No       | How long the meeting runs.                             |
+| Field             | Type             | Required | Description                                           |
+| ----------------- | ---------------- | -------- | ----------------------------------------------------- |
+| `purpose`         | string           | Yes      | What the meeting is for, e.g. `"daily sync"`.         |
+| `dayOfWeek`       | string           | No       | e.g. `"Tuesday"`; a free-text day name, not an enum.  |
+| `timeOfDay`       | string           | No       | e.g. `"09:30"`; a free-text time, no enforced format. |
+| `durationMinutes` | positive integer | No       | How long the meeting runs.                            |
 
 ## Interactions and context mapping
 
@@ -319,19 +319,19 @@ A recurring meeting.
 
 When `contextMappingPattern` is omitted, `@jgalego/teamapi-core`'s `deriveContextMap` applies a heuristic:
 
-| Mode             | Inferred pattern                                                                |
-| ---------------- | ------------------------------------------------------------------------------- |
-| `x-as-a-service` | `OpenHostService`                                                               |
-| `collaboration`  | `Partnership`                                                                   |
-| `facilitating`   | _(none)_ — coaching/enabling relationships aren't a runtime integration pattern |
+| Mode             | Inferred pattern                                                               |
+| ---------------- | ------------------------------------------------------------------------------ |
+| `x-as-a-service` | `OpenHostService`                                                              |
+| `collaboration`  | `Partnership`                                                                  |
+| `facilitating`   | _(none)_; coaching/enabling relationships aren't a runtime integration pattern |
 
 Each team's interaction declaration is an independent directed edge. If two teams describe the
 same relationship with different modes, `deriveContextMap` surfaces it as a `conflict` rather than
-silently reconciling — that disagreement is itself useful organizational signal.
+silently reconciling, because that disagreement is itself useful organizational signal.
 
 ## Dependencies
 
-`{ teamName, description?, type: "OK" | "Slowing" | "Blocking", $ref }` — unchanged from the base
+`{ teamName, description?, type: "OK" | "Slowing" | "Blocking", $ref }`, unchanged from the base
 spec.
 
 ## AI-native domains
@@ -341,7 +341,7 @@ existed still parses identically. Every resource in every array below requires a
 that array (validated the same way `roles[].id`/`members[].id` are). Every array-of-objects field
 not called out below (`capabilities`, `tags`, `reviewers`, etc.) is a plain string array.
 
-**Agent**: `{ id, name, description?, provider, model?, role, capabilities: string[], status: "active" | "inactive" | "deprecated" (default "active"), ownerId?: slug (a members[].id), permissions: string[], tags: string[] }`. Worked example: `examples/acme-org/platform-payments/teamapi.yml` declares five agents, each scoped to one review concern (architecture, tests, security, docs, compliance) rather than one do-everything agent — `platform-payments`'s `memory[]` (below) records why. `examples/acme-org/stream-onboarding/teamapi.yml` declares none, backed by a `policies[]` entry rather than silent omission.
+**Agent**: `{ id, name, description?, provider, model?, role, capabilities: string[], status: "active" | "inactive" | "deprecated" (default "active"), ownerId?: slug (a members[].id), permissions: string[], tags: string[] }`. Worked example: `examples/acme-org/platform-payments/teamapi.yml` declares five agents, each scoped to one review concern (architecture, tests, security, docs, compliance) rather than one do-everything agent; `platform-payments`'s `memory[]` (below) records why. `examples/acme-org/stream-onboarding/teamapi.yml` declares none, backed by a `policies[]` entry rather than silent omission.
 
 #### Example: an agent with a resolvable human owner
 
@@ -369,7 +369,7 @@ agents:
 
 **MemoryEntry**: `{ id, title, kind: "architecture-decision" | "convention" | "lesson-learned" | "recurring-issue" | "domain-knowledge" | "historical-decision", body (markdown), tags: string[], contributors: string[], relatedRefs: Ref[], createdAt?, updatedAt? }`.
 
-**Specification**: `{ id, title, kind: "requirement" | "design" | "task" | "acceptance-criteria", status: "draft" | "in-review" | "approved" | "in-progress" | "implemented" | "deprecated" (default "draft"), body?, reviewers: string[], approvals: { reviewer, approvedAt?, comment? }[], linkedPullRequests: string[], linkedIssues: string[], linkedDocuments: Ref[], tags: string[] }`. `linkedPullRequests`/`linkedIssues` are plain strings (URLs or `owner/repo#123`), not `$ref`s — they point at GitHub/GitLab/Jira, not another team's document.
+**Specification**: `{ id, title, kind: "requirement" | "design" | "task" | "acceptance-criteria", status: "draft" | "in-review" | "approved" | "in-progress" | "implemented" | "deprecated" (default "draft"), body?, reviewers: string[], approvals: { reviewer, approvedAt?, comment? }[], linkedPullRequests: string[], linkedIssues: string[], linkedDocuments: Ref[], tags: string[] }`. `linkedPullRequests`/`linkedIssues` are plain strings (URLs or `owner/repo#123`), not `$ref`s. They point at GitHub/GitLab/Jira, not another team's document.
 
 #### Example: recording a review in progress
 
@@ -390,7 +390,7 @@ specifications:
     tags: [identity, security]
 ```
 
-**SteeringDocument**: `{ id, title, category: "coding-standards" | "api-conventions" | "security-guidelines" | "architecture-principles" | "documentation-style" | "custom", scope: "organization" | "team" | "project" (default "team"), appliesTo?, body, tags: string[] }`. `@jgalego/teamapi-core`'s `resolveEffectiveSteering(graph, teamId)` returns a team's own documents plus every document declared on the team(s) reachable by walking the existing `platform.$ref` chain upward — reusing that edge rather than inventing a second hierarchy mechanism. A document the team declares itself always wins over an inherited one sharing its `id`.
+**SteeringDocument**: `{ id, title, category: "coding-standards" | "api-conventions" | "security-guidelines" | "architecture-principles" | "documentation-style" | "custom", scope: "organization" | "team" | "project" (default "team"), appliesTo?, body, tags: string[] }`. `@jgalego/teamapi-core`'s `resolveEffectiveSteering(graph, teamId)` returns a team's own documents plus every document declared on the team(s) reachable by walking the existing `platform.$ref` chain upward, reusing that edge rather than inventing a second hierarchy mechanism. A document the team declares itself always wins over an inherited one sharing its `id`.
 
 #### Example: inheriting and overriding steering
 
@@ -481,7 +481,7 @@ workflows:
 
 > **Rejected:** a transition such as `{ from: testing, to: production, trigger: deploy }` fails validation because `production` is not present in `states[]`. Automation actions are declarations for external tooling; TeamAPI does not execute them.
 
-**AiSession**: `{ id, agentId?: slug (an agents[].id), assistant, model?, objective, promptIds: slug[] (this team's prompts[].id), generatedArtifacts: Ref[], referencedDocuments: Ref[], decisions: string[], startedAt?, endedAt?, tags: string[] }`. Written after the fact — a durable record, the same way `meetings[]` records a standing meeting rather than driving one live.
+**AiSession**: `{ id, agentId?: slug (an agents[].id), assistant, model?, objective, promptIds: slug[] (this team's prompts[].id), generatedArtifacts: Ref[], referencedDocuments: Ref[], decisions: string[], startedAt?, endedAt?, tags: string[] }`. Written after the fact as a durable record, the same way `meetings[]` records a standing meeting rather than driving one live.
 
 ### Context bundles
 
@@ -493,17 +493,17 @@ knowledge base entries, prompts, and playbooks most relevant to a stated `goal`,
 It also returns `seams[]`: every pair of teams the matched entries span, with the interaction
 `mode` declared between them, and `undeclared: true` when neither team declares any edge to the
 other. A bundle otherwise reads as if the goal belongs to whichever team was scoped, when in
-practice the highest-scoring entries routinely straddle a boundary — which is where the risk is.
+practice the highest-scoring entries routinely straddle a boundary, which is where the risk is.
 An undeclared seam deserves more caution than a declared one, not less: the work is about to cross
 a line nobody has written down. Derived from the `teamId` each scored entry already carries, so it
 costs one pass and no extra lookups.
 
 Relevance is a heuristic: `goal` is tokenized (lowercased, alphanumeric runs of length >= 3), and
-each candidate resource is scored by how many of those tokens appear in its text fields/tags —
+each candidate resource is scored by how many of those tokens appear in its text fields/tags,
 returned as `matchedTerms` alongside each result, so the ranking is auditable rather than a black
 box. A resource belonging to the scoped `teamId` gets a fixed score boost, so a team's own material
 usually outranks equally-relevant org-wide material without burying something more relevant found
-elsewhere. This is a v1 scorer — nothing about the interface assumes keyword overlap specifically,
+elsewhere. This is a v1 scorer; nothing about the interface assumes keyword overlap specifically,
 so a semantic/embeddings-based scorer can replace it later without changing the request/response shape.
 
 ### Knowledge graph
@@ -513,12 +513,12 @@ so a semantic/embeddings-based scorer can replace it later without changing the 
 document into one graph of `{ nodes, edges }`. Edge kinds, each backed by something the schema can
 actually resolve:
 
-- **`owns`** — every resource belongs to the team whose document declares it.
-- **`fills`** — `members[].roleIds` -> `roles[]`.
-- **`reportsTo`/`alignsWith`** — reuses the graph's existing role-level edges.
-- **`interaction`/`dependency`/`platform`** — reuses the graph's existing team-level edges.
-- **`usedPrompt`/`ranBy`** — `sessions[].promptIds`/`.agentId`, same-team fields needing no `$ref` resolution.
-- **`references`** — resolved from `$ref`-bearing fields not otherwise traversed by the graph
+- **`owns`**: every resource belongs to the team whose document declares it.
+- **`fills`**: `members[].roleIds` -> `roles[]`.
+- **`reportsTo`/`alignsWith`**: reuses the graph's existing role-level edges.
+- **`interaction`/`dependency`/`platform`**: reuses the graph's existing team-level edges.
+- **`usedPrompt`/`ranBy`**: `sessions[].promptIds`/`.agentId`, same-team fields needing no `$ref` resolution.
+- **`references`**: resolved from `$ref`-bearing fields not otherwise traversed by the graph
   builder (`memory[].relatedRefs`, `specifications[].linkedDocuments`, `knowledgeBase[].relatedRefs`/`.attachments`,
   `playbooks[].attachments`), by resolving each `$ref` against its declaring team's `sourceUri` and
   matching it against another team's `sourceUri`. A `$ref` that doesn't resolve to a known team
@@ -530,7 +530,7 @@ node, for scoping a visualization or answering "what's connected to this ADR."
 
 ### Unified search
 
-`searchOrg`/`GET /search`/`search_org` now also covers every AI-native domain — agent, memory,
+`searchOrg`/`GET /search`/`search_org` now also covers every AI-native domain: agent, memory,
 specification, steeringDocument, prompt, playbook, policy, knowledgeBase, workflow, and session are
 all valid `SearchResult.kind` values, matched the same way team/service/role/member always were
 (case-insensitive substring, now also over each resource's `tags`).
@@ -539,11 +539,11 @@ all valid `SearchResult.kind` values, matched the same way team/service/role/mem
 
 Every AI-native domain above follows the same rule as the rest of this API: **there is no write
 path**. A `POST` you might expect from a typical CRUD API (`POST /teams/:id/agents` to register a
-new agent, say) does not exist here — an agent, a policy, a prompt is added the same way a role or
+new agent, say) does not exist here. An agent, a policy, a prompt is added the same way a role or
 a service is: by editing `teamapi.yml` and committing it. The only new `POST` endpoints
 are `POST /context` (a stateless computation over the current graph, not a resource creation) and
 `POST /teams/:id/prompts/:promptId/render` (ditto). This preserves the existing architecture's
-central property — the YAML documents, versioned in git, are the single source of truth — rather
+central property (the YAML documents, versioned in git, are the single source of truth) rather
 than bolting on a second, parallel persistence layer that could drift from it.
 
 ## Toolchain-generated artifacts
@@ -551,18 +551,18 @@ than bolting on a second, parallel persistence layer that could drift from it.
 Given a resolved org graph, `@jgalego/teamapi-core` (consumed identically by the REST API, MCP server, and
 CLI) can produce:
 
-- **Topology organigram** — team-interaction diagram (Mermaid/DOT), org-wide or scoped to one
+- **Topology organigram**: team-interaction diagram (Mermaid/DOT), org-wide or scoped to one
   team's neighborhood.
-- **Role hierarchy chart** — one team's `roles[]`/`reportsTo` tree, annotated with `members[]`.
-- **Org-wide role hierarchy** — every team's roles, grouped into one box per team, with a solid
+- **Role hierarchy chart**: one team's `roles[]`/`reportsTo` tree, annotated with `members[]`.
+- **Org-wide role hierarchy**: every team's roles, grouped into one box per team, with a solid
   arrow for formal reporting (`reportsTo`/`reportsToRef`, same-team or cross-team) and a dashed
   arrow for `alignsWith` (dotted-line/matrix relationships).
-- **Context map** — DDD relationship diagram derived from `interactions[]`.
-- **Cognitive load report** — per-team or org-wide, sorted by total load.
-- **Full graph JSON** — every resolved team plus every edge, for custom tooling.
-- **Context bundle** — the goal-relevant slice of specifications/steering/policies/memory/knowledge
+- **Context map**: DDD relationship diagram derived from `interactions[]`.
+- **Cognitive load report**: per-team or org-wide, sorted by total load.
+- **Full graph JSON**: every resolved team plus every edge, for custom tooling.
+- **Context bundle**: the goal-relevant slice of specifications/steering/policies/memory/knowledge
   base/prompts/playbooks (see [Context bundles](#context-bundles) above).
-- **Knowledge graph** — every team/person/agent/document as linked nodes (see
+- **Knowledge graph**: every team/person/agent/document as linked nodes (see
   [Knowledge graph](#knowledge-graph) above), with breadth-first traversal from any node.
 
 See the root `README.md` (or `packages/cli`) for the CLI commands, REST endpoints, and MCP tools
