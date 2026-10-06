@@ -1,5 +1,19 @@
 # @jgalego/teamapi
 
+## 0.8.0
+
+### Minor Changes
+
+- edf9ad7: Add `owner-fan-out` and `rationale-gap` gap findings: one member owning more than three active agents, and an AI session that generated artifacts without recording any decisions.
+
+### Patch Changes
+
+- Updated dependencies [edf9ad7]
+  - @jgalego/teamapi-core@0.11.0
+  - @jgalego/teamapi-chat@0.3.3
+  - @jgalego/teamapi-mcp-server@0.5.3
+  - @jgalego/teamapi-rest-api@0.7.2
+
 ## 0.7.0
 
 ### Minor Changes

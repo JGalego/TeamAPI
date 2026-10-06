@@ -1,5 +1,12 @@
 # @jgalego/teamapi-chat
 
+## 0.3.3
+
+### Patch Changes
+
+- Updated dependencies [edf9ad7]
+  - @jgalego/teamapi-core@0.11.0
+
 ## 0.3.2
 
 ### Patch Changes
