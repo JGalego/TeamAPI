@@ -1,6 +1,5 @@
-import * as fs from "node:fs/promises";
 import * as path from "node:path";
-import { expandSeeds } from "./seeds";
+import { expandSeeds, isDirectory } from "./seeds";
 
 /**
  * Drops any directory already contained in another, because the watches are recursive: keeping
@@ -41,12 +40,4 @@ export async function resolveWatchRoots(patterns: string[]): Promise<string[]> {
   }
 
   return collapseNested(roots);
-}
-
-async function isDirectory(candidate: string): Promise<boolean> {
-  try {
-    return (await fs.stat(candidate)).isDirectory();
-  } catch {
-    return false;
-  }
 }

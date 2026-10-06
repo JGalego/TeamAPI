@@ -1,12 +1,22 @@
 import * as fs from "node:fs/promises";
 import fg from "fast-glob";
 
-async function isDirectory(pattern: string): Promise<boolean> {
+/**
+ * Whether `target` names an existing directory. Only "nothing is there" answers no: a permission
+ * error or similar is rethrown, since reading it as a missing path would quietly drop seeds.
+ */
+export async function isDirectory(target: string): Promise<boolean> {
   try {
-    return (await fs.stat(pattern)).isDirectory();
-  } catch {
-    return false;
+    return (await fs.stat(target)).isDirectory();
+  } catch (error) {
+    if (isMissingPath(error)) return false;
+    throw error;
   }
+}
+
+export function isMissingPath(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException).code;
+  return code === "ENOENT" || code === "ENOTDIR";
 }
 
 /**

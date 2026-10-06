@@ -10,6 +10,7 @@ import {
   type GapRulesConfig,
   type TopologyConfig,
 } from "@jgalego/teamapi-core";
+import { isMissingPath } from "./seeds";
 
 export const CONFIG_FILENAMES = ["teamapi.config.yml", "teamapi.config.yaml"] as const;
 
@@ -118,8 +119,8 @@ export async function findConfigFile(startDir: string): Promise<string | undefin
       try {
         await fs.access(candidate);
         return candidate;
-      } catch {
-        // keep looking
+      } catch (error) {
+        if (!isMissingPath(error)) throw error;
       }
     }
     const parent = path.dirname(dir);

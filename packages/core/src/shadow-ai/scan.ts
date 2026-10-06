@@ -6,23 +6,23 @@ import path from "node:path";
  *
  * Shadow AI is rarely a decision anyone announced. It arrives as a config file somebody committed
  * during a delivery crunch, and by the time it matters it is load-bearing. But it is not actually
- * hidden — every one of these artifacts is checked into git, which means the invisible operating
+ * hidden. Every one of these artifacts is checked into git, which means the invisible operating
  * layer can be read off the same source of truth as everything else, with no gateway to install
  * and no runtime to adopt.
  *
  * Deliberately offline: this reads directories that are already on disk. Nothing here talks to a
- * provider, needs a token, or reports usage — it reports *declaration*, which is the only thing a
+ * provider, needs a token, or reports usage. It reports *declaration*, which is the only thing a
  * spec-vs-reality check can honestly claim to know.
  */
 
 export type AiArtifactKind =
-  /** An MCP server configuration — `.mcp.json`. */
+  /** An MCP server configuration (`.mcp.json`). */
   | "mcp-config"
-  /** Instructions written for a coding agent — `AGENTS.md`, `CLAUDE.md`. */
+  /** Instructions written for a coding agent, such as `AGENTS.md` or `CLAUDE.md`. */
   | "agent-instructions"
-  /** Assistant-specific configuration directories — `.claude/`, `.cursor/`. */
+  /** Assistant-specific configuration directories, such as `.claude/` or `.cursor/`. */
   | "assistant-config"
-  /** An LLM SDK in a manifest — `package.json`, `requirements.txt`. */
+  /** An LLM SDK in a manifest such as `package.json` or `requirements.txt`. */
   | "llm-dependency"
   /** A CI workflow step that invokes a model. */
   | "ai-workflow";
@@ -82,27 +82,38 @@ const AI_ACTION = /claude|anthropic|openai|copilot|gemini|bedrock-runtime/i;
 
 const isLlmPackage = (name: string) => LLM_PACKAGES.some((pattern) => pattern.test(name));
 
+/** Absence is the common, expected answer for every probe below, and a directory sitting where a
+ * file was expected counts as absent. Anything else, such as a permission error, is a real failure
+ * and is rethrown. */
+function isMissingPath(error: unknown): boolean {
+  const code = (error as NodeJS.ErrnoException).code;
+  return code === "ENOENT" || code === "ENOTDIR" || code === "EISDIR";
+}
+
 async function readIfPresent(file: string): Promise<string | null> {
   try {
     return await readFile(file, "utf-8");
-  } catch {
-    return null;
+  } catch (error) {
+    if (isMissingPath(error)) return null;
+    throw error;
   }
 }
 
 async function isFile(target: string): Promise<boolean> {
   try {
     return (await stat(target)).isFile();
-  } catch {
-    return false;
+  } catch (error) {
+    if (isMissingPath(error)) return false;
+    throw error;
   }
 }
 
 async function isDirectory(target: string): Promise<boolean> {
   try {
     return (await stat(target)).isDirectory();
-  } catch {
-    return false;
+  } catch (error) {
+    if (isMissingPath(error)) return false;
+    throw error;
   }
 }
 
@@ -148,8 +159,9 @@ async function scanWorkflows(repoRoot: string): Promise<AiArtifact[]> {
   let entries: string[];
   try {
     entries = await readdir(workflowDir);
-  } catch {
-    return [];
+  } catch (error) {
+    if (isMissingPath(error)) return [];
+    throw error;
   }
 
   const artifacts: AiArtifact[] = [];
