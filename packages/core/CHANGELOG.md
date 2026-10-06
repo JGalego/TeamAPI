@@ -1,5 +1,11 @@
 # @jgalego/teamapi-core
 
+## 0.11.0
+
+### Minor Changes
+
+- edf9ad7: Add `owner-fan-out` and `rationale-gap` gap findings: one member owning more than three active agents, and an AI session that generated artifacts without recording any decisions.
+
 ## 0.10.0
 
 ### Minor Changes
